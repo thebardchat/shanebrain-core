@@ -1,0 +1,17 @@
+# Completed Projects Archive
+# This directory contains archived project plans.
+# Files in this directory are in .gitignore to protect personal data.
+#
+# When you complete a project:
+# 1. Move files from ../active-projects/ here
+# 2. Create a subfolder named [date]-[project-name]/
+# 3. Add a summary.md with lessons learned
+#
+# Example structure:
+# completed-projects/
+#   2025-01-angel-cloud-crisis-detection/
+#     task_plan.md
+#     context.md
+#     errors.md
+#     decisions.md
+#     summary.md

@@ -1,0 +1,245 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserSession",
+  "description": "Schema for tracking user sessions and preferences across ShaneBrain projects",
+  "type": "object",
+  "collection": "user_sessions",
+  "database": "shanebrain_db",
+  "required": ["user_id", "created_at"],
+  "properties": {
+    "_id": {
+      "bsonType": "objectId",
+      "description": "MongoDB unique identifier"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "Hashed/anonymous user identifier"
+    },
+    "profile": {
+      "bsonType": "object",
+      "description": "User profile settings (no PII)",
+      "properties": {
+        "display_name": {
+          "bsonType": "string",
+          "description": "Chosen display name (optional)"
+        },
+        "preferences": {
+          "bsonType": "object",
+          "properties": {
+            "theme": {
+              "bsonType": "string",
+              "enum": ["light", "dark", "system"]
+            },
+            "language": { "bsonType": "string" },
+            "timezone": { "bsonType": "string" },
+            "notification_level": {
+              "bsonType": "string",
+              "enum": ["all", "important", "critical", "none"]
+            }
+          }
+        },
+        "accessibility": {
+          "bsonType": "object",
+          "properties": {
+            "high_contrast": { "bsonType": "bool" },
+            "large_text": { "bsonType": "bool" },
+            "reduce_motion": { "bsonType": "bool" },
+            "screen_reader_optimized": { "bsonType": "bool" }
+          }
+        }
+      }
+    },
+    "projects": {
+      "bsonType": "object",
+      "description": "Per-project settings and state",
+      "properties": {
+        "angel_cloud": {
+          "bsonType": "object",
+          "properties": {
+            "onboarded": { "bsonType": "bool" },
+            "onboarded_at": { "bsonType": "date" },
+            "crisis_contact_set": { "bsonType": "bool" },
+            "resources_acknowledged": { "bsonType": "bool" },
+            "preferred_resources": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            },
+            "check_in_frequency": {
+              "bsonType": "string",
+              "enum": ["never", "weekly", "daily", "as_needed"]
+            }
+          }
+        },
+        "shanebrain_legacy": {
+          "bsonType": "object",
+          "properties": {
+            "relationship": {
+              "bsonType": "string",
+              "description": "Relationship to Shane (spouse, child, etc.)"
+            },
+            "access_level": {
+              "bsonType": "string",
+              "enum": ["full", "primary", "limited", "public"]
+            },
+            "interests": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" },
+              "description": "Topics they're most interested in"
+            }
+          }
+        },
+        "pulsar": {
+          "bsonType": "object",
+          "properties": {
+            "watched_chains": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            },
+            "watched_protocols": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            },
+            "alert_threshold": {
+              "bsonType": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            }
+          }
+        },
+        "logibot": {
+          "bsonType": "object",
+          "properties": {
+            "role": {
+              "bsonType": "string",
+              "enum": ["dispatcher", "driver", "manager", "admin"]
+            },
+            "permissions": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            }
+          }
+        }
+      }
+    },
+    "activity": {
+      "bsonType": "object",
+      "description": "User activity tracking",
+      "properties": {
+        "last_active": { "bsonType": "date" },
+        "last_project": { "bsonType": "string" },
+        "session_count": { "bsonType": "int" },
+        "total_messages": { "bsonType": "int" },
+        "total_time_seconds": { "bsonType": "int" },
+        "active_days": { "bsonType": "int" },
+        "streak_days": { "bsonType": "int" }
+      }
+    },
+    "context": {
+      "bsonType": "object",
+      "description": "Persistent context for continuity",
+      "properties": {
+        "last_conversation_summary": { "bsonType": "string" },
+        "active_planning_files": {
+          "bsonType": "array",
+          "items": { "bsonType": "string" }
+        },
+        "current_project_focus": { "bsonType": "string" },
+        "pending_tasks": {
+          "bsonType": "array",
+          "items": {
+            "bsonType": "object",
+            "properties": {
+              "task": { "bsonType": "string" },
+              "project": { "bsonType": "string" },
+              "created_at": { "bsonType": "date" }
+            }
+          }
+        },
+        "bookmarked_memories": {
+          "bsonType": "array",
+          "items": { "bsonType": "string" },
+          "description": "Weaviate IDs of bookmarked memories"
+        }
+      }
+    },
+    "sessions": {
+      "bsonType": "array",
+      "description": "Recent session history (last 10)",
+      "maxItems": 10,
+      "items": {
+        "bsonType": "object",
+        "properties": {
+          "session_id": { "bsonType": "string" },
+          "project": { "bsonType": "string" },
+          "started_at": { "bsonType": "date" },
+          "ended_at": { "bsonType": "date" },
+          "messages": { "bsonType": "int" },
+          "summary": { "bsonType": "string" }
+        }
+      }
+    },
+    "privacy": {
+      "bsonType": "object",
+      "description": "Privacy settings",
+      "properties": {
+        "data_retention_days": {
+          "bsonType": "int",
+          "description": "How long to retain conversation data"
+        },
+        "allow_analytics": { "bsonType": "bool" },
+        "allow_improvement_training": {
+          "bsonType": "bool",
+          "description": "Allow anonymized data for model improvement"
+        },
+        "export_requested": { "bsonType": "bool" },
+        "deletion_requested": { "bsonType": "bool" },
+        "deletion_scheduled_for": { "bsonType": "date" }
+      }
+    },
+    "security": {
+      "bsonType": "object",
+      "description": "Security-related data",
+      "properties": {
+        "failed_auth_attempts": { "bsonType": "int" },
+        "last_failed_auth": { "bsonType": "date" },
+        "locked_until": { "bsonType": "date" },
+        "auth_tokens": {
+          "bsonType": "array",
+          "items": {
+            "bsonType": "object",
+            "properties": {
+              "token_hash": { "bsonType": "string" },
+              "created_at": { "bsonType": "date" },
+              "expires_at": { "bsonType": "date" },
+              "last_used": { "bsonType": "date" },
+              "device_info": { "bsonType": "string" }
+            }
+          }
+        }
+      }
+    },
+    "created_at": {
+      "bsonType": "date",
+      "description": "When user first registered"
+    },
+    "updated_at": {
+      "bsonType": "date",
+      "description": "When user record was last updated"
+    }
+  },
+  "indexes": [
+    {
+      "name": "user_id_unique",
+      "key": { "user_id": 1 },
+      "unique": true
+    },
+    {
+      "name": "last_active",
+      "key": { "activity.last_active": -1 }
+    },
+    {
+      "name": "deletion_scheduled",
+      "key": { "privacy.deletion_scheduled_for": 1 },
+      "sparse": true
+    }
+  ]
+}

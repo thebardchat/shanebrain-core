@@ -1,0 +1,178 @@
+{
+  "class": "ShanebrainMemory",
+  "description": "ShaneBrain Legacy memories, stories, values, and knowledge for digital preservation",
+  "vectorizer": "text2vec-transformers",
+  "moduleConfig": {
+    "text2vec-transformers": {
+      "poolingStrategy": "masked_mean",
+      "vectorizeClassName": false
+    }
+  },
+  "properties": [
+    {
+      "name": "title",
+      "description": "Title of the memory or story",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "content",
+      "description": "Full content of the memory, story, value, or knowledge",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "category",
+      "description": "Category: story, value, knowledge, advice, family_history, creative_work",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "subcategory",
+      "description": "More specific categorization within the main category",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "period",
+      "description": "Time period this memory relates to (e.g., 'childhood', '2020-2025')",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "themes",
+      "description": "Key themes or values present in this memory",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "forWhom",
+      "description": "Intended audience: all, spouse, children, grandchildren, extended_family",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "accessLevel",
+      "description": "Access level: full, primary, limited, public",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "lessonLearned",
+      "description": "Key lesson or takeaway from this memory",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "relatedMemories",
+      "description": "References to related ShanebrainMemory objects",
+      "dataType": ["ShanebrainMemory"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "createdAt",
+      "description": "When this memory was recorded",
+      "dataType": ["date"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "updatedAt",
+      "description": "When this memory was last updated",
+      "dataType": ["date"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "sourceType",
+      "description": "Source: written, voice_transcription, interview, document",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "emotionalTone",
+      "description": "Emotional tone: joyful, reflective, instructive, cautionary, loving",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "isPrivate",
+      "description": "Whether this memory contains private/sensitive content",
+      "dataType": ["boolean"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    }
+  ]
+}

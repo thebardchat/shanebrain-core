@@ -1,0 +1,278 @@
+{
+  "class": "PulsarSecurityEvent",
+  "description": "Pulsar AI blockchain security events, threats, and patterns",
+  "vectorizer": "text2vec-transformers",
+  "moduleConfig": {
+    "text2vec-transformers": {
+      "poolingStrategy": "masked_mean",
+      "vectorizeClassName": false
+    }
+  },
+  "properties": [
+    {
+      "name": "eventId",
+      "description": "Unique identifier for this security event",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "eventType",
+      "description": "Type of event: exploit, vulnerability, suspicious_activity, threat_intel, pattern",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "title",
+      "description": "Brief title of the security event",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "description",
+      "description": "Detailed description of the security event",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "chain",
+      "description": "Blockchain: ethereum, bsc, polygon, arbitrum, optimism, solana, etc.",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "severity",
+      "description": "Severity level: critical, high, medium, low, info",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "riskScore",
+      "description": "Risk score from 0 to 100",
+      "dataType": ["number"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "attackVector",
+      "description": "Attack vector: reentrancy, flash_loan, rug_pull, front_running, etc.",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "affectedContracts",
+      "description": "Contract addresses affected",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "affectedProtocols",
+      "description": "Protocol names affected",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "maliciousAddresses",
+      "description": "Known malicious addresses involved",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "transactionHashes",
+      "description": "Related transaction hashes",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "lossAmount",
+      "description": "Estimated loss in USD",
+      "dataType": ["number"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "detectionSignatures",
+      "description": "Signatures or patterns used to detect this event",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "solidityCode",
+      "description": "Relevant Solidity code snippet if applicable",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "mitigation",
+      "description": "Recommended mitigation steps",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "timestamp",
+      "description": "When this event occurred",
+      "dataType": ["date"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "detectedAt",
+      "description": "When Pulsar detected this event",
+      "dataType": ["date"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "source",
+      "description": "Source: internal_detection, threat_feed, manual_report, exploit_db",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "status",
+      "description": "Status: active, mitigated, investigating, resolved",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "references",
+      "description": "External references (URLs, reports)",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "relatedEvents",
+      "description": "References to related PulsarSecurityEvent objects",
+      "dataType": ["PulsarSecurityEvent"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "tags",
+      "description": "Tags for categorization and search",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    }
+  ]
+}

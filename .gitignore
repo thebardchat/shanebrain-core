@@ -1,0 +1,255 @@
+# =============================================================================
+# ShaneBrain Core - Git Ignore
+# =============================================================================
+# SECURITY FIRST: This file protects your credentials, personal data, and
+# sensitive information from being committed to git.
+# =============================================================================
+
+# =============================================================================
+# CREDENTIALS & SECRETS (CRITICAL - NEVER COMMIT)
+# =============================================================================
+
+# Environment files with real credentials
+.env
+.env.local
+.env.production
+.env.*.local
+*.env
+
+# Credential files
+credentials.json
+credentials.yaml
+credentials.yml
+secrets.json
+secrets.yaml
+secrets.yml
+*.key
+*.pem
+*.p12
+*.pfx
+
+# MongoDB credentials
+mongodb-credentials.txt
+mongo-*.txt
+
+# API keys
+api-keys.txt
+*.apikey
+
+# =============================================================================
+# PERSONAL DATA (PRIVACY - NEVER COMMIT)
+# =============================================================================
+
+# Active project files with personal data
+planning-system/active-projects/*.md
+planning-system/active-projects/**/*.md
+
+# Completed projects (may contain personal notes)
+planning-system/completed-projects/*.md
+planning-system/completed-projects/**/*.md
+
+# Conversation logs
+conversations/
+*.conversation
+*.chat
+
+# User data
+user-data/
+personal/
+private/
+
+# Crisis logs (sensitive mental health data)
+crisis-logs/
+*.crisis
+crisis_*.json
+
+# =============================================================================
+# LOCAL DATABASE DATA (TOO LARGE FOR GIT)
+# =============================================================================
+
+# Weaviate data
+weaviate-config/data/
+weaviate-data/
+*.weaviate
+
+# MongoDB data
+mongodb-data/
+mongo-data/
+*.mongodb
+
+# Llama models (huge files)
+llama-configs/models/*.bin
+llama-configs/models/*.gguf
+llama-configs/models/*.ggml
+llama-configs/models/**/*.bin
+llama-configs/models/**/*.gguf
+*.safetensors
+
+# =============================================================================
+# BACKUP FILES (LARGE, CONTAIN SENSITIVE DATA)
+# =============================================================================
+
+# Backup directories
+backups/
+*.backup
+*.bak
+weaviate-config/backups/*.tar.gz
+weaviate-config/backups/*.zip
+
+# Database dumps
+*.dump
+*.sql
+*.mongodump
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# Distribution
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+
+# Docker volumes (should be external anyway)
+docker-volumes/
+
+# =============================================================================
+# IDE & EDITOR
+# =============================================================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# =============================================================================
+# LOGS & TEMP FILES
+# =============================================================================
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# =============================================================================
+# MISC
+# =============================================================================
+
+# Large media files (if accidentally added)
+*.mp4
+*.mov
+*.avi
+*.wav
+*.mp3
+
+# Archives (might contain sensitive backups)
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# =============================================================================
+# KEEP THESE DIRECTORIES (CREATE .gitkeep files)
+# =============================================================================
+# Note: Empty directories need .gitkeep files to be tracked
+# These patterns ensure we track the structure but not contents:
+
+# Track template directories but not content
+!planning-system/templates/
+!planning-system/templates/*.md
+
+# Track schema files
+!weaviate-config/schemas/
+!weaviate-config/schemas/*.json
+!mongodb-schemas/
+!mongodb-schemas/*.json
+
+# Track config templates (not real configs)
+!config/*.template.yaml
+!.env.template
+
+# Track documentation
+!docs/
+!docs/*.md
+
+# Track scripts
+!scripts/
+!scripts/*.py
+!scripts/*.sh
+!scripts/*.bat
+
+# =============================================================================
+# END OF GITIGNORE
+# =============================================================================
+# If you're adding something sensitive, add it here BEFORE committing!
+# When in doubt, add it to .gitignore first.
+# =============================================================================

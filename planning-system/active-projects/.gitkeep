@@ -1,0 +1,15 @@
+# Active Projects Directory
+# This directory contains your current working project plans.
+# Files in this directory are in .gitignore to protect personal data.
+#
+# To start a new project:
+# 1. Copy a template from ../templates/
+# 2. Rename it to describe your project
+# 3. Fill in the project details
+# 4. Track your progress with checkboxes
+#
+# Recommended files to create:
+# - task_plan.md      (main task tracking)
+# - context.md        (session context for resuming)
+# - errors.md         (error log for learning)
+# - decisions.md      (decision log)

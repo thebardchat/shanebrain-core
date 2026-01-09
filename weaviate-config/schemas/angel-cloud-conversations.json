@@ -1,0 +1,225 @@
+{
+  "class": "AngelCloudConversation",
+  "description": "Angel Cloud mental wellness conversations with crisis detection metadata",
+  "vectorizer": "text2vec-transformers",
+  "moduleConfig": {
+    "text2vec-transformers": {
+      "poolingStrategy": "masked_mean",
+      "vectorizeClassName": false
+    }
+  },
+  "properties": [
+    {
+      "name": "sessionId",
+      "description": "Unique identifier for the conversation session",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "userId",
+      "description": "Anonymous user identifier (hashed)",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "messageContent",
+      "description": "The actual message content",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "messageRole",
+      "description": "Role: user, assistant, system",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "timestamp",
+      "description": "When the message was sent",
+      "dataType": ["date"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "crisisScore",
+      "description": "Crisis detection score (0.0 to 1.0)",
+      "dataType": ["number"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "crisisLevel",
+      "description": "Crisis level: none, low, medium, high, critical",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "crisisKeywordsDetected",
+      "description": "Any crisis keywords found in the message",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "sentiment",
+      "description": "Overall sentiment: positive, neutral, negative, mixed",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "sentimentScore",
+      "description": "Sentiment score (-1.0 to 1.0)",
+      "dataType": ["number"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "topics",
+      "description": "Topics discussed in the message",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "emotionalState",
+      "description": "Detected emotional state: anxious, sad, angry, hopeful, calm, etc.",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "resourcesProvided",
+      "description": "Any mental health resources shared in response",
+      "dataType": ["text[]"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "escalated",
+      "description": "Whether the conversation was escalated to human review",
+      "dataType": ["boolean"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "indexFilterable": true,
+      "indexSearchable": false
+    },
+    {
+      "name": "escalationReason",
+      "description": "Reason for escalation if applicable",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "conversationContext",
+      "description": "Summary of conversation context for continuity",
+      "dataType": ["text"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": false,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "isEncrypted",
+      "description": "Whether the content is additionally encrypted",
+      "dataType": ["boolean"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    },
+    {
+      "name": "retentionDays",
+      "description": "Days to retain this data (user preference)",
+      "dataType": ["int"],
+      "moduleConfig": {
+        "text2vec-transformers": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      }
+    }
+  ]
+}

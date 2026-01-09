@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CrisisLog",
+  "description": "Schema for logging mental health crisis detections in Angel Cloud - SENSITIVE DATA",
+  "type": "object",
+  "collection": "crisis_logs",
+  "database": "shanebrain_db",
+  "security_note": "This collection contains sensitive mental health data. Encrypt at rest, limit access, audit all queries.",
+  "required": ["crisis_id", "session_id", "detected_at", "crisis_level"],
+  "properties": {
+    "_id": {
+      "bsonType": "objectId",
+      "description": "MongoDB unique identifier"
+    },
+    "crisis_id": {
+      "bsonType": "string",
+      "description": "Unique crisis event identifier (UUID)"
+    },
+    "session_id": {
+      "bsonType": "string",
+      "description": "Reference to conversation session"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "Hashed/anonymous user identifier"
+    },
+    "detected_at": {
+      "bsonType": "date",
+      "description": "When the crisis was detected"
+    },
+    "crisis_level": {
+      "bsonType": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Severity level of the detected crisis"
+    },
+    "crisis_score": {
+      "bsonType": "double",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Numerical crisis score (0.0 to 1.0)"
+    },
+    "detection": {
+      "bsonType": "object",
+      "description": "Details of how the crisis was detected",
+      "properties": {
+        "method": {
+          "bsonType": "string",
+          "enum": ["keyword", "ml_model", "pattern", "escalation", "user_reported"],
+          "description": "Detection method used"
+        },
+        "keywords_found": {
+          "bsonType": "array",
+          "items": { "bsonType": "string" },
+          "description": "Crisis keywords detected (if any)"
+        },
+        "model_confidence": {
+          "bsonType": "double",
+          "description": "ML model confidence score"
+        },
+        "patterns_matched": {
+          "bsonType": "array",
+          "items": { "bsonType": "string" },
+          "description": "Behavioral patterns matched"
+        },
+        "context_window": {
+          "bsonType": "int",
+          "description": "Number of messages analyzed for context"
+        }
+      }
+    },
+    "triggering_message": {
+      "bsonType": "object",
+      "description": "The message that triggered the crisis detection",
+      "properties": {
+        "message_id": { "bsonType": "string" },
+        "content_hash": {
+          "bsonType": "string",
+          "description": "Hash of content (not storing raw content for privacy)"
+        },
+        "content_length": { "bsonType": "int" }
+      }
+    },
+    "response": {
+      "bsonType": "object",
+      "description": "How the system responded",
+      "properties": {
+        "action_taken": {
+          "bsonType": "string",
+          "enum": ["resources_provided", "gentle_checkin", "urgent_resources", "escalated", "emergency_protocol"],
+          "description": "Primary action taken"
+        },
+        "resources_shared": {
+          "bsonType": "array",
+          "items": {
+            "bsonType": "object",
+            "properties": {
+              "type": { "bsonType": "string" },
+              "name": { "bsonType": "string" },
+              "identifier": { "bsonType": "string" }
+            }
+          },
+          "description": "Resources shared with user"
+        },
+        "response_template_used": {
+          "bsonType": "string",
+          "description": "Which response template was used"
+        },
+        "escalated_to": {
+          "bsonType": "string",
+          "description": "Who/what was escalated to (if applicable)"
+        },
+        "escalation_reason": {
+          "bsonType": "string"
+        }
+      }
+    },
+    "user_engagement": {
+      "bsonType": "object",
+      "description": "How user engaged after crisis detection",
+      "properties": {
+        "continued_conversation": { "bsonType": "bool" },
+        "clicked_resources": { "bsonType": "bool" },
+        "messages_after": { "bsonType": "int" },
+        "subsequent_crisis_level": {
+          "bsonType": "string",
+          "enum": ["none", "low", "medium", "high", "critical", "unknown"]
+        },
+        "time_in_session_after": { "bsonType": "int" }
+      }
+    },
+    "outcome": {
+      "bsonType": "object",
+      "description": "Outcome of the crisis event (filled later if known)",
+      "properties": {
+        "status": {
+          "bsonType": "string",
+          "enum": ["resolved", "ongoing", "escalated", "unknown"],
+          "description": "Current status of the crisis"
+        },
+        "resolution_notes": {
+          "bsonType": "string",
+          "description": "Notes on resolution (if any)"
+        },
+        "follow_up_needed": { "bsonType": "bool" },
+        "reviewed_by": {
+          "bsonType": "string",
+          "description": "Who reviewed this case (if anyone)"
+        },
+        "reviewed_at": { "bsonType": "date" }
+      }
+    },
+    "analysis": {
+      "bsonType": "object",
+      "description": "Post-detection analysis",
+      "properties": {
+        "was_false_positive": { "bsonType": "bool" },
+        "false_positive_reason": { "bsonType": "string" },
+        "severity_accurate": { "bsonType": "bool" },
+        "response_appropriate": { "bsonType": "bool" },
+        "improvement_notes": { "bsonType": "string" }
+      }
+    },
+    "metadata": {
+      "bsonType": "object",
+      "description": "System metadata",
+      "properties": {
+        "detection_model_version": { "bsonType": "string" },
+        "processing_time_ms": { "bsonType": "int" },
+        "server_id": { "bsonType": "string" }
+      }
+    },
+    "retention": {
+      "bsonType": "object",
+      "description": "Data retention settings",
+      "properties": {
+        "retain_until": { "bsonType": "date" },
+        "anonymize_at": { "bsonType": "date" },
+        "delete_at": { "bsonType": "date" }
+      }
+    },
+    "created_at": {
+      "bsonType": "date"
+    },
+    "updated_at": {
+      "bsonType": "date"
+    }
+  },
+  "indexes": [
+    {
+      "name": "crisis_id_unique",
+      "key": { "crisis_id": 1 },
+      "unique": true
+    },
+    {
+      "name": "session_lookup",
+      "key": { "session_id": 1, "detected_at": -1 }
+    },
+    {
+      "name": "level_time",
+      "key": { "crisis_level": 1, "detected_at": -1 }
+    },
+    {
+      "name": "outcome_status",
+      "key": { "outcome.status": 1 }
+    },
+    {
+      "name": "retention_expiry",
+      "key": { "retention.delete_at": 1 },
+      "expireAfterSeconds": 0
+    }
+  ],
+  "encryption": {
+    "note": "Consider field-level encryption for: triggering_message, analysis",
+    "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+  }
+}
