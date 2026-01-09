@@ -1,0 +1,80 @@
+# =============================================================================
+# ShaneBrain Core - MongoDB Configuration Template
+# =============================================================================
+# Copy to mongodb.yaml and customize for your environment.
+# This file is safe to commit - contains no secrets.
+# =============================================================================
+
+mongodb:
+  # Local instance (primary)
+  local:
+    enabled: true
+    host: localhost
+    port: 27017
+    database: shanebrain_db
+    # Authentication (optional for local)
+    # username: ${MONGODB_LOCAL_USER}
+    # password: ${MONGODB_LOCAL_PASSWORD}
+
+  # Atlas cloud backup (optional)
+  atlas:
+    enabled: false
+    # Connection string from environment:
+    # uri: ${MONGODB_ATLAS_URI}
+    database: shanebrain_db
+
+  # Connection settings
+  connection:
+    timeout_ms: 5000
+    retry_writes: true
+    w: majority
+    max_pool_size: 100
+
+  # Collections
+  collections:
+    conversations:
+      capped: false
+      indexes:
+        - keys: { session_id: 1 }
+          unique: true
+        - keys: { user_id: 1, created_at: -1 }
+        - keys: { status: 1, updated_at: -1 }
+
+    crisis_logs:
+      capped: false
+      # TTL index for automatic deletion
+      indexes:
+        - keys: { crisis_id: 1 }
+          unique: true
+        - keys: { session_id: 1, detected_at: -1 }
+        - keys: { crisis_level: 1, detected_at: -1 }
+        - keys: { "retention.delete_at": 1 }
+          expireAfterSeconds: 0
+
+    user_sessions:
+      capped: false
+      indexes:
+        - keys: { user_id: 1 }
+          unique: true
+        - keys: { "activity.last_active": -1 }
+
+  # Backup settings
+  backup:
+    enabled: true
+    schedule: "0 3 * * *"  # Daily at 3 AM
+    retention_days: 30
+    compress: true
+    path: ${BACKUPS_PATH}/mongodb
+
+  # Security
+  security:
+    # Field-level encryption (optional)
+    encryption:
+      enabled: false
+      # key_vault_namespace: shanebrain_db.datakeys
+      # kms_provider: local
+
+    # Audit logging
+    audit:
+      enabled: true
+      log_path: ${SHANEBRAIN_ROOT}/logs/mongodb-audit.log

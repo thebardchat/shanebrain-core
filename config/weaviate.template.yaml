@@ -1,0 +1,64 @@
+# =============================================================================
+# ShaneBrain Core - Weaviate Configuration Template
+# =============================================================================
+# Copy to weaviate.yaml and customize for your environment.
+# This file is safe to commit - contains no secrets.
+# =============================================================================
+
+weaviate:
+  # Connection settings
+  host: localhost
+  port: 8080
+  grpc_port: 50051
+  scheme: http
+
+  # Authentication (local mode = none)
+  auth:
+    enabled: false
+    # For cloud, use API key:
+    # api_key: ${WEAVIATE_CLOUD_API_KEY}
+
+  # Vectorizer settings
+  vectorizer:
+    module: text2vec-transformers
+    # Alternative: text2vec-ollama
+    model: sentence-transformers/all-MiniLM-L6-v2
+
+  # Default query settings
+  defaults:
+    limit: 25
+    certainty_threshold: 0.7
+    auto_schema: true
+
+  # Backup settings
+  backup:
+    enabled: true
+    backend: filesystem
+    path: /var/lib/weaviate/backups
+    schedule: "0 2 * * *"  # Daily at 2 AM
+
+  # Performance tuning
+  performance:
+    query_maximum_results: 10000
+    query_defaults_limit: 25
+    max_import_goroutines: 4
+
+# Schema classes to create
+schemas:
+  - name: ShanebrainMemory
+    description: ShaneBrain Legacy memories and stories
+    vectorizer: text2vec-transformers
+
+  - name: AngelCloudConversation
+    description: Angel Cloud mental wellness conversations
+    vectorizer: text2vec-transformers
+
+  - name: PulsarSecurityEvent
+    description: Pulsar blockchain security events
+    vectorizer: text2vec-transformers
+
+# Cloud backup (optional)
+cloud:
+  enabled: false
+  # url: ${WEAVIATE_CLOUD_URL}
+  # api_key: ${WEAVIATE_CLOUD_API_KEY}

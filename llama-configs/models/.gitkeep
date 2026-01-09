@@ -1,0 +1,11 @@
+# Llama Models Directory
+# This directory stores downloaded Llama model files.
+# Model files are in .gitignore due to their large size (2-15GB each).
+#
+# To download models:
+#   ./download-models.sh
+#
+# Or use Ollama:
+#   ollama pull llama3.2
+#
+# Supported formats: .gguf, .bin, .ggml
