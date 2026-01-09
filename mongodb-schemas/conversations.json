@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Conversation",
+  "description": "Schema for storing conversation sessions across all ShaneBrain projects",
+  "type": "object",
+  "collection": "conversations",
+  "database": "shanebrain_db",
+  "required": ["session_id", "project", "created_at"],
+  "properties": {
+    "_id": {
+      "bsonType": "objectId",
+      "description": "MongoDB unique identifier"
+    },
+    "session_id": {
+      "bsonType": "string",
+      "description": "Unique session identifier (UUID)",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "Hashed/anonymous user identifier"
+    },
+    "project": {
+      "bsonType": "string",
+      "description": "Project: angel_cloud, shanebrain_legacy, pulsar, logibot",
+      "enum": ["angel_cloud", "shanebrain_legacy", "pulsar", "logibot", "general"]
+    },
+    "title": {
+      "bsonType": "string",
+      "description": "Auto-generated or user-provided conversation title"
+    },
+    "messages": {
+      "bsonType": "array",
+      "description": "Array of messages in the conversation",
+      "items": {
+        "bsonType": "object",
+        "required": ["role", "content", "timestamp"],
+        "properties": {
+          "message_id": {
+            "bsonType": "string",
+            "description": "Unique message identifier"
+          },
+          "role": {
+            "bsonType": "string",
+            "enum": ["user", "assistant", "system"],
+            "description": "Who sent the message"
+          },
+          "content": {
+            "bsonType": "string",
+            "description": "Message content"
+          },
+          "timestamp": {
+            "bsonType": "date",
+            "description": "When the message was sent"
+          },
+          "model": {
+            "bsonType": "string",
+            "description": "Model used for assistant responses"
+          },
+          "tokens_used": {
+            "bsonType": "int",
+            "description": "Tokens consumed by this message"
+          },
+          "metadata": {
+            "bsonType": "object",
+            "description": "Additional message metadata",
+            "properties": {
+              "crisis_score": {
+                "bsonType": "double",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "sentiment_score": {
+                "bsonType": "double",
+                "minimum": -1,
+                "maximum": 1
+              },
+              "detected_topics": {
+                "bsonType": "array",
+                "items": { "bsonType": "string" }
+              },
+              "weaviate_id": {
+                "bsonType": "string",
+                "description": "Reference to Weaviate vector"
+              }
+            }
+          }
+        }
+      }
+    },
+    "context": {
+      "bsonType": "object",
+      "description": "Conversation context and state",
+      "properties": {
+        "summary": {
+          "bsonType": "string",
+          "description": "Auto-generated conversation summary"
+        },
+        "key_topics": {
+          "bsonType": "array",
+          "items": { "bsonType": "string" }
+        },
+        "planning_files": {
+          "bsonType": "array",
+          "description": "Associated planning files",
+          "items": { "bsonType": "string" }
+        },
+        "current_task": {
+          "bsonType": "string",
+          "description": "Current task being worked on"
+        }
+      }
+    },
+    "stats": {
+      "bsonType": "object",
+      "description": "Conversation statistics",
+      "properties": {
+        "message_count": { "bsonType": "int" },
+        "total_tokens": { "bsonType": "int" },
+        "duration_seconds": { "bsonType": "int" },
+        "average_response_time": { "bsonType": "double" }
+      }
+    },
+    "status": {
+      "bsonType": "string",
+      "enum": ["active", "paused", "completed", "archived"],
+      "description": "Conversation status"
+    },
+    "created_at": {
+      "bsonType": "date",
+      "description": "When the conversation started"
+    },
+    "updated_at": {
+      "bsonType": "date",
+      "description": "When the conversation was last updated"
+    },
+    "ended_at": {
+      "bsonType": "date",
+      "description": "When the conversation ended"
+    },
+    "tags": {
+      "bsonType": "array",
+      "description": "User-defined tags",
+      "items": { "bsonType": "string" }
+    },
+    "is_encrypted": {
+      "bsonType": "bool",
+      "description": "Whether content is additionally encrypted"
+    }
+  },
+  "indexes": [
+    {
+      "name": "session_id_unique",
+      "key": { "session_id": 1 },
+      "unique": true
+    },
+    {
+      "name": "user_project",
+      "key": { "user_id": 1, "project": 1 }
+    },
+    {
+      "name": "created_at",
+      "key": { "created_at": -1 }
+    },
+    {
+      "name": "status_updated",
+      "key": { "status": 1, "updated_at": -1 }
+    }
+  ]
+}
