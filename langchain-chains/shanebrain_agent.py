@@ -45,13 +45,24 @@ except ImportError:
     CodeGenerationChain = None
     CODE_AVAILABLE = False
 
+# LangChain imports - try new API first, fall back to legacy
+LANGCHAIN_AVAILABLE = False
 try:
-    from langchain.memory import ConversationBufferWindowMemory
-    from langchain.prompts import PromptTemplate
-    from langchain.chains import LLMChain
+    from langchain_core.prompts import PromptTemplate
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    LANGCHAIN_AVAILABLE = False
+    try:
+        from langchain.prompts import PromptTemplate
+        LANGCHAIN_AVAILABLE = True
+    except ImportError:
+        PromptTemplate = None
+
+try:
+    from langchain_ollama import OllamaLLM
+    OLLAMA_LANGCHAIN_AVAILABLE = True
+except ImportError:
+    OllamaLLM = None
+    OLLAMA_LANGCHAIN_AVAILABLE = False
 
 try:
     import weaviate
@@ -64,6 +75,12 @@ try:
     MONGODB_AVAILABLE = True
 except ImportError:
     MONGODB_AVAILABLE = False
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 
 class AgentMode(Enum):
@@ -78,7 +95,7 @@ class AgentMode(Enum):
 SYSTEM_PROMPTS = {
     AgentMode.CHAT: "You are ShaneBrain, Shane Brazelton's AI assistant. Be warm and helpful.",
     AgentMode.MEMORY: "You are the ShaneBrain Legacy interface. Help family connect with memories.",
-    AgentMode.WELLNESS: "You are Angel Cloud. SAFETY FIRST - watch for crisis indicators.",
+    AgentMode.WELLNESS: "You are Angel Cloud, a compassionate mental wellness companion. SAFETY FIRST - watch for crisis indicators. Be warm, supportive, and non-judgmental.",
     AgentMode.SECURITY: "You are Pulsar AI, a blockchain security assistant.",
     AgentMode.DISPATCH: "You are LogiBot, a dispatch automation assistant.",
     AgentMode.CODE: "You are a code generation assistant."
@@ -135,19 +152,13 @@ class ShaneBrainAgent:
         self.weaviate_client = weaviate_client
         self.mongodb_client = mongodb_client
         self.planning_root = planning_root or Path(
-            os.environ.get("PLANNING_ROOT", "/mnt/8TB/ShaneBrain-Core/planning-system")
+            os.environ.get("PLANNING_ROOT", "D:/Angel_Cloud/shanebrain-core/planning-system")
         )
         self.default_mode = default_mode
         self.enable_crisis_detection = enable_crisis_detection
         self.context = AgentContext(mode=default_mode)
         self._conversation_history = []
-
-        if LANGCHAIN_AVAILABLE:
-            self.memory = ConversationBufferWindowMemory(
-                k=memory_window, memory_key="chat_history", return_messages=False
-            )
-        else:
-            self.memory = None
+        self.memory = None  # Simplified - just use _conversation_history
 
         self._init_chains()
 
@@ -180,19 +191,9 @@ class ShaneBrainAgent:
         return "\n\n".join(context_parts) if context_parts else ""
 
     def _get_chat_history(self) -> str:
-        if self.memory:
-            try:
-                return self.memory.load_memory_variables({}).get("chat_history", "")
-            except Exception:
-                return ""
         return "\n".join(self._conversation_history[-10:])
 
     def _save_to_memory(self, user_input: str, response: str) -> None:
-        if self.memory:
-            try:
-                self.memory.save_context({"input": user_input}, {"output": response})
-            except Exception:
-                pass
         self._conversation_history.append(f"User: {user_input}")
         self._conversation_history.append(f"Assistant: {response}")
 
@@ -207,18 +208,28 @@ class ShaneBrainAgent:
     def _generate_response(self, user_input: str, mode: AgentMode, context: str, history: str) -> str:
         system_prompt = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS[AgentMode.CHAT])
 
-        if self.llm and LANGCHAIN_AVAILABLE:
+        if self.llm:
             try:
-                prompt = PromptTemplate(
-                    input_variables=["system", "context", "history", "input"],
-                    template="{system}\n\nContext: {context}\n\nHistory: {history}\n\nUser: {input}\n\nAssistant:"
-                )
-                chain = LLMChain(llm=self.llm, prompt=prompt)
-                return chain.run(system=system_prompt, context=context, history=history, input=user_input)
-            except Exception as e:
-                return f"I'm here to help. (LLM error: {e})"
+                # Build prompt for direct LLM invocation
+                ctx_text = context if context else "No additional context."
+                hist_text = history if history else "This is the start of our conversation."
 
-        return f"Hello! I'm ShaneBrain. LLM not configured - please set up local Llama model."
+                full_prompt = f"""{system_prompt}
+
+Context: {ctx_text}
+
+Conversation History:
+{hist_text}
+
+User: {user_input}
+Assistant:"""
+                # Invoke the LLM directly
+                result = self.llm.invoke(full_prompt)
+                return result.strip() if isinstance(result, str) else str(result)
+            except Exception as e:
+                return f"I'm here to help. (Error: {e})"
+
+        return "Hello! I'm ShaneBrain. LLM not configured - please set up Ollama with: ollama pull llama3.2:1b"
 
     def chat(self, message: str, mode: Optional[AgentMode] = None) -> AgentResponse:
         """Main chat interface."""
@@ -254,7 +265,7 @@ class ShaneBrainAgent:
             try:
                 self.mongodb_client.conversations.insert_one({
                     "session_id": self.context.session_id,
-                    "message": message[:100],  # Truncate for privacy
+                    "message": message[:100],
                     "mode": mode.value,
                     "timestamp": datetime.now()
                 })
@@ -274,8 +285,6 @@ class ShaneBrainAgent:
 
     def clear_memory(self) -> None:
         """Clear conversation memory."""
-        if self.memory:
-            self.memory.clear()
         self._conversation_history = []
 
     def load_planning_files(self, files: List[str]) -> None:
@@ -289,29 +298,62 @@ class ShaneBrainAgent:
         weaviate_host: str = "localhost",
         weaviate_port: int = 8080,
         mongodb_uri: Optional[str] = None,
+        ollama_host: str = "http://localhost:11434",
+        ollama_model: str = "llama3.2:1b",
     ) -> "ShaneBrainAgent":
         """Create agent from configuration."""
+        llm = None
         weaviate_client = None
         mongodb_client = None
 
-        # Connect to Weaviate
+        # Load from environment if available
+        ollama_host = os.environ.get("OLLAMA_HOST", ollama_host)
+        ollama_model = os.environ.get("OLLAMA_MODEL", ollama_model)
+        weaviate_host = os.environ.get("WEAVIATE_HOST", weaviate_host)
+        weaviate_port = int(os.environ.get("WEAVIATE_PORT", weaviate_port))
+
+        # Connect to Ollama LLM
+        if OLLAMA_LANGCHAIN_AVAILABLE:
+            try:
+                llm = OllamaLLM(
+                    model=ollama_model,
+                    base_url=ollama_host,
+                    temperature=0.7,
+                )
+                # Test connection
+                llm.invoke("test")
+                print(f"[OK] Connected to Ollama ({ollama_model})")
+            except Exception as e:
+                print(f"[WARN] Ollama connection failed: {e}")
+                llm = None
+
+        # Connect to Weaviate (v4 API)
         if WEAVIATE_AVAILABLE:
             try:
-                weaviate_client = weaviate.Client(f"http://{weaviate_host}:{weaviate_port}")
-                if not weaviate_client.is_ready():
+                weaviate_client = weaviate.connect_to_local(
+                    host=weaviate_host,
+                    port=weaviate_port,
+                )
+                if weaviate_client.is_ready():
+                    print(f"[OK] Connected to Weaviate ({weaviate_host}:{weaviate_port})")
+                else:
+                    weaviate_client.close()
                     weaviate_client = None
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[WARN] Weaviate connection failed: {e}")
+                weaviate_client = None
 
         # Connect to MongoDB
         if MONGODB_AVAILABLE and mongodb_uri:
             try:
                 client = MongoClient(mongodb_uri, serverSelectionTimeoutMS=5000)
                 mongodb_client = client.shanebrain_db
+                print(f"[OK] Connected to MongoDB")
             except Exception:
                 pass
 
         return cls(
+            llm=llm,
             weaviate_client=weaviate_client,
             mongodb_client=mongodb_client,
         )
@@ -325,29 +367,35 @@ if __name__ == "__main__":
     print("=" * 60)
     print("ShaneBrain Agent - Demo")
     print("=" * 60)
+    print()
 
-    # Create agent without external dependencies
-    agent = ShaneBrainAgent(enable_crisis_detection=True)
+    # Create agent from configuration (connects to Ollama, Weaviate)
+    print("Initializing agent...")
+    agent = ShaneBrainAgent.from_config()
+    print()
+
+    # Show status
+    print("Component Status:")
+    print(f"  LLM: {'Connected' if agent.llm else 'Not available'}")
+    print(f"  Weaviate: {'Connected' if agent.weaviate_client else 'Not available'}")
+    print(f"  Crisis Detection: {'Enabled' if agent.crisis_chain else 'Disabled'}")
+    print()
 
     # Test messages
     test_messages = [
         ("Hello! How are you?", AgentMode.CHAT),
-        ("Tell me about Shane's values", AgentMode.MEMORY),
-        ("I've been feeling down lately", AgentMode.WELLNESS),
-        ("Analyze this smart contract for vulnerabilities", AgentMode.SECURITY),
+        ("Tell me about the importance of family", AgentMode.MEMORY),
     ]
 
-    print("\nTesting agent modes:\n")
+    print("Testing agent responses:\n")
 
     for message, mode in test_messages:
         agent.set_mode(mode)
         response = agent.chat(message)
-        print(f"Mode: {mode.value}")
-        print(f"User: {message}")
-        print(f"Response: {response.message[:100]}...")
-        print(f"Crisis: {response.crisis_detected}")
+        print(f"[{mode.value.upper()}] User: {message}")
+        print(f"Response: {response.message[:300]}...")
         print()
 
     print("=" * 60)
-    print("To use with full capabilities, connect LLM and Weaviate.")
+    print("Agent demo complete. Run angel_cloud_cli.py for full interface.")
     print("=" * 60)

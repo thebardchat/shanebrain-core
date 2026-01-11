@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(ollama --version:*)",
+      "Bash(ollama list:*)",
+      "Bash(curl:*)",
+      "Bash(python shanebrain_agent.py:*)",
+      "Bash(ollama pull:*)",
+      "Bash(python -c \")",
+      "Bash(content = '' ')",
+      "Bash(echo \"Assistant:\"\"\"\"\"\"\")",
+      "Bash(python -m py_compile:*)",
+      "Bash(docker-compose pull:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker start:*)"
+    ]
+  }
+}
