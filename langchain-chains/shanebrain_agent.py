@@ -15,13 +15,15 @@ Author: Shane Brazelton
 import os
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from enum import Enum
 import uuid
 
 sys.path.insert(0, str(Path(__file__).parent))
+# Add scripts directory for weaviate_helpers
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 try:
     from crisis_detection_chain import CrisisDetectionChain, CrisisLevel
@@ -69,6 +71,14 @@ try:
     WEAVIATE_AVAILABLE = True
 except ImportError:
     WEAVIATE_AVAILABLE = False
+
+# Import Weaviate helper for collection operations
+try:
+    from weaviate_helpers import WeaviateHelper
+    WEAVIATE_HELPER_AVAILABLE = True
+except ImportError:
+    WeaviateHelper = None
+    WEAVIATE_HELPER_AVAILABLE = False
 
 try:
     from pymongo import MongoClient
@@ -143,6 +153,7 @@ class ShaneBrainAgent:
         llm=None,
         weaviate_client=None,
         mongodb_client=None,
+        weaviate_helper=None,
         planning_root: Optional[Path] = None,
         default_mode: AgentMode = AgentMode.CHAT,
         enable_crisis_detection: bool = True,
@@ -151,6 +162,7 @@ class ShaneBrainAgent:
         self.llm = llm
         self.weaviate_client = weaviate_client
         self.mongodb_client = mongodb_client
+        self.weaviate_helper = weaviate_helper
         self.planning_root = planning_root or Path(
             os.environ.get("PLANNING_ROOT", "D:/Angel_Cloud/shanebrain-core/planning-system")
         )
@@ -205,6 +217,57 @@ class ShaneBrainAgent:
         except Exception:
             return None
 
+    def _search_legacy_knowledge(self, query: str, limit: int = 3) -> str:
+        """Search LegacyKnowledge collection for relevant context."""
+        if not self.weaviate_helper:
+            return ""
+
+        try:
+            results = self.weaviate_helper.search_knowledge(query, limit=limit)
+            if not results:
+                return ""
+
+            context_parts = []
+            for r in results:
+                content = r.get('content', '')
+                category = r.get('category', 'general')
+                if content:
+                    context_parts.append(f"[{category}] {content[:500]}")
+
+            return "\n\n".join(context_parts)
+        except Exception:
+            return ""
+
+    def _log_conversation_to_weaviate(self, message: str, role: str, mode: AgentMode) -> None:
+        """Log a conversation message to Weaviate Conversation collection."""
+        if not self.weaviate_helper:
+            return
+
+        try:
+            self.weaviate_helper.log_conversation(
+                message=message,
+                role=role,
+                mode=mode.value.upper(),
+                session_id=self.context.session_id
+            )
+        except Exception:
+            pass  # Don't let logging failures affect the conversation
+
+    def _log_crisis_to_weaviate(self, input_text: str, severity: str, response: str) -> None:
+        """Log a crisis detection event to Weaviate CrisisLog collection."""
+        if not self.weaviate_helper:
+            return
+
+        try:
+            self.weaviate_helper.log_crisis(
+                input_text=input_text,
+                severity=severity,
+                session_id=self.context.session_id,
+                response_given=response
+            )
+        except Exception:
+            pass  # Don't let logging failures affect the response
+
     def _generate_response(self, user_input: str, mode: AgentMode, context: str, history: str) -> str:
         system_prompt = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS[AgentMode.CHAT])
 
@@ -235,6 +298,9 @@ Assistant:"""
         """Main chat interface."""
         mode = mode or self.context.mode
 
+        # Log user message to Weaviate
+        self._log_conversation_to_weaviate(message, "user", mode)
+
         # Crisis check for wellness mode
         crisis_result = None
         if mode == AgentMode.WELLNESS or self.enable_crisis_detection:
@@ -242,6 +308,15 @@ Assistant:"""
 
         # Handle crisis
         if crisis_result and crisis_result.crisis_level and crisis_result.crisis_level.value in ["high", "critical"]:
+            # Log crisis event to Weaviate
+            self._log_crisis_to_weaviate(
+                input_text=message,
+                severity=crisis_result.crisis_level.value,
+                response=crisis_result.response
+            )
+            # Log crisis response to conversation
+            self._log_conversation_to_weaviate(crisis_result.response, "assistant", mode)
+
             return AgentResponse(
                 message=crisis_result.response,
                 mode=mode,
@@ -254,13 +329,23 @@ Assistant:"""
         planning_context = self._load_planning_context()
         chat_history = self._get_chat_history()
 
+        # For MEMORY mode, search LegacyKnowledge for relevant context
+        legacy_context = ""
+        if mode == AgentMode.MEMORY:
+            legacy_context = self._search_legacy_knowledge(message)
+            if legacy_context:
+                planning_context = f"Legacy Knowledge:\n{legacy_context}\n\n{planning_context}"
+
         # Generate response
         response_text = self._generate_response(message, mode, planning_context, chat_history)
 
         # Save to memory
         self._save_to_memory(message, response_text)
 
-        # Log to MongoDB
+        # Log assistant response to Weaviate
+        self._log_conversation_to_weaviate(response_text, "assistant", mode)
+
+        # Log to MongoDB (legacy support)
         if self.mongodb_client:
             try:
                 self.mongodb_client.conversations.insert_one({
@@ -277,6 +362,7 @@ Assistant:"""
             mode=mode,
             crisis_detected=crisis_result is not None and crisis_result.crisis_score > 0.3 if crisis_result else False,
             crisis_level=crisis_result.crisis_level.value if crisis_result and crisis_result.crisis_level else None,
+            sources=[{"type": "legacy_knowledge"}] if legacy_context else [],
         )
 
     def set_mode(self, mode: AgentMode) -> None:
@@ -304,6 +390,7 @@ Assistant:"""
         """Create agent from configuration."""
         llm = None
         weaviate_client = None
+        weaviate_helper = None
         mongodb_client = None
 
         # Load from environment if available
@@ -343,6 +430,19 @@ Assistant:"""
                 print(f"[WARN] Weaviate connection failed: {e}")
                 weaviate_client = None
 
+        # Create WeaviateHelper for collection operations
+        if WEAVIATE_HELPER_AVAILABLE and weaviate_client:
+            try:
+                weaviate_helper = WeaviateHelper()
+                weaviate_helper.connect()
+                if weaviate_helper.is_ready():
+                    print(f"[OK] WeaviateHelper ready (conversations, knowledge, crisis logging)")
+                else:
+                    weaviate_helper = None
+            except Exception as e:
+                print(f"[WARN] WeaviateHelper initialization failed: {e}")
+                weaviate_helper = None
+
         # Connect to MongoDB
         if MONGODB_AVAILABLE and mongodb_uri:
             try:
@@ -355,6 +455,7 @@ Assistant:"""
         return cls(
             llm=llm,
             weaviate_client=weaviate_client,
+            weaviate_helper=weaviate_helper,
             mongodb_client=mongodb_client,
         )
 
@@ -378,6 +479,7 @@ if __name__ == "__main__":
     print("Component Status:")
     print(f"  LLM: {'Connected' if agent.llm else 'Not available'}")
     print(f"  Weaviate: {'Connected' if agent.weaviate_client else 'Not available'}")
+    print(f"  WeaviateHelper: {'Ready' if agent.weaviate_helper else 'Not available'}")
     print(f"  Crisis Detection: {'Enabled' if agent.crisis_chain else 'Disabled'}")
     print()
 
