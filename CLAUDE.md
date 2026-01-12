@@ -55,6 +55,29 @@ python langchain-chains/shanebrain_agent.py
 python langchain-chains/angel_cloud_cli.py
 ```
 
+### Weaviate Schema Setup
+```bash
+# Complete setup (recommended for first-time setup)
+python scripts/setup_all_weaviate.py
+
+# Or run individual steps:
+python scripts/setup_weaviate_schema.py      # Create core schema classes
+python scripts/load_json_schemas.py          # Load JSON schema definitions
+python scripts/import_rag_to_weaviate.py RAG.md  # Import RAG knowledge base
+python scripts/verify_weaviate.py            # Verify setup and show status
+
+# Query legacy knowledge interactively
+python scripts/query_legacy.py
+
+# Run integration tests
+python scripts/test_weaviate_integration.py
+
+# Backup/Restore data
+python scripts/backup_weaviate.py              # Backup to weaviate-backups/
+python scripts/restore_weaviate.py <backup_dir>  # Restore from backup
+python scripts/clear_weaviate.py               # Clear data (with confirmation)
+```
+
 ## Architecture
 
 ### Core Components
@@ -89,6 +112,19 @@ python langchain-chains/angel_cloud_cli.py
 
 6. **Weaviate Schemas** (`weaviate-config/schemas/`)
    - `shanebrain-memory.json`, `angel-cloud-conversations.json`, `pulsar-security-events.json`
+
+7. **Weaviate Setup Scripts** (`scripts/`)
+   - `setup_all_weaviate.py` - Complete setup orchestration (run this first)
+   - `setup_weaviate_schema.py` - Creates core classes (Conversation, LegacyKnowledge, CrisisLog)
+   - `load_json_schemas.py` - Loads JSON schemas for advanced classes
+   - `import_rag_to_weaviate.py` - Imports RAG.md into LegacyKnowledge
+   - `verify_weaviate.py` - Verifies schema and shows record counts
+   - `query_legacy.py` - Interactive CLI for querying LegacyKnowledge
+   - `test_weaviate_integration.py` - Integration test suite
+   - `weaviate_helpers.py` - Reusable helper class for Weaviate operations
+   - `backup_weaviate.py` - Export data to JSON backups
+   - `restore_weaviate.py` - Import data from JSON backups
+   - `clear_weaviate.py` - Clear or delete collections
 
 ### Multi-Project Support
 
