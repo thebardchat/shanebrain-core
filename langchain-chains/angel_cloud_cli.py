@@ -111,8 +111,8 @@ class AngelCloudCLI:
         self.running = False
         self.history_file = Path.home() / ".angel_cloud_history"
 
-    def print(self, message: str, style: str = None):
-        """Print with optional styling."""
+    def print(self, message: str = "", style: str = None):
+        """Print with optional styling. Defaults to empty string for blank lines."""
         if self.console:
             self.console.print(message, style=style)
         else:
@@ -285,7 +285,7 @@ Crisis Detection: {'Active' if self.agent.crisis_chain else 'Limited'}
 
             # Show crisis resources if high severity detected
             if response.crisis_detected and response.crisis_level in ["high", "critical"]:
-                self.print()
+                self.print("")
                 self.print_panel(CRISIS_RESOURCES, title="Resources", border_style="red")
 
         except Exception as e:
@@ -320,7 +320,7 @@ Crisis Detection: {'Active' if self.agent.crisis_chain else 'Limited'}
             self.agent = ShaneBrainAgent(enable_crisis_detection=True)
             self.agent.set_mode(AgentMode.WELLNESS)
 
-        self.print()
+        self.print("")
         self.running = True
 
         # Main loop
@@ -336,7 +336,7 @@ Crisis Detection: {'Active' if self.agent.crisis_chain else 'Limited'}
                 else:
                     self.chat(user_input)
 
-                self.print()  # Blank line between exchanges
+                self.print("")  # Blank line between exchanges
 
             except KeyboardInterrupt:
                 self.print("\n[dim]Use /exit to quit properly.[/dim]")
@@ -344,6 +344,13 @@ Crisis Detection: {'Active' if self.agent.crisis_chain else 'Limited'}
                 self.print(f"[red]Unexpected error: {e}[/red]")
 
         self.print("\n[bold cyan]Thank you for using Angel Cloud. Take care.[/bold cyan]\n")
+        
+        # Clean up Weaviate connection
+        if self.agent and self.agent.weaviate_client:
+            try:
+                self.agent.weaviate_client.close()
+            except:
+                pass
 
 
 # =============================================================================
