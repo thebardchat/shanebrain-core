@@ -71,6 +71,11 @@ python scripts/query_legacy.py
 
 # Run integration tests
 python scripts/test_weaviate_integration.py
+
+# Backup/Restore data
+python scripts/backup_weaviate.py              # Backup to weaviate-backups/
+python scripts/restore_weaviate.py <backup_dir>  # Restore from backup
+python scripts/clear_weaviate.py               # Clear data (with confirmation)
 ```
 
 ## Architecture
@@ -117,6 +122,9 @@ python scripts/test_weaviate_integration.py
    - `query_legacy.py` - Interactive CLI for querying LegacyKnowledge
    - `test_weaviate_integration.py` - Integration test suite
    - `weaviate_helpers.py` - Reusable helper class for Weaviate operations
+   - `backup_weaviate.py` - Export data to JSON backups
+   - `restore_weaviate.py` - Import data from JSON backups
+   - `clear_weaviate.py` - Clear or delete collections
 
 ### Multi-Project Support
 
