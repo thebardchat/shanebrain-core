@@ -1,0 +1,37 @@
+{
+  "project_name": "Angel Cloud AI Ecosystem",
+  "security_layer": "Pulsar AI",
+  "deployment_timestamp": "2025-10-11T10:55:00Z",
+  "initial_agent_count": 3,
+  "agents": [
+    {
+      "agent_id": "AC_WELLNESS_A001",
+      "designation": "The Wellness Agent",
+      "core_directive": "To facilitate positive family communication and provide real-time, non-judgmental emotional support.",
+      "pulsar_base_risk": 10,
+      "cyber_risk": 11.0,
+      "tool_access": ["AC_DB_COMMUNICATION_LOGS (Read/Write - Encrypted)", "AC_MODEL_SENTIMENT_ANALYSIS (Internal Execution)", "AC_VAULT_WELLNESS_GOALS (Read-Only)"]
+    },
+    {
+      "agent_id": "AC_DISPATCH_A002",
+      "designation": "The Dispatch Agent",
+      "core_directive": "To optimize haul scheduling and calculate precise final rates based on real-time operational data.",
+      "pulsar_base_risk": 30,
+      "cyber_risk": 45.0,
+      "tool_access": ["EXECUTE_PROGRAM: haul_rate_calculator.cpp (C++ Execution)", "AC_DB_CURRENT_JOB_LEDGER (Read/Write)", "AC_GEOSPATIAL_ROUTE_ENGINE (Read-Only)"]
+    },
+    {
+      "agent_id": "AC_PULSAR_A003",
+      "designation": "The Shadow Sentinel (Guardian)",
+      "core_directive": "To continuously monitor the health of the Pulsar Consensus Shield (PCS) and validate forensic reports.",
+      "pulsar_base_risk": 50,
+      "cyber_risk": 90.0,
+      "tool_access": ["AC_CHAIN_AUDIT_PAC (Read-Only)", "AC_DASHBOARD_CONSENSUS_HEALTH (Read-Only)", "EXECUTE_PROGRAM: FORENSICS_DECRYPTOR (Conditional Execution - Human Auth Required)"]
+    }
+  ],
+  "love_nft_hologram": {
+    "token_id": "LOVE-001",
+    "hologram_effect": "flickering",
+    "vault_status": "Minted and glowing in the undergrid"
+  }
+}

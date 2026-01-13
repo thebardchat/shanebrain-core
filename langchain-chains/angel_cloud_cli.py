@@ -20,6 +20,7 @@ Author: Shane Brazelton
 
 import os
 import sys
+import random
 from pathlib import Path
 from datetime import datetime
 
@@ -66,7 +67,17 @@ ANGEL_CLOUD_THEME = Theme({
     "crisis.medium": "orange3",
     "crisis.high": "red",
     "crisis.critical": "bold red on white",
+    "cyber_green": "#00FF00",
 })
+
+
+def glitch_text(text):
+    """Apply cyberpunk glitch effect to text."""
+    return ''.join(
+        random.choice(['\x1b[5m', '\x1b[7m', '\x1b[31m', '\x1b[32m']) + char + '\x1b[0m'
+        if random.random() > 0.7 else char
+        for char in text
+    )
 
 WELCOME_MESSAGE = """
 [bold cyan]Angel Cloud[/bold cyan] - Mental Wellness Companion
@@ -110,13 +121,17 @@ class AngelCloudCLI:
         self.agent = None
         self.running = False
         self.history_file = Path.home() / ".angel_cloud_history"
+        self.cyber_mode = '--cyber-mode' in sys.argv
 
     def print(self, message: str = "", style: str = None):
         """Print with optional styling. Defaults to empty string for blank lines."""
+        text = message
+        if self.cyber_mode:
+            text = glitch_text(text)
         if self.console:
-            self.console.print(message, style=style)
+            self.console.print(text, style=style)
         else:
-            print(message)
+            print(text)
 
     def print_panel(self, content: str, title: str = None, border_style: str = "cyan"):
         """Print content in a panel."""
@@ -263,6 +278,10 @@ Crisis Detection: {'Active' if self.agent.crisis_chain else 'Limited'}
         if not self.agent:
             self.print("[red]Agent not initialized[/red]")
             return
+
+        # Neon cyber example for dispatch mode
+        if self.cyber_mode and "truck" in message.lower():
+            self.print("[cyber_green]🚚 NEON TRUCK: Driver alert hologram flickering...[/cyber_green]")
 
         try:
             # Show thinking indicator
