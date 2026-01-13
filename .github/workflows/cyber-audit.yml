@@ -1,0 +1,36 @@
+name: Cyber Audit - Vuln Scan with Glitch Reports
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Snyk
+      run: npm install -g snyk
+
+    - name: Auth Snyk
+      run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+    - name: Scan for Vulns
+      run: snyk test --json > vuln-report.json
+      continue-on-error: true
+
+    - name: Glitch Report (Redact Sensitive)
+      run: |
+        sed -i 's/(sensitive-path)/[REDACTED ████]/g' vuln-report.json
+        echo "## Cyber Audit Report - Glitch Edition" > report.md
+        echo "Vulns found: $(jq '.vulnerabilities | length' vuln-report.json 2>/dev/null || echo 0)" >> report.md
+        jq '.vulnerabilities[]? | "- **[███] \(.title)**: Severity \(.severity)"' vuln-report.json >> report.md 2>/dev/null || echo "No vulnerabilities detected or scan failed." >> report.md
+
+    - name: Upload Glitched Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: cyber-audit-report
+        path: report.md

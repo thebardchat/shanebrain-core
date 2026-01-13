@@ -134,6 +134,15 @@ if exist "%SHANEBRAIN_ROOT%\planning-system\active-projects\task_plan.md" (
 echo.
 
 REM =============================================================================
+REM Audio Hack - Glitch Echo Mode
+REM =============================================================================
+echo [6/6] Booting Audio Hack - Glitch Echo Mode...
+python -c "import pygame; pygame.mixer.init(); sound = pygame.mixer.Sound('distorted_yell.wav'); sound.play()" 2>nul
+if errorlevel 1 (
+    echo %YELLOW%[!]%NC% Audio hack skipped - pip install pygame and add distorted_yell.wav
+)
+
+REM =============================================================================
 REM Main Menu
 REM =============================================================================
 :main_menu
