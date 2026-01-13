@@ -30,7 +30,7 @@ jobs:
         jq '.vulnerabilities[]? | "- **[███] \(.title)**: Severity \(.severity)"' vuln-report.json >> report.md 2>/dev/null || echo "No vulnerabilities detected or scan failed." >> report.md
 
     - name: Upload Glitched Report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: cyber-audit-report
         path: report.md
