@@ -50,7 +50,7 @@ class WeaviateHelper:
         """Check if Weaviate is ready."""
         try:
             return self.client.is_ready()
-        except:
+        except Exception:
             return False
 
     # =========================================================================
@@ -124,7 +124,8 @@ class WeaviateHelper:
                 limit=limit
             )
             return [obj.properties for obj in response.objects]
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to get conversation history: {e}")
             return []
 
     def search_conversations(
@@ -162,7 +163,8 @@ class WeaviateHelper:
                     limit=limit
                 )
             return [obj.properties for obj in response.objects]
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to search conversations: {e}")
             return []
 
     # =========================================================================
@@ -252,7 +254,8 @@ class WeaviateHelper:
                     entry["_distance"] = obj.metadata.distance
                 results.append(entry)
             return results
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to search legacy knowledge: {e}")
             return []
 
     # =========================================================================
@@ -331,7 +334,8 @@ class WeaviateHelper:
             else:
                 response = collection.query.fetch_objects(limit=limit)
             return [obj.properties for obj in response.objects]
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to get crisis logs: {e}")
             return []
 
     # =========================================================================
@@ -347,7 +351,8 @@ class WeaviateHelper:
             collection = self.client.collections.get(collection_name)
             response = collection.aggregate.over_all(total_count=True)
             return response.total_count
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to get collection count for {collection_name}: {e}")
             return 0
 
     def collection_exists(self, name: str) -> bool:

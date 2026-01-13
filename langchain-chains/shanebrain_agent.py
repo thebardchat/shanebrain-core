@@ -164,7 +164,7 @@ class ShaneBrainAgent:
         self.mongodb_client = mongodb_client
         self.weaviate_helper = weaviate_helper
         self.planning_root = planning_root or Path(
-            os.environ.get("PLANNING_ROOT", "D:/Angel_Cloud/shanebrain-core/planning-system")
+            os.environ.get("PLANNING_ROOT", str(Path(__file__).parent.parent / "planning-system"))
         )
         self.default_mode = default_mode
         self.enable_crisis_detection = enable_crisis_detection

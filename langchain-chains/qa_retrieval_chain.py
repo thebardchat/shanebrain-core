@@ -506,11 +506,13 @@ def create_qa_chain(
 
     if WEAVIATE_AVAILABLE:
         try:
-            weaviate_client = weaviate.Client(
-                f"http://{weaviate_host}:{weaviate_port}"
+            weaviate_client = weaviate.connect_to_local(
+                host=weaviate_host,
+                port=weaviate_port
             )
             if not weaviate_client.is_ready():
                 print("Warning: Weaviate is not ready")
+                weaviate_client.close()
                 weaviate_client = None
         except Exception as e:
             print(f"Warning: Could not connect to Weaviate: {e}")
