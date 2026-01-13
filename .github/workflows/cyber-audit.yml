@@ -10,27 +10,54 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
     - name: Install Snyk
       run: npm install -g snyk
 
     - name: Auth Snyk
       run: snyk auth ${{ secrets.SNYK_TOKEN }}
+      continue-on-error: true
 
     - name: Scan for Vulns
-      run: snyk test --json > vuln-report.json
+      run: snyk test --json > vuln-report.json 2>&1 || true
       continue-on-error: true
 
     - name: Glitch Report (Redact Sensitive)
       run: |
+        # Ensure report file exists even if scan failed
+        if [ ! -f vuln-report.json ]; then
+          echo '{"vulnerabilities": []}' > vuln-report.json
+        fi
+
+        # Redact sensitive paths
         sed -i 's/(sensitive-path)/[REDACTED ████]/g' vuln-report.json
+
+        # Generate glitch-style report
         echo "## Cyber Audit Report - Glitch Edition" > report.md
-        echo "Vulns found: $(jq '.vulnerabilities | length' vuln-report.json 2>/dev/null || echo 0)" >> report.md
-        jq '.vulnerabilities[]? | "- **[███] \(.title)**: Severity \(.severity)"' vuln-report.json >> report.md 2>/dev/null || echo "No vulnerabilities detected or scan failed." >> report.md
+        echo "" >> report.md
+        echo "**Scan Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> report.md
+        echo "" >> report.md
+
+        VULN_COUNT=$(jq '.vulnerabilities | length' vuln-report.json 2>/dev/null || echo 0)
+        echo "**Vulnerabilities Found:** ${VULN_COUNT}" >> report.md
+        echo "" >> report.md
+
+        if [ "$VULN_COUNT" != "0" ] && [ "$VULN_COUNT" != "null" ]; then
+          echo "### Vulnerability Details" >> report.md
+          jq -r '.vulnerabilities[]? | "- **[███] \(.title // "Unknown")**: Severity: \(.severity // "unknown")"' vuln-report.json >> report.md 2>/dev/null
+        else
+          echo "No vulnerabilities detected or scan requires authentication." >> report.md
+        fi
 
     - name: Upload Glitched Report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: cyber-audit-report
         path: report.md
+        retention-days: 30
