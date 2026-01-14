@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShaneBrain // Neural Interface</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Scanline overlay -->
+    <div class="scanlines"></div>
+
+    <!-- Grid background -->
+    <div class="grid-bg"></div>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">&#9881;</span>
+                <h1>SHANE<span class="accent">BRAIN</span></h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot online"></span>
+                    <span>OLLAMA</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot" id="weaviate-status"></span>
+                    <span>WEAVIATE</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot online"></span>
+                    <span>NEURAL LINK</span>
+                </div>
+            </div>
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="chat">CHAT</button>
+                <button class="mode-btn" data-mode="memory">MEMORY</button>
+                <button class="mode-btn" data-mode="wellness">WELLNESS</button>
+            </div>
+        </header>
+
+        <!-- Main chat area -->
+        <main class="main-content">
+            <!-- Sidebar with system info -->
+            <aside class="sidebar">
+                <div class="system-panel">
+                    <h3>// SYSTEM STATUS</h3>
+                    <div class="stat-row">
+                        <span>MODEL</span>
+                        <span class="stat-value" id="model-name">llama3.2:1b</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>KNOWLEDGE</span>
+                        <span class="stat-value" id="knowledge-count">13 chunks</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>UPTIME</span>
+                        <span class="stat-value" id="uptime">--:--:--</span>
+                    </div>
+                </div>
+
+                <div class="system-panel">
+                    <h3>// QUICK ACTIONS</h3>
+                    <button class="action-btn" onclick="queryKnowledge()">
+                        <span class="btn-icon">&#128269;</span> Search Knowledge
+                    </button>
+                    <button class="action-btn" onclick="clearChat()">
+                        <span class="btn-icon">&#128465;</span> Clear Session
+                    </button>
+                    <button class="action-btn" onclick="checkHealth()">
+                        <span class="btn-icon">&#9889;</span> System Check
+                    </button>
+                </div>
+
+                <div class="system-panel knowledge-panel">
+                    <h3>// KNOWLEDGE BASE</h3>
+                    <div id="knowledge-list" class="knowledge-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chat window -->
+            <section class="chat-section">
+                <div class="chat-window" id="chat-window">
+                    <div class="message system-message">
+                        <div class="message-header">
+                            <span class="sender">SHANEBRAIN v1.0</span>
+                            <span class="timestamp" id="init-time"></span>
+                        </div>
+                        <div class="message-content">
+                            <p>Neural interface initialized. Local-first AI ready.</p>
+                            <p class="subtext">Connected to Ollama (llama3.2:1b) + Weaviate RAG</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div class="input-area">
+                    <div class="input-wrapper">
+                        <span class="input-prompt">&gt;</span>
+                        <textarea
+                            id="user-input"
+                            placeholder="Enter command or query..."
+                            rows="1"
+                            onkeydown="handleKeyPress(event)"
+                        ></textarea>
+                        <button class="send-btn" onclick="sendMessage()">
+                            <span>TRANSMIT</span>
+                            <span class="btn-arrow">&#9658;</span>
+                        </button>
+                    </div>
+                    <div class="input-hints">
+                        <span>ENTER to send</span>
+                        <span>|</span>
+                        <span>SHIFT+ENTER for newline</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-left">
+                <span>SHANEBRAIN CORE // LOCAL-FIRST AI INFRASTRUCTURE</span>
+            </div>
+            <div class="footer-right">
+                <span id="current-time"></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
