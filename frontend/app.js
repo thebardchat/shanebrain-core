@@ -2,10 +2,11 @@
    SHANEBRAIN CYBERPUNK UI - Application Logic
    ============================================================================= */
 
-// Configuration
+// Configuration - Dynamic URLs based on current host
+const currentHost = window.location.hostname; // Works for localhost AND Tailscale IP
 const CONFIG = {
-    ollamaUrl: 'http://localhost:11434',
-    weaviateUrl: 'http://localhost:8080',
+    ollamaUrl: `http://${currentHost}:11434`,
+    weaviateUrl: `http://${currentHost}:8080`,
     model: 'llama3.2:1b',
     systemPrompt: `You are ShaneBrain - Shane Brazelton's personal AI assistant.
 Be direct, no fluff. Lead with solutions. Keep responses short and actionable.
@@ -16,15 +17,18 @@ Never say "Certainly!" or "I'd be happy to help!" - just help.`
 let currentMode = 'chat';
 let conversationHistory = [];
 let startTime = Date.now();
+let sessionId = 'session_' + Date.now();
+let userId = 'shane'; // Default user
 
 // =============================================================================
 // INITIALIZATION
 // =============================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initializeUI();
     checkConnections();
     loadKnowledgeBase();
+    await loadRecentConversations(); // Load memory from Weaviate
     startClock();
     updateUptime();
     setInterval(updateUptime, 1000);
@@ -106,6 +110,125 @@ async function checkHealth() {
     }
 
     addSystemMessage('SYSTEM STATUS:\n' + results.join('\n'));
+}
+
+// =============================================================================
+// PERSISTENT MEMORY - Save/Load conversations to Weaviate
+// =============================================================================
+
+async function saveConversation(userMessage, aiResponse) {
+    try {
+        const timestamp = new Date().toISOString();
+
+        const conversationData = {
+            class: 'Conversation',
+            properties: {
+                user_id: userId,
+                message: userMessage,
+                response: aiResponse,
+                timestamp: timestamp,
+                project: 'shanebrain',
+                mode: currentMode
+            }
+        };
+
+        await fetch(`${CONFIG.weaviateUrl}/v1/objects`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(conversationData)
+        });
+
+        console.log('Conversation saved to memory');
+        updateMemoryCount();
+    } catch (e) {
+        console.error('Failed to save conversation:', e);
+    }
+}
+
+async function loadRecentConversations() {
+    try {
+        const graphqlQuery = {
+            query: `{
+                Get {
+                    Conversation(
+                        limit: 10
+                        sort: [{ path: ["timestamp"], order: desc }]
+                    ) {
+                        user_id
+                        message
+                        response
+                        timestamp
+                        mode
+                    }
+                }
+            }`
+        };
+
+        const resp = await fetch(`${CONFIG.weaviateUrl}/v1/graphql`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(graphqlQuery)
+        });
+
+        const data = await resp.json();
+        const conversations = data.data?.Get?.Conversation || [];
+
+        if (conversations.length > 0) {
+            // Load into local history (reversed to chronological order)
+            conversations.reverse().forEach(conv => {
+                conversationHistory.push({ role: 'user', content: conv.message });
+                conversationHistory.push({ role: 'assistant', content: conv.response });
+            });
+
+            addSystemMessage(`Loaded ${conversations.length} conversations from memory.`);
+        }
+
+        updateMemoryCount();
+    } catch (e) {
+        console.error('Failed to load conversations:', e);
+    }
+}
+
+async function updateMemoryCount() {
+    try {
+        const resp = await fetch(`${CONFIG.weaviateUrl}/v1/objects?class=Conversation&limit=1`);
+        const data = await resp.json();
+        // Note: This is approximate, for exact count we'd need aggregate query
+        const countResp = await fetch(`${CONFIG.weaviateUrl}/v1/graphql`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                query: `{ Aggregate { Conversation { meta { count } } } }`
+            })
+        });
+        const countData = await countResp.json();
+        const count = countData.data?.Aggregate?.Conversation?.[0]?.meta?.count || 0;
+
+        // Update UI to show memory count
+        const knowledgeCount = document.getElementById('knowledge-count');
+        if (knowledgeCount) {
+            const existing = knowledgeCount.textContent;
+            knowledgeCount.textContent = existing.split('+')[0] + ` + ${count} memories`;
+        }
+    } catch (e) {
+        console.error('Failed to get memory count:', e);
+    }
+}
+
+async function getConversationContext() {
+    // Get recent conversation history for context
+    const recentHistory = conversationHistory.slice(-10); // Last 5 exchanges
+    if (recentHistory.length === 0) return '';
+
+    let context = 'Recent conversation history:\n';
+    for (let i = 0; i < recentHistory.length; i += 2) {
+        const user = recentHistory[i];
+        const ai = recentHistory[i + 1];
+        if (user && ai) {
+            context += `User: ${user.content}\nShaneBrain: ${ai.content}\n\n`;
+        }
+    }
+    return context;
 }
 
 // =============================================================================
@@ -252,15 +375,30 @@ function handleCommand(message) {
 async function sendToOllama(message) {
     addThinkingMessage();
 
-    // Build context from knowledge base if in memory mode
-    let context = '';
+    // Build context from multiple sources
+    let knowledgeContext = '';
+    let conversationContext = '';
+
+    // Always include recent conversation context for continuity
+    conversationContext = await getConversationContext();
+
+    // Add knowledge base context if in memory mode
     if (currentMode === 'memory') {
-        context = await getRelevantContext(message);
+        knowledgeContext = await getRelevantContext(message);
     }
 
-    const fullPrompt = context
-        ? `Context from knowledge base:\n${context}\n\nUser question: ${message}`
-        : message;
+    // Build the full prompt with all context
+    let fullPrompt = message;
+    if (conversationContext || knowledgeContext) {
+        fullPrompt = '';
+        if (conversationContext) {
+            fullPrompt += `${conversationContext}\n`;
+        }
+        if (knowledgeContext) {
+            fullPrompt += `Relevant knowledge:\n${knowledgeContext}\n\n`;
+        }
+        fullPrompt += `Current question: ${message}`;
+    }
 
     try {
         const resp = await fetch(`${CONFIG.ollamaUrl}/api/generate`, {
@@ -279,8 +417,13 @@ async function sendToOllama(message) {
 
         if (data.response) {
             addAIMessage(data.response);
+
+            // Update local history
             conversationHistory.push({ role: 'user', content: message });
             conversationHistory.push({ role: 'assistant', content: data.response });
+
+            // SAVE TO WEAVIATE - Persistent memory!
+            await saveConversation(message, data.response);
         } else {
             addAIMessage('No response received from model.');
         }
