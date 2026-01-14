@@ -28,14 +28,20 @@ from enum import Enum
 
 # LangChain imports
 try:
-    from langchain.prompts import PromptTemplate
-    from langchain.chains import LLMChain
-    from langchain.memory import ConversationBufferWindowMemory
-    from langchain.schema import Document
+    from langchain_core.prompts import PromptTemplate
+    from langchain_classic.chains import LLMChain
+    from langchain_core.documents import Document
+    # Memory handling - optional, may not be available in all versions
+    try:
+        from langchain.memory import ConversationBufferWindowMemory
+        MEMORY_AVAILABLE = True
+    except ImportError:
+        MEMORY_AVAILABLE = False
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     LANGCHAIN_AVAILABLE = False
-    print("Warning: LangChain not installed. Install with: pip install langchain")
+    MEMORY_AVAILABLE = False
+    print("Warning: LangChain not installed. Install with: pip install langchain langchain-core")
 
 # Weaviate imports
 try:
@@ -165,14 +171,14 @@ class QARetrievalChain:
         self.confidence_threshold = confidence_threshold
 
         # Initialize conversation memory
-        if LANGCHAIN_AVAILABLE:
+        if LANGCHAIN_AVAILABLE and MEMORY_AVAILABLE:
             self.memory = ConversationBufferWindowMemory(
                 k=memory_window,
                 memory_key="chat_history",
                 return_messages=False
             )
         else:
-            self.memory = None
+            self.memory = None  # Memory not available in this LangChain version
 
         # Initialize LLM chain
         self._init_chains()

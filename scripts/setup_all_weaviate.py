@@ -28,7 +28,7 @@ def run_script(script_name: str, args: list = None, description: str = None) -> 
     script_path = Path(__file__).parent / script_name
 
     if not script_path.exists():
-        print(f"{RED}✗ Script not found: {script_name}{RESET}")
+        print(f"{RED}[X] Script not found: {script_name}{RESET}")
         return False
 
     cmd = [sys.executable, str(script_path)]
@@ -63,20 +63,20 @@ def wait_for_weaviate(max_wait: int = 60) -> bool:
     print(f"\n{BLUE}Checking Weaviate status...{RESET}")
 
     if check_weaviate_running():
-        print(f"{GREEN}✓ Weaviate is already running{RESET}")
+        print(f"{GREEN}[OK] Weaviate is already running{RESET}")
         return True
 
     print(f"{YELLOW}Weaviate not responding. Waiting up to {max_wait} seconds...{RESET}")
 
     for i in range(max_wait):
         if check_weaviate_running():
-            print(f"\n{GREEN}✓ Weaviate is now ready!{RESET}")
+            print(f"\n{GREEN}[OK] Weaviate is now ready!{RESET}")
             return True
         time.sleep(1)
         if (i + 1) % 10 == 0:
             print(f"  Still waiting... ({i + 1}s)")
 
-    print(f"\n{RED}✗ Weaviate did not become ready within {max_wait} seconds{RESET}")
+    print(f"\n{RED}[X] Weaviate did not become ready within {max_wait} seconds{RESET}")
     return False
 
 
@@ -177,11 +177,11 @@ def main():
     all_passed = True
     for step_name, result in steps:
         if result is None:
-            print(f"  {YELLOW}○{RESET} {step_name} (skipped)")
+            print(f"  {YELLOW}[-]{RESET} {step_name} (skipped)")
         elif result:
-            print(f"  {GREEN}✓{RESET} {step_name}")
+            print(f"  {GREEN}[OK]{RESET} {step_name}")
         else:
-            print(f"  {RED}✗{RESET} {step_name}")
+            print(f"  {RED}[X]{RESET} {step_name}")
             all_passed = False
 
     print(f"\n{BLUE}{'='*60}{RESET}")
