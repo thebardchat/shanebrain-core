@@ -1,11 +1,11 @@
 {
   "class": "AngelCloudConversation",
   "description": "Angel Cloud mental wellness conversations with crisis detection metadata",
-  "vectorizer": "text2vec-transformers",
+  "vectorizer": "text2vec-ollama",
   "moduleConfig": {
-    "text2vec-transformers": {
-      "poolingStrategy": "masked_mean",
-      "vectorizeClassName": false
+    "text2vec-ollama": {
+      "model": "llama3.2:1b",
+      "apiEndpoint": "http://host.docker.internal:11434"
     }
   },
   "properties": [
@@ -14,7 +14,7 @@
       "description": "Unique identifier for the conversation session",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -27,7 +27,7 @@
       "description": "Anonymous user identifier (hashed)",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -40,7 +40,7 @@
       "description": "The actual message content",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -51,7 +51,7 @@
       "description": "Role: user, assistant, system",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -64,7 +64,7 @@
       "description": "When the message was sent",
       "dataType": ["date"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -75,7 +75,7 @@
       "description": "Crisis detection score (0.0 to 1.0)",
       "dataType": ["number"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -88,7 +88,7 @@
       "description": "Crisis level: none, low, medium, high, critical",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -101,7 +101,7 @@
       "description": "Any crisis keywords found in the message",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -112,7 +112,7 @@
       "description": "Overall sentiment: positive, neutral, negative, mixed",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -125,7 +125,7 @@
       "description": "Sentiment score (-1.0 to 1.0)",
       "dataType": ["number"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -136,7 +136,7 @@
       "description": "Topics discussed in the message",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -147,7 +147,7 @@
       "description": "Detected emotional state: anxious, sad, angry, hopeful, calm, etc.",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -158,7 +158,7 @@
       "description": "Any mental health resources shared in response",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -169,7 +169,7 @@
       "description": "Whether the conversation was escalated to human review",
       "dataType": ["boolean"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -182,7 +182,7 @@
       "description": "Reason for escalation if applicable",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -193,7 +193,7 @@
       "description": "Summary of conversation context for continuity",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -204,7 +204,7 @@
       "description": "Whether the content is additionally encrypted",
       "dataType": ["boolean"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -215,7 +215,7 @@
       "description": "Days to retain this data (user preference)",
       "dataType": ["int"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }

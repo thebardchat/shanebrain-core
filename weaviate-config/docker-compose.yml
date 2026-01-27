@@ -2,32 +2,19 @@
 # ShaneBrain Core - Weaviate Docker Compose Configuration
 # =============================================================================
 #
-# Local-first Weaviate vector database setup for ShaneBrain ecosystem.
-#
-# Features:
-# - Stores data on 8TB external drive
-# - No authentication (local-only, secure by network isolation)
-# - Includes backup module
-# - Works completely offline
-# - Integrated text2vec-transformers for local embeddings
+# LEAN VERSION - Uses Ollama for embeddings (no RAM-hungry transformers)
 #
 # Usage:
 #   cd weaviate-config
-#   docker-compose up -d              # Start services
-#   docker-compose down               # Stop services
+#   docker-compose up -d              # Start Weaviate
+#   docker-compose down               # Stop
 #   docker-compose logs -f weaviate   # View logs
-#   docker-compose ps                 # Check status
-#
-# Data Location: ./data (relative to this file)
-# Backups: ./backups (relative to this file)
 #
 # =============================================================================
 
-version: '3.8'
-
 services:
   # ===========================================================================
-  # Weaviate Vector Database
+  # Weaviate Vector Database (ONLY container needed)
   # ===========================================================================
   weaviate:
     image: semitechnologies/weaviate:1.28.0
@@ -37,9 +24,7 @@ services:
       - "8080:8080"      # REST API
       - "50051:50051"    # gRPC
     volumes:
-      # Data persistence on 8TB drive
       - ./data:/var/lib/weaviate
-      # Backup directory
       - ./backups:/var/lib/weaviate/backups
     environment:
       # =======================================================================
@@ -48,43 +33,26 @@ services:
       QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'text2vec-transformers'
       CLUSTER_HOSTNAME: 'node1'
 
       # =======================================================================
-      # Module Configuration
+      # Module Configuration - LEAN (Ollama-based)
       # =======================================================================
-      # Enable these modules for full functionality
-      ENABLE_MODULES: >-
-        text2vec-transformers,
-        generative-ollama,
-        backup-filesystem,
-        qna-transformers
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-ollama'
+      ENABLE_MODULES: 'text2vec-ollama,generative-ollama,backup-filesystem'
 
-      # Transformer model settings
-      TRANSFORMERS_INFERENCE_API: 'http://t2v-transformers:8080'
-
-      # QnA settings
-      QNA_INFERENCE_API: 'http://qna-transformers:8080'
+      # Ollama connection (host.docker.internal = your Windows machine)
+      OLLAMA_API_ENDPOINT: 'http://host.docker.internal:11434'
 
       # Backup settings
       BACKUP_FILESYSTEM_PATH: '/var/lib/weaviate/backups'
 
       # =======================================================================
-      # Performance Configuration
+      # Performance - Tuned for 7.4GB RAM
       # =======================================================================
-      # Adjust based on your hardware
       LIMIT_RESOURCES: 'false'
-      GOMAXPROCS: '4'
-
-      # Memory settings (adjust for your system)
-      # GOMEMLIMIT: '4GiB'
-
-      # =======================================================================
-      # Optional: Ollama Integration (for local LLM)
-      # =======================================================================
-      # Uncomment if using Ollama for generative features
-      # GENERATIVE_OLLAMA_API_ENDPOINT: 'http://host.docker.internal:11434'
+      GOMAXPROCS: '2'
+      GOMEMLIMIT: '1GiB'
 
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/v1/.well-known/ready"]
@@ -93,49 +61,6 @@ services:
       retries: 5
       start_period: 30s
 
-    depends_on:
-      t2v-transformers:
-        condition: service_healthy
-
-    networks:
-      - shanebrain-network
-
-  # ===========================================================================
-  # Text2Vec Transformer (Local Embeddings)
-  # ===========================================================================
-  # This provides LOCAL embedding generation - no cloud required!
-  t2v-transformers:
-    image: semitechnologies/transformers-inference:sentence-transformers-all-MiniLM-L6-v2
-    container_name: shanebrain-t2v
-    restart: unless-stopped
-    environment:
-      ENABLE_CUDA: '0'  # Set to '1' if you have NVIDIA GPU
-      # For GPU support, uncomment:
-      # NVIDIA_VISIBLE_DEVICES: 'all'
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/.well-known/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    networks:
-      - shanebrain-network
-
-  # ===========================================================================
-  # QnA Transformers (Optional - for question answering)
-  # ===========================================================================
-  qna-transformers:
-    image: semitechnologies/qna-transformers:distilbert-base-uncased-distilled-squad
-    container_name: shanebrain-qna
-    restart: unless-stopped
-    environment:
-      ENABLE_CUDA: '0'  # Set to '1' if you have NVIDIA GPU
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/.well-known/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     networks:
       - shanebrain-network
 
@@ -146,15 +71,3 @@ networks:
   shanebrain-network:
     driver: bridge
     name: shanebrain-network
-
-# =============================================================================
-# Volumes (for data persistence)
-# =============================================================================
-# Using bind mounts above for explicit path control
-# Uncomment below for Docker-managed volumes if preferred:
-#
-# volumes:
-#   weaviate_data:
-#     driver: local
-#   weaviate_backups:
-#     driver: local

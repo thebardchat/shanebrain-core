@@ -1,11 +1,11 @@
 {
   "class": "ShanebrainMemory",
   "description": "ShaneBrain Legacy memories, stories, values, and knowledge for digital preservation",
-  "vectorizer": "text2vec-transformers",
+  "vectorizer": "text2vec-ollama",
   "moduleConfig": {
-    "text2vec-transformers": {
-      "poolingStrategy": "masked_mean",
-      "vectorizeClassName": false
+    "text2vec-ollama": {
+      "model": "llama3.2:1b",
+      "apiEndpoint": "http://host.docker.internal:11434"
     }
   },
   "properties": [
@@ -14,7 +14,7 @@
       "description": "Title of the memory or story",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -25,7 +25,7 @@
       "description": "Full content of the memory, story, value, or knowledge",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -36,7 +36,7 @@
       "description": "Category: story, value, knowledge, advice, family_history, creative_work",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -47,7 +47,7 @@
       "description": "More specific categorization within the main category",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -58,7 +58,7 @@
       "description": "Time period this memory relates to (e.g., 'childhood', '2020-2025')",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -69,7 +69,7 @@
       "description": "Key themes or values present in this memory",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -80,7 +80,7 @@
       "description": "Intended audience: all, spouse, children, grandchildren, extended_family",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -91,7 +91,7 @@
       "description": "Access level: full, primary, limited, public",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -102,7 +102,7 @@
       "description": "Key lesson or takeaway from this memory",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -113,7 +113,7 @@
       "description": "References to related ShanebrainMemory objects",
       "dataType": ["ShanebrainMemory"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -124,7 +124,7 @@
       "description": "When this memory was recorded",
       "dataType": ["date"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -135,7 +135,7 @@
       "description": "When this memory was last updated",
       "dataType": ["date"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -146,7 +146,7 @@
       "description": "Source: written, voice_transcription, interview, document",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -157,7 +157,7 @@
       "description": "Emotional tone: joyful, reflective, instructive, cautionary, loving",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -168,7 +168,7 @@
       "description": "Whether this memory contains private/sensitive content",
       "dataType": ["boolean"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }

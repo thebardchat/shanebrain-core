@@ -1,11 +1,11 @@
 {
   "class": "PulsarSecurityEvent",
   "description": "Pulsar AI blockchain security events, threats, and patterns",
-  "vectorizer": "text2vec-transformers",
+  "vectorizer": "text2vec-ollama",
   "moduleConfig": {
-    "text2vec-transformers": {
-      "poolingStrategy": "masked_mean",
-      "vectorizeClassName": false
+    "text2vec-ollama": {
+      "model": "llama3.2:1b",
+      "apiEndpoint": "http://host.docker.internal:11434"
     }
   },
   "properties": [
@@ -14,7 +14,7 @@
       "description": "Unique identifier for this security event",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -27,7 +27,7 @@
       "description": "Type of event: exploit, vulnerability, suspicious_activity, threat_intel, pattern",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -40,7 +40,7 @@
       "description": "Brief title of the security event",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -51,7 +51,7 @@
       "description": "Detailed description of the security event",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -62,7 +62,7 @@
       "description": "Blockchain: ethereum, bsc, polygon, arbitrum, optimism, solana, etc.",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -75,7 +75,7 @@
       "description": "Severity level: critical, high, medium, low, info",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -88,7 +88,7 @@
       "description": "Risk score from 0 to 100",
       "dataType": ["number"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -101,7 +101,7 @@
       "description": "Attack vector: reentrancy, flash_loan, rug_pull, front_running, etc.",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -112,7 +112,7 @@
       "description": "Contract addresses affected",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -123,7 +123,7 @@
       "description": "Protocol names affected",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -134,7 +134,7 @@
       "description": "Known malicious addresses involved",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -145,7 +145,7 @@
       "description": "Related transaction hashes",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -156,7 +156,7 @@
       "description": "Estimated loss in USD",
       "dataType": ["number"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -167,7 +167,7 @@
       "description": "Signatures or patterns used to detect this event",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -178,7 +178,7 @@
       "description": "Relevant Solidity code snippet if applicable",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -189,7 +189,7 @@
       "description": "Recommended mitigation steps",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
@@ -200,7 +200,7 @@
       "description": "When this event occurred",
       "dataType": ["date"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -211,7 +211,7 @@
       "description": "When Pulsar detected this event",
       "dataType": ["date"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -222,7 +222,7 @@
       "description": "Source: internal_detection, threat_feed, manual_report, exploit_db",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -233,7 +233,7 @@
       "description": "Status: active, mitigated, investigating, resolved",
       "dataType": ["text"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -246,7 +246,7 @@
       "description": "External references (URLs, reports)",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -257,7 +257,7 @@
       "description": "References to related PulsarSecurityEvent objects",
       "dataType": ["PulsarSecurityEvent"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": true,
           "vectorizePropertyName": false
         }
@@ -268,7 +268,7 @@
       "description": "Tags for categorization and search",
       "dataType": ["text[]"],
       "moduleConfig": {
-        "text2vec-transformers": {
+        "text2vec-ollama": {
           "skip": false,
           "vectorizePropertyName": false
         }
