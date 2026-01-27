@@ -5,6 +5,30 @@
 
 ---
 
+## 🔗 ALL YOUR LINKS (Bookmarks)
+
+### Money & Sponsors
+| Platform | URL | Status |
+|----------|-----|--------|
+| GitHub Sponsors | https://github.com/sponsors/thebardchat | ✅ Live |
+| Ko-fi | https://ko-fi.com/shanebrain | ✅ Live |
+| Carrd (landing page) | https://shanebrain.carrd.co | 🔨 Setting up |
+
+### Project Links
+| Platform | URL |
+|----------|-----|
+| GitHub Repo | https://github.com/thebardchat/shanebrain-core |
+| Discord Server | [your invite link] |
+
+### Tools We Use
+| Tool | URL | What For |
+|------|-----|----------|
+| Carrd | https://carrd.co | Landing pages |
+| Jockie Music | https://jockiemusic.com | Discord music bot |
+| Gemini | https://gemini.google.com | Image generation |
+
+---
+
 ## 🟢 CURRENT STATUS (What's Working NOW)
 
 | Component | Status | Notes |

@@ -11,96 +11,96 @@
 
 ---
 
-## 🚀 Current Status
+## Current Status
 
 | Component | Status |
 |-----------|--------|
-| Discord Bot | ✅ ONLINE |
-| Angel Arcade | ✅ ONLINE |
-| Two-Computer Cluster | ✅ OPERATIONAL |
-| Weaviate RAG | ✅ CONNECTED |
-| Learning System | ✅ WORKING |
+| Discord Bot | ONLINE |
+| Angel Arcade | ONLINE |
+| Two-Computer Cluster | OPERATIONAL |
+| Weaviate RAG | CONNECTED |
+| Learning System | WORKING |
 
 **Built on 7.4GB RAM.** Proof that you don't need expensive hardware to build the future.
 
 ---
 
-## 🎯 Mission
+## Mission
 
-Transform technology from exploitative to uplifting. Build AI systems that serve humanity, respect privacy, and empower individuals—starting with **800 million Windows users losing security updates.**
+Transform technology from exploitative to uplifting. Build AI systems that serve humanity, respect privacy, and empower individuals - starting with **800 million Windows users losing security updates.**
 
 **Core Values:**
-- 🔓 Open source first
-- 🏠 Local-first architecture (your data, your hardware)
-- 👨‍👩‍👧‍👦 Family-first priorities
-- 🚀 ADHD as superpower
-- 💪 Accessibility for all
+- Open source first
+- Local-first architecture (your data, your hardware)
+- Family-first priorities
+- ADHD as superpower
+- Accessibility for all
 
 ---
 
-## 💖 Support This Project
+## Support This Project
 
 I'm a dump truck dispatcher by day, self-taught developer by night. Father of 5 sons. 2+ years sober. Building this on limited hardware while working full-time.
 
 **Every sponsor helps keep the lights on while I code the future.**
 
-[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor_on_GitHub-💖-pink?style=for-the-badge)](https://github.com/sponsors/thebardchat)
-[![Support on Ko-fi](https://img.shields.io/badge/Buy_me_a_coffee-☕-yellow?style=for-the-badge)](https://ko-fi.com/shanebrain)
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor_on_GitHub-pink?style=for-the-badge)](https://github.com/sponsors/thebardchat)
+[![Support on Ko-fi](https://img.shields.io/badge/Buy_me_a_coffee-yellow?style=for-the-badge)](https://ko-fi.com/shanebrain)
 
 | Tier | Price | What You Get |
 |------|-------|--------------|
-| ☕ Coffee Fuel | $3/mo | Name in README + gratitude |
-| 🧠 Brain Builder | $10/mo | Early access to releases |
-| ⚡ Power Supporter | $25/mo | Private Discord channel |
-| 🚀 Legacy Partner | $50/mo | Monthly 1-on-1 video call |
+| Coffee Fuel | $3/mo | Name in README + gratitude |
+| Brain Builder | $10/mo | Early access to releases |
+| Power Supporter | $25/mo | Private Discord channel |
+| Legacy Partner | $50/mo | Monthly 1-on-1 video call |
 
 ---
 
-## 📦 What's Inside
+## What's Inside
 
-### 🧠 ShaneBrain Bot
+### ShaneBrain Bot
 Discord bot with RAG-powered memory. Knows my family, my values, learns from every conversation.
 
-### 🎰 Angel Arcade
+### Angel Arcade
 Revenue-generating Discord casino bot with premium features via Ko-fi integration.
 
-### ⚡ Two-Computer Cluster
+### Two-Computer Cluster
 Load-balanced Ollama setup across two machines. Proof you can build enterprise architecture on consumer hardware.
 
-### 🗄️ Weaviate RAG
+### Weaviate RAG
 Local vector database for semantic search and memory. No cloud dependency.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────┐
-│  Discord User   │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│  ShaneBrain Bot │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│  Load Balancer  │
-│  :8000          │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │         │
-┌───▼───┐ ┌───▼───┐
-│ PC A  │ │ PC B  │
-│Primary│ │Backup │
-└───────┘ └───────┘
++------------------+
+|  Discord User    |
++--------+---------+
+         |
++--------v---------+
+|  ShaneBrain Bot  |
++--------+---------+
+         |
++--------v---------+
+|  Load Balancer   |
+|  :8000           |
++--------+---------+
+         |
+    +----+----+
+    |         |
++---v---+ +---v---+
+| PC A  | | PC B  |
+|Primary| |Backup |
++-------+ +-------+
 ```
 
 **Philosophy:** Local first, cloud backup. Everything runs offline.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```batch
 # Clone
@@ -114,18 +114,18 @@ START-SHANEBRAIN.bat
 
 ---
 
-## 🔧 Projects in the Ecosystem
+## Projects in the Ecosystem
 
 | Project | Purpose | Status |
 |---------|---------|--------|
-| **ShaneBrain** | Personal AI legacy system | ✅ Active |
-| **Angel Cloud** | Mental wellness platform | 🔨 Building |
-| **Pulsar AI** | Quantum-safe security | 📋 Planned |
-| **TheirNameBrain** | AI legacy for everyone | 🔮 Vision |
+| **ShaneBrain** | Personal AI legacy system | Active |
+| **Angel Cloud** | Mental wellness platform | Building |
+| **Pulsar AI** | Quantum-safe security | Planned |
+| **TheirNameBrain** | AI legacy for everyone | Vision |
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
@@ -138,43 +138,41 @@ START-SHANEBRAIN.bat
 
 ---
 
-## 👨‍💻 About the Builder
+## About the Builder
 
 **Shane Brazelton** - Alabama dump truck dispatcher turned AI developer.
 
-- 👨‍👩‍👦‍👦 Father of 5 sons
-- 💪 2+ years sober
-- 🧠 ADHD as superpower
-- 🎯 Mission: 800 million users deserve better
+- Father of 5 sons
+- 2+ years sober
+- ADHD as superpower
+- Mission: 800 million users deserve better
 
 **"If you don't own your infrastructure, you don't own your future."**
 
 ---
 
-## 🤝 Sponsors
+## Sponsors
 
-<!-- sponsors -->
 *Become the first sponsor!*
-<!-- sponsors -->
 
 ---
 
-## 📄 License
+## License
 
 MIT License - Use freely, build your own legacy.
 
 ---
 
-## ⭐ Star History
+## Star History
 
 If this project helps you, star it! Every star helps others find it.
 
 ---
 
-**Built with love in Alabama 🏈**  
+**Built with love in Alabama**  
 **For my family. For the 800 million. For everyone who deserves better technology.**
 
 ---
 
 *"The best way to predict the future is to build it."*  
-*— Shane Brazelton, 2026*
+*- Shane Brazelton, 2026*
