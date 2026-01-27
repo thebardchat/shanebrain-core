@@ -1,14 +1,33 @@
-# shanebrain-core
 # ShaneBrain Core
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/thebardchat)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-ff5f5f?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/shanebrain)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?style=for-the-badge&logo=discord)](https://discord.gg/your-invite-link)
+
 > **The Foundation of the ShaneBrain AI Ecosystem**  
-> Local-first AI infrastructure powering Angel Cloud, Pulsar AI, LogiBot, and the ShaneBrain digital legacy system.
+> Local-first AI infrastructure powering Angel Cloud, Pulsar AI, and the ShaneBrain digital legacy system.
+
+![ShaneBrain](https://raw.githubusercontent.com/thebardchat/shanebrain-core/main/.github/assets/shanebrain-avatar.png)
+
+---
+
+## 🚀 Current Status
+
+| Component | Status |
+|-----------|--------|
+| Discord Bot | ✅ ONLINE |
+| Angel Arcade | ✅ ONLINE |
+| Two-Computer Cluster | ✅ OPERATIONAL |
+| Weaviate RAG | ✅ CONNECTED |
+| Learning System | ✅ WORKING |
+
+**Built on 7.4GB RAM.** Proof that you don't need expensive hardware to build the future.
 
 ---
 
 ## 🎯 Mission
 
-Transform technology from exploitative to uplifting. Build AI systems that serve humanity, respect privacy, and empower individuals—starting with 800 million Windows users losing security updates.
+Transform technology from exploitative to uplifting. Build AI systems that serve humanity, respect privacy, and empower individuals—starting with **800 million Windows users losing security updates.**
 
 **Core Values:**
 - 🔓 Open source first
@@ -19,337 +38,136 @@ Transform technology from exploitative to uplifting. Build AI systems that serve
 
 ---
 
+## 💖 Support This Project
+
+I'm a dump truck dispatcher by day, self-taught developer by night. Father of 5 sons. 2+ years sober. Building this on limited hardware while working full-time.
+
+**Every sponsor helps keep the lights on while I code the future.**
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor_on_GitHub-💖-pink?style=for-the-badge)](https://github.com/sponsors/thebardchat)
+[![Support on Ko-fi](https://img.shields.io/badge/Buy_me_a_coffee-☕-yellow?style=for-the-badge)](https://ko-fi.com/shanebrain)
+
+| Tier | Price | What You Get |
+|------|-------|--------------|
+| ☕ Coffee Fuel | $3/mo | Name in README + gratitude |
+| 🧠 Brain Builder | $10/mo | Early access to releases |
+| ⚡ Power Supporter | $25/mo | Private Discord channel |
+| 🚀 Legacy Partner | $50/mo | Monthly 1-on-1 video call |
+
+---
+
 ## 📦 What's Inside
 
-This repository contains the core infrastructure that powers the entire ShaneBrain ecosystem:
+### 🧠 ShaneBrain Bot
+Discord bot with RAG-powered memory. Knows my family, my values, learns from every conversation.
 
-### 🧠 Planning System
-Persistent markdown-based planning inspired by Manus AI (the $2B Meta acquisition). Enables:
-- Multi-session project continuity
-- Context preservation across conversations
-- Systematic progress tracking
-- Error logging and learning
+### 🎰 Angel Arcade
+Revenue-generating Discord casino bot with premium features via Ko-fi integration.
 
-### 🗄️ Vector Database Integration
-Local Weaviate instance for semantic search and memory:
-- RAG (Retrieval-Augmented Generation) support
-- Conversation history storage
-- Document embeddings
-- Cross-project knowledge sharing
+### ⚡ Two-Computer Cluster
+Load-balanced Ollama setup across two machines. Proof you can build enterprise architecture on consumer hardware.
 
-### 🦙 Llama Integration
-Local AI models running on your hardware:
-- Llama 3.2 (3B, 11B variants)
-- Zero cloud dependency
-- Complete privacy
-- Offline-capable
-
-### 🔗 LangChain Workflows
-Reusable AI chains and agents:
-- Question answering
-- Crisis detection
-- Code generation
-- Document analysis
-
-### 🗃️ MongoDB Configuration
-Local database for structured data:
-- User conversations
-- System logs
-- Progress tracking
-- Analytics
+### 🗄️ Weaviate RAG
+Local vector database for semantic search and memory. No cloud dependency.
 
 ---
 
 ## 🏗️ Architecture
-```
-8TB External Drive (Local-First)
-│
-├─ /llama-models/              # AI models (50-100GB)
-├─ /weaviate-local/            # Vector database (500GB-2TB)
-├─ /mongodb-local/             # Document database (100-500GB)
-├─ /planning-system/           # Project planning files
-├─ /raw-documents/             # RAG source documents (1-2TB)
-└─ /backups/                   # Disaster recovery (remaining space)
 
-Cloud (Optional Backup)
-│
-├─ Weaviate Cloud              # Disaster recovery
-├─ MongoDB Atlas               # Critical data backup
-└─ GitHub                      # Code and configurations
+```
+┌─────────────────┐
+│  Discord User   │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│  ShaneBrain Bot │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│  Load Balancer  │
+│  :8000          │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+┌───▼───┐ ┌───▼───┐
+│ PC A  │ │ PC B  │
+│Primary│ │Backup │
+└───────┘ └───────┘
 ```
 
-**Philosophy:** Local first, cloud backup. Everything runs offline. Cloud is optional redundancy.
+**Philosophy:** Local first, cloud backup. Everything runs offline.
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- 8TB external drive
-- Docker Desktop
-- Python 3.10+
-- Git
-- Windows 10/11 or Linux
-
-### Installation
-```bash
-# 1. Clone this repository to your 8TB drive
-cd /mnt/8TB/
+```batch
+# Clone
 git clone https://github.com/thebardchat/shanebrain-core.git
 cd shanebrain-core
 
-# 2. Run setup script
-./setup.sh
-
-# 3. Start ShaneBrain
-./start-shanebrain.bat
-```
-
-### First Run
-```bash
-# The setup wizard will:
-# 1. Install dependencies
-# 2. Download Llama models
-# 3. Initialize Weaviate
-# 4. Configure MongoDB
-# 5. Set up planning system
-
-# Estimated time: 30-60 minutes
-# Disk space needed: ~100GB minimum
+# Start Computer B first (if using cluster)
+# Then on Computer A:
+START-SHANEBRAIN.bat
 ```
 
 ---
 
-## 📚 Documentation
+## 🔧 Projects in the Ecosystem
 
-- [Architecture Overview](docs/architecture.md) - System design and data flow
-- [Planning System Guide](docs/planning-system.md) - Using persistent markdown planning
-- [Vector Database Setup](docs/weaviate-setup.md) - Configuring local Weaviate
-- [LangChain Workflows](docs/langchain-guide.md) - Creating reusable AI chains
-- [Offline Mode](docs/offline-mode.md) - Running without internet
-- [Backup Strategy](docs/backups.md) - Disaster recovery
-
----
-
-## 🔧 Projects Using ShaneBrain Core
-
-### [Angel Cloud](https://github.com/thebardchat/angel-cloud)
-Mental wellness platform with AI-powered crisis intervention
-- **Uses:** Planning system, vector DB, crisis detection chains
-- **Scale:** Designed for millions of users
-
-### [Pulsar AI](https://github.com/thebardchat/pulsar-ai)
-Blockchain security powered by AI
-- **Uses:** Vector DB for threat patterns, LangChain agents
-- **Focus:** Real-time security analysis
-
-### LogiBot
-Business automation for SRM Dispatch
-- **Uses:** Planning system, database integration
-- **Purpose:** Streamline trucking operations
-
-### ShaneBrain Legacy
-Digital legacy AI for family
-- **Uses:** Full stack - planning, vector DB, conversation memory
-- **Vision:** Preserve knowledge and values for future generations
+| Project | Purpose | Status |
+|---------|---------|--------|
+| **ShaneBrain** | Personal AI legacy system | ✅ Active |
+| **Angel Cloud** | Mental wellness platform | 🔨 Building |
+| **Pulsar AI** | Quantum-safe security | 📋 Planned |
+| **TheirNameBrain** | AI legacy for everyone | 🔮 Vision |
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| AI Models | Llama 3.2 (3B, 11B) | Local inference, zero cloud cost |
-| Vector DB | Weaviate | Semantic search, RAG, embeddings |
-| Document DB | MongoDB | Structured data, conversations |
-| AI Framework | LangChain | Chains, agents, workflows |
-| Planning | Markdown + Git | Persistent context, version control |
-| Deployment | Docker | Containerization, portability |
-| Storage | 8TB External | Local-first, offline-capable |
-
----
-
-## 💾 Storage Requirements
-
-**Minimum Configuration:**
-- AI Models: 20GB (Llama 3.2-3B)
-- Weaviate: 50GB
-- MongoDB: 10GB
-- Working Space: 20GB
-- **Total: ~100GB**
-
-**Recommended Configuration:**
-- AI Models: 100GB (multiple models)
-- Weaviate: 500GB (full RAG library)
-- MongoDB: 100GB (extensive logs)
-- Raw Documents: 500GB (source material)
-- Backups: 500GB
-- Growth Buffer: 300GB
-- **Total: ~2TB**
-
-**Production Configuration:**
-- 8TB fully utilized
-- Handles millions of interactions
-- Years of conversation history
-- Complete document archive
+| Component | Technology |
+|-----------|------------|
+| AI Models | Ollama + llama3.2 |
+| Vector DB | Weaviate |
+| Bot Framework | discord.py |
+| Load Balancer | Custom Python |
+| Database | SQLite |
+| Deployment | Docker + Batch |
 
 ---
 
-## 🔐 Security & Privacy
+## 👨‍💻 About the Builder
 
-**Data Sovereignty:**
-- ✅ All data stored locally on YOUR hardware
-- ✅ No cloud dependencies for core functionality
-- ✅ Open source - audit the entire stack
-- ✅ Encrypted backups
-- ✅ No telemetry, no tracking
+**Shane Brazelton** - Alabama dump truck dispatcher turned AI developer.
 
-**Mental Health Data:**
-- HIPAA-aware design (not certified, but principles applied)
-- User data never leaves your infrastructure
-- Crisis logs encrypted at rest
-- Access controls for sensitive information
-
----
-
-## 🎯 Roadmap
-
-### Phase 1: Foundation (Current)
-- [x] Repository structure
-- [ ] Planning system integration
-- [x] Weaviate local setup
-- [x] Llama model configuration
-- [ ] Basic LangChain chains
-
-### Phase 2: Integration (Next 2-4 weeks)
-- [ ] Angel Cloud integration
-- [ ] MongoDB schemas
-- [ ] Backup automation
-- [ ] Mobile access via VPN
-- [ ] Multi-project switching
-
-### Phase 3: Scale (2-3 months)
-- [ ] Distributed architecture
-- [ ] Multi-user support
-- [ ] Advanced crisis detection
-- [ ] Performance optimization
-- [ ] Production hardening
-
-### Phase 4: Legacy (6-12 months)
-- [ ] ShaneBrain digital legacy complete
-- [ ] Voice interface
-- [ ] Multi-modal (text, images, audio)
-- [ ] Family member access system
-- [ ] 1000-year preservation strategy
-
----
-
-## 👨‍💻 Development
-
-### Project Structure
-```
-shanebrain-core/
-├─ planning-system/          # Markdown-based planning
-│   ├─ templates/            # Project templates
-│   ├─ active-projects/      # Current work
-│   └─ completed/            # Archived projects
-├─ weaviate-config/          # Vector DB configuration
-│   ├─ schemas/              # Data classes
-│   └─ backups/              # DB snapshots
-├─ llama-configs/            # Model settings
-│   ├─ models/               # Downloaded models
-│   └─ prompts/              # Reusable prompts
-├─ langchain-chains/         # AI workflows
-│   ├─ crisis-detection/
-│   ├─ qa-retrieval/
-│   └─ code-generation/
-├─ mongodb-schemas/          # Database structures
-├─ scripts/                  # Automation scripts
-│   ├─ setup.sh
-│   ├─ start-shanebrain.bat
-│   └─ backup.sh
-└─ docs/                     # Documentation
-```
-
-### Contributing
-
-This is a personal infrastructure project, but principles and patterns are shared openly:
-
-1. Fork for your own use
-2. Adapt to your needs
-3. Share learnings (not code with personal data)
-4. Respect privacy and security
-
----
-
-## 🤝 Philosophy
-
-**Why Local-First?**
-
-Cloud services are:
-- ❌ Expensive at scale ($50k+/year)
-- ❌ Privacy-invasive
-- ❌ Subject to terms changes
-- ❌ Can disappear overnight
-- ❌ Require internet always
-
-Local infrastructure is:
-- ✅ One-time cost (~$200 for 8TB)
-- ✅ Complete privacy
-- ✅ You own it forever
-- ✅ Can't be shut down
-- ✅ Works offline
+- 👨‍👩‍👦‍👦 Father of 5 sons
+- 💪 2+ years sober
+- 🧠 ADHD as superpower
+- 🎯 Mission: 800 million users deserve better
 
 **"If you don't own your infrastructure, you don't own your future."**
 
 ---
 
-## 👨‍👩‍👦‍👦 About
+## 🤝 Sponsors
 
-Built by **Shane Brazelton** - Father of 5, dispatcher, AI developer, and advocate for accessible technology.
-
-**Mission:** Transform technology from exploitative to uplifting. Build systems that serve 800 million Windows users losing security support, while creating a digital legacy for my family.
-
-**Core Belief:** ADHD isn't a disability—it's a superpower when channeled correctly. This system is built for people like me who think in file structures, need visual progress tracking, and can build incredible things when given the right tools.
+<!-- sponsors -->
+*Become the first sponsor!*
+<!-- sponsors -->
 
 ---
 
 ## 📄 License
 
-**Infrastructure Code:** MIT License - Use freely, modify as needed, no attribution required
-
-**Personal Data & Conversations:** Private - Not included in repository
-
-**Documentation & Patterns:** CC BY 4.0 - Share and adapt with attribution
+MIT License - Use freely, build your own legacy.
 
 ---
 
-## 🙏 Acknowledgments
+## ⭐ Star History
 
-- **Anthropic** - Claude AI and the vision for beneficial AI
-- **Meta AI** - Llama models and open-source commitment
-- **Manus AI** - Context engineering principles (acquired by Meta for $2B)
-- **OthmanAdi** - planning-with-files skill implementation
-- **Weaviate** - Open-source vector database
-- **LangChain** - AI workflow framework
-
----
-
-## 📞 Contact
-
-- **GitHub:** [@thebardchat](https://github.com/thebardchat)
-- **Project:** [Angel Cloud](https://github.com/thebardchat/angel-cloud)
-
----
-
-## ⚡ Quick Links
-
-- [Setup Guide](docs/setup.md)
-- [Architecture](docs/architecture.md)
-- [FAQ](docs/faq.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Changelog](CHANGELOG.md)
+If this project helps you, star it! Every star helps others find it.
 
 ---
 
