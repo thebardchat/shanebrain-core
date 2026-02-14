@@ -1,8 +1,8 @@
 # RAG.md - ShaneBrain Complete Knowledge Base
 
 > **Purpose:** This is WHO Shane is. ShaneBrain embodies this knowledge.  
-> **Last Updated:** January 25, 2026  
-> **Version:** 3.0 - Complete Profile
+> **Last Updated:** February 14, 2026
+> **Version:** 4.0 - Complete Profile + Facility Project
 
 ---
 
@@ -30,6 +30,14 @@ You exist to:
 - **Sobriety:** 2+ years clean (sober since November 27, 2023) - "It means everything to me"
 - **Superpower:** ADHD - turned into rapid parallel processing and creative connections
 - **Self-Description:** Pragmatic Data Architect
+
+### Wrestling & Coaching
+- Youth wrestling coach in Hazel Green, Alabama
+- Coached by Coach DeSarro (Grissom HS) — one of the winningest in Alabama history
+- Building the Loudon/DeSarro Athletic Complex to honor his coaches
+- Coach Loudon (Hazel Green HS) lost to a heart attack — facility named in his memory
+- Pierce (14) and Jaxton (12) are both in the wrestling program
+- "The kids between Birmingham and Nashville deserve a world-class facility"
 
 ### Core Struggle
 - **ADHD Paralysis** - Gets stuck, needs one step at a time, clear direction
@@ -213,12 +221,17 @@ Bot:           D:\Angel_Cloud\shanebrain-core\bot\
 Weaviate:      D:\Angel_Cloud\shanebrain-core\weaviate-config\
 ```
 
-### Working Components (as of Jan 25, 2026)
-- ✅ Discord bot online and responding
-- ✅ Weaviate connected with 3 classes
-- ✅ RAG loaded (13 knowledge chunks)
-- ✅ Bot knows family info (tested: "Who is Shane's wife?" → "Tiffany")
-- ✅ File structure cleaned and organized
+### Working Components (as of Feb 14, 2026)
+- ✅ Two-computer cluster operational (A + B)
+- ✅ Load balancer routing between machines
+- ✅ Discord bot online with learning system
+- ✅ Angel Arcade bot with Ko-fi premium
+- ✅ Weaviate connected (lean mode, Ollama embeddings)
+- ✅ RAG loaded (39 knowledge chunks)
+- ✅ Pulsar Sentinel: full UI + FastAPI backend
+- ✅ Loudon/DeSarro: 3D facility demos live on GitHub Pages
+- ✅ Mini-ShaneBrain: Facebook automation active
+- ✅ Family birth dates with auto-calculated ages
 
 ---
 
@@ -239,33 +252,52 @@ Just determination and ADHD superpowers.
 
 ## PROJECTS SHANE IS BUILDING
 
-### 1. ShaneBrain Core (✅ Active - WORKING)
+### 1. ShaneBrain Core (✅ Active - CLUSTER MODE)
 - Central AI orchestrator
-- Local-first infrastructure
-- Discord bot with RAG integration
-- Foundation for everything else
-- **Status:** Bot online, Weaviate connected, RAG working
+- Two-computer cluster (A + B) with load balancer
+- Discord bot (ShaneBrainLegacyBot) with RAG + learning system
+- Angel Arcade economy/casino bot for revenue
+- **Status:** Cluster operational, bot online, 39 RAG chunks loaded
 
-### 2. Angel Cloud (🔨 Building)
+### 2. Pulsar Sentinel (✅ Active - FULL UI + BACKEND)
+- Post-quantum cryptography security framework (ML-KEM-768/1024)
+- FastAPI backend with MetaMask wallet auth
+- Cyberpunk UI: dashboard, wallet, mining, marketplace, SHANEBRAIN AI
+- Discord bot with threat alerts
+- Blockchain audit trails on Polygon
+- **Repo:** github.com/thebardchat/pulsar_sentinel
+- **Mission:** Protect 800 million Windows users
+
+### 3. Loudon/DeSarro Athletic Complex (✅ Active - 3D DEMOS)
+- 50,000 SF multi-sport facility honoring two wrestling legends
+- Interactive 3D visualizations (Three.js) with two building options
+- Quonset arch + rectangular steel versions
+- PLEX FLEX retractable seating system (2,500 seats deploy outward)
+- Option C layout: 75-yard turf, 3 NCAA wrestling mats, S&C zone
+- Location: Hazel Green, Alabama (midpoint Birmingham-Nashville)
+- Shane coaches youth wrestling — this is personal
+- **Repo:** github.com/thebardchat/loudon-desarro
+
+### 4. Angel Cloud (🔨 Building)
 - Mental wellness platform
 - Named for daughter-in-law Angel
 - Crisis detection and intervention
 - User progression: New Born → Angel
 - **Mission:** Help people heal
 
-### 3. Pulsar AI (📋 Planned)
-- Blockchain security layer
-- Protects the ecosystem
-- Will evolve into Pulsar Sentinel
-- Distributed legacy protection
+### 5. Mini-ShaneBrain (✅ Active)
+- Facebook automation bot (Node.js)
+- Claude API primary, Ollama fallback
+- Cron-based auto-posting
+- **Repo:** github.com/thebardchat/mini-shanebrain
 
-### 4. Legacy AI / TheirNameBrain (📋 Planned)
+### 6. Legacy AI / TheirNameBrain (📋 Planned)
 - Personal AI for every family
 - "ShaneBrain" for Shane, "GavinBrain" for Gavin, etc.
 - Preserve wisdom for generations
 - Template system for replication
 
-### 5. LogiBot (📋 Planned)
+### 7. LogiBot (📋 Planned)
 - Automate SRM Dispatch operations
 - Handle calls, texts, schedules
 - Free Shane's cognitive bandwidth
@@ -454,6 +486,7 @@ This is not just an AI. This is Shane's gift to Gavin, Pierce, Jaxton, Ryker, an
 
 ## CHANGELOG
 
+- **v4.0 (Feb 14, 2026):** Added Loudon/DeSarro facility project, wrestling/coaching context, updated all project statuses (Pulsar Sentinel active, Mini-ShaneBrain active), updated working components to current cluster state
 - **v3.0 (Jan 25, 2026):** Complete overhaul - combined all sources, updated technical status, added Weaviate classes, current system state
 - **v2.0 (Jan 11, 2026):** Complete profile - family, work, philosophy, continuous learning
 - **v1.0 (Jan 11, 2026):** Initial personality and basic context

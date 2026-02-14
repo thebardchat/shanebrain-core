@@ -1,148 +1,224 @@
-# CLAUDE.md
+# CLAUDE.md - ShaneBrain Core
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **Last Updated:** February 14, 2026
+> **Version:** 2.0
+> **Owner:** Shane Brazelton (SRM Dispatch, Alabama)
+> **Repo:** github.com/thebardchat/shanebrain-core
+
+---
 
 ## Project Overview
 
-ShaneBrain Core is a local-first AI infrastructure powering four projects: Angel Cloud (mental wellness), Pulsar AI (blockchain security), LogiBot (dispatch automation), and ShaneBrain Legacy (digital legacy). The philosophy is local-first, cloud-backup—everything runs offline with cloud as optional redundancy.
+ShaneBrain Core is a local-first AI infrastructure powering the Angel Cloud ecosystem. It serves as the central orchestrator for all projects: Angel Cloud (mental wellness), Pulsar Sentinel (post-quantum security), LogiBot (dispatch automation), and ShaneBrain Legacy (digital legacy). Philosophy: local-first, cloud-backup — everything runs offline with cloud as optional redundancy.
+
+---
+
+## Quick Start
+
+```bash
+# Start everything (Windows)
+START-SHANEBRAIN.bat
+
+# Or start manually:
+# 1. Start Computer B first (if cluster mode)
+# 2. Start Weaviate
+cd weaviate-config && docker-compose up -d
+
+# 3. Run the bot
+cd bot && python bot.py
+
+# 4. Run Angel Arcade (optional)
+cd arcade && python arcade_bot.py
+```
+
+---
 
 ## Common Commands
 
-### Install Dependencies
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### Start/Stop Services
-```bash
-# Start everything (Windows)
-scripts/start-shanebrain.bat
-
-# Start Weaviate only
+# Start/Stop Weaviate
 cd weaviate-config && docker-compose up -d
-
-# Stop Weaviate
 cd weaviate-config && docker-compose down
 
-# View Weaviate logs
-cd weaviate-config && docker-compose logs -f weaviate
-```
+# Ollama
+ollama list                    # Check models
+ollama pull llama3.2:1b        # Lightweight (8GB RAM)
+ollama serve                   # Start server
 
-### Ollama (Local LLM)
-```bash
-# Check Ollama status
-ollama list
+# Weaviate setup (first time)
+python scripts/setup_all_weaviate.py
 
-# Pull the lightweight model (for 8GB RAM systems)
-ollama pull llama3.2:1b
+# Import RAG knowledge
+python scripts/import_rag_to_weaviate.py RAG.md
 
-# Pull the larger model (needs 16GB+ RAM)
-ollama pull llama3.2
-```
+# Verify setup
+python scripts/verify_weaviate.py
 
-### Health Check
-```bash
+# Query knowledge
+python scripts/query_legacy.py
+
+# Backup/Restore
+python scripts/backup_weaviate.py
+python scripts/restore_weaviate.py <backup_dir>
+
+# Health check
 python scripts/health_check.py
-```
 
-### Run the Main Agent
-```bash
+# Run the agent
 python langchain-chains/shanebrain_agent.py
-```
 
-### Run Angel Cloud CLI (Mental Wellness Interface)
-```bash
+# Run Angel Cloud CLI
 python langchain-chains/angel_cloud_cli.py
 ```
 
-### Weaviate Schema Setup
-```bash
-# Complete setup (recommended for first-time setup)
-python scripts/setup_all_weaviate.py
+---
 
-# Or run individual steps:
-python scripts/setup_weaviate_schema.py      # Create core schema classes
-python scripts/load_json_schemas.py          # Load JSON schema definitions
-python scripts/import_rag_to_weaviate.py RAG.md  # Import RAG knowledge base
-python scripts/verify_weaviate.py            # Verify setup and show status
+## File Structure
 
-# Query legacy knowledge interactively
-python scripts/query_legacy.py
-
-# Run integration tests
-python scripts/test_weaviate_integration.py
-
-# Backup/Restore data
-python scripts/backup_weaviate.py              # Backup to weaviate-backups/
-python scripts/restore_weaviate.py <backup_dir>  # Restore from backup
-python scripts/clear_weaviate.py               # Clear data (with confirmation)
+```
+shanebrain-core/
+├── CLAUDE.md                    # This file
+├── README.md                    # Project README
+├── RAG.md                       # ShaneBrain personality + knowledge (v4.0)
+├── SHANEBRAIN-MASTER.md         # Quick reference for Shane
+├── requirements.txt             # Python dependencies
+├── START-SHANEBRAIN.bat         # Master launcher (v6.3)
+├── START-COMPUTER-B.bat         # Cluster secondary node
+├── ollama_loadbalancer.py       # Routes between Computer A & B
+├── shanebrain.modelfile         # Custom Ollama model config
+├── shanebrain-3b.modelfile      # 3B model config
+├── agent_manifest.json          # Agent manifest
+│
+├── bot/
+│   ├── bot.py                   # Discord bot (v5.3 - learning system)
+│   ├── .env                     # Bot token (NEVER commit)
+│   └── pending_questions.json   # Learning queue
+│
+├── arcade/
+│   ├── arcade_bot.py            # Angel Arcade economy/casino bot
+│   ├── .env                     # Arcade token (NEVER commit)
+│   └── data/arcade.db           # Player data
+│
+├── langchain-chains/
+│   ├── shanebrain_agent.py      # Central agent (CHAT, MEMORY, WELLNESS, SECURITY, DISPATCH, CODE)
+│   ├── angel_cloud_cli.py       # Interactive CLI for mental wellness
+│   ├── crisis_detection_chain.py # Crisis detection
+│   ├── qa_retrieval_chain.py    # RAG Q&A
+│   └── code_generation_chain.py # Code generation
+│
+├── weaviate-config/
+│   ├── docker-compose.yml       # Lean mode (Ollama embeddings)
+│   ├── data/                    # Persistent storage
+│   └── schemas/                 # Collection definitions
+│
+├── scripts/                     # Setup, import, backup, health check scripts
+├── mongodb-schemas/             # MongoDB collection schemas
+├── planning-system/             # Markdown planning (active-projects gitignored)
+└── frontend/                    # Web frontend (planned)
 ```
 
+---
+
 ## Architecture
+
+### Two-Computer Cluster
+```
+Computer A (192.168.100.1) ── Load Balancer ── Computer B (192.168.100.2)
+        Primary (everything)                        Secondary (Ollama only)
+```
 
 ### Core Components
 
 1. **Ollama LLM** (localhost:11434)
-   - Local LLM inference via Ollama
-   - Default model: `llama3.2:1b` (for 8GB RAM systems)
-   - Configured via `OLLAMA_HOST` and `OLLAMA_MODEL` env vars
+   - Model: `shanebrain-3b:latest` (770 MB) or `llama3.2:1b` fallback
+   - Load balanced across two machines
 
-2. **Weaviate Vector Database** (localhost:8080)
-   - Requires Weaviate 1.27.0+ for Python client v4 compatibility
-   - Local embeddings via `text2vec-transformers` (sentence-transformers-all-MiniLM-L6-v2)
-   - QnA module via `qna-transformers`
-   - Data persisted in `weaviate-config/data/`
-   - Docker containers: `shanebrain-weaviate`, `shanebrain-t2v`, `shanebrain-qna`
+2. **Weaviate** (localhost:8080)
+   - Lean mode: Ollama embeddings (no t2v-transformers container)
+   - 39 RAG chunks loaded
+   - Classes: LegacyKnowledge, Conversation, CrisisLog
 
-3. **LangChain Chains** (`langchain-chains/`)
-   - `shanebrain_agent.py` - Central agent integrating all components, supports modes: CHAT, MEMORY, WELLNESS, SECURITY, DISPATCH, CODE
-   - `angel_cloud_cli.py` - Interactive CLI for Angel Cloud mental wellness
-   - `crisis_detection_chain.py` - Mental health crisis detection for Angel Cloud
-   - `qa_retrieval_chain.py` - RAG-based question answering
-   - `code_generation_chain.py` - Code generation support
+3. **Discord Bot** — ShaneBrainLegacyBot
+   - RAG-enabled knowledge responses
+   - Learning system (`!questions`, `!teach`)
+   - Family data with auto-calculated ages
 
-4. **Planning System** (`planning-system/`)
-   - Markdown-based persistent planning for multi-session continuity
-   - Templates in `templates/` (tracked in git)
-   - Active projects in `active-projects/` (gitignored - contains personal data)
-   - Uses checkbox markers: `[ ]` not started, `[x]` completed, `[~]` in progress, `[!]` blocked
+4. **Angel Arcade** — Economy/casino bot for Discord revenue
+   - Games: slots, coinflip, dice, blackjack, roulette
+   - Ko-fi integration for premium roles
 
-5. **MongoDB Schemas** (`mongodb-schemas/`)
-   - `conversations.json`, `user_sessions.json`, `crisis_logs.json`
+5. **LangChain Chains** — Agent modes: CHAT, MEMORY, WELLNESS, SECURITY, DISPATCH, CODE
 
-6. **Weaviate Schemas** (`weaviate-config/schemas/`)
-   - `shanebrain-memory.json`, `angel-cloud-conversations.json`, `pulsar-security-events.json`
+### Agent Modes
 
-7. **Weaviate Setup Scripts** (`scripts/`)
-   - `setup_all_weaviate.py` - Complete setup orchestration (run this first)
-   - `setup_weaviate_schema.py` - Creates core classes (Conversation, LegacyKnowledge, CrisisLog)
-   - `load_json_schemas.py` - Loads JSON schemas for advanced classes
-   - `import_rag_to_weaviate.py` - Imports RAG.md into LegacyKnowledge
-   - `verify_weaviate.py` - Verifies schema and shows record counts
-   - `query_legacy.py` - Interactive CLI for querying LegacyKnowledge
-   - `test_weaviate_integration.py` - Integration test suite
-   - `weaviate_helpers.py` - Reusable helper class for Weaviate operations
-   - `backup_weaviate.py` - Export data to JSON backups
-   - `restore_weaviate.py` - Import data from JSON backups
-   - `clear_weaviate.py` - Clear or delete collections
+| Mode | Purpose |
+|------|---------|
+| CHAT | General conversation |
+| MEMORY | Shane's knowledge/legacy retrieval |
+| WELLNESS | Angel Cloud mental health support |
+| SECURITY | Pulsar AI threat detection |
+| DISPATCH | SRM trucking operations |
+| CODE | Code generation/debugging |
 
-### Multi-Project Support
+---
 
-The codebase supports four distinct projects with shared infrastructure:
-- **Angel Cloud**: Mental wellness with crisis detection (AgentMode.WELLNESS)
-- **Pulsar AI**: Blockchain security analysis (AgentMode.SECURITY)
-- **LogiBot**: Dispatch automation (AgentMode.DISPATCH)
-- **ShaneBrain Legacy**: Digital legacy/family memory (AgentMode.MEMORY)
+## Ecosystem Projects
+
+| Project | Repo | Status | Description |
+|---------|------|--------|-------------|
+| ShaneBrain Core | shanebrain-core | Active | Central AI orchestrator, Discord bot, cluster |
+| Pulsar Sentinel | pulsar_sentinel | Active | Post-quantum security framework, full UI |
+| Loudon/DeSarro | loudon-desarro | Active | 50,000 SF athletic complex 3D visualizations |
+| Mini-ShaneBrain | mini-shanebrain | Active | Facebook automation bot (Node.js) |
+| Angel Cloud | (in shanebrain-core) | Building | Mental wellness platform |
+| Angel Arcade | (in shanebrain-core) | Active | Discord economy/casino bot |
+| Legacy AI | Planned | Planned | Personal "TheirNameBrain" for each family member |
+| LogiBot | Planned | Planned | SRM Dispatch automation |
+
+---
 
 ## Key Patterns
 
 ### Environment Configuration
-Configuration is in `.env` (gitignored). Template available at `.env.template`. Required variables include `SHANEBRAIN_ROOT` and `WEAVIATE_URL`.
+All secrets in `.env` files (gitignored). Template at `.env.template`.
 
 ### Optional Dependencies
-LangChain chains gracefully handle missing dependencies with `*_AVAILABLE` boolean flags (e.g., `WEAVIATE_AVAILABLE`, `LANGCHAIN_AVAILABLE`).
+LangChain chains handle missing deps with `*_AVAILABLE` boolean flags.
 
 ### Data Privacy
-- Personal planning files, conversation logs, and crisis data are gitignored
-- Only templates and schemas are tracked
-- Local-first means all sensitive data stays on user hardware
+- Personal planning files, conversation logs, crisis data gitignored
+- Local-first: all sensitive data stays on user hardware
+- Only templates and schemas tracked in git
+
+---
+
+## Ports
+
+| Service | Port |
+|---------|------|
+| Load Balancer | 8000 |
+| Weaviate | 8080 |
+| Ollama A | 11434 (192.168.100.1) |
+| Ollama B | 11434 (192.168.100.2) |
+
+---
+
+## Security
+
+- NEVER commit `.env` files
+- NEVER paste connection strings in chat
+- Keep repos PRIVATE until production ready
+- Use Tailscale for remote access, not port forwarding
+
+---
+
+## Contact
+
+**Owner:** Shane Brazelton
+**Company:** SRM Dispatch (Alabama)
+**Ko-fi:** ko-fi.com/shanebrain
+**Discord:** discord.gg/xbHQZkggU7
+**Mission:** 800 million users. Digital legacy for generations.
