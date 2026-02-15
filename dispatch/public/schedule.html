@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Driver Schedule - Google Calendar Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .schedule-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .nav-buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .nav-buttons button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .nav-buttons button:hover {
+            background: #1976D2;
+        }
+        
+        /* Google Calendar Section */
+        .calendar-section {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .calendar-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .calendar-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .calendar-action {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .calendar-action:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .calendar-embed {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .date-section {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+        .date-section input {
+            padding: 8px;
+            border: 2px solid #2196F3;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .alert-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .alert-input {
+            padding: 10px;
+            border: 3px solid #ff5722;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .alert-display {
+            background: #ff5722;
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+            animation: blink 1.5s infinite;
+            display: none;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        .driver-header {
+            display: grid;
+            grid-template-columns: 180px 80px 100px 120px 150px 1fr;
+            gap: 15px;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+        }
+        .driver-row {
+            display: grid;
+            grid-template-columns: 180px 80px 100px 120px 150px 1fr;
+            gap: 15px;
+            margin: 8px 0;
+            align-items: center;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .driver-row.off-work {
+            background: #ffebee;
+            opacity: 0.6;
+        }
+        .driver-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .parking-location {
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 3px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #1976d2;
+        }
+        .off-work-checkbox {
+            width: 20px;
+            height: 20px;
+        }
+        .start-time {
+            padding: 6px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .default-time {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f9f9f9;
+            text-align: center;
+            font-size: 12px;
+        }
+        .tasks {
+            resize: vertical;
+            min-height: 35px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+        .save-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 10px;
+            font-size: 16px;
+        }
+        .save-btn:hover {
+            background: #45a049;
+        }
+        .calendar-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 10px;
+            font-size: 16px;
+        }
+        .calendar-btn:hover {
+            background: #3367d6;
+        }
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+    
+    <!-- Google Calendar API -->
+    <script src="https://calendar.google.com/calendar/embed?src=f04ed4b2e8e5ac1a6e22dcc00d8e49690eb66dd2fcd798441d5fd2148519fbfe%40group.calendar.google.com&ctz=America%2FChicago.JS
+    "></script>
+</head>
+<body>
+    <div class="schedule-container">
+        <h1>🚛 Professional Driver Schedule - Live Google Calendar</h1>
+        
+        <div class="nav-buttons">
+            <button onclick="window.location.href='index.html'">📋 Back to Orders</button>
+            <button onclick="window.open('/routing-data', '_blank')">🗺️ Routing System</button>
+        </div>
+
+        <!-- Google Calendar Integration Section -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h2>📅 Live Driver Schedule - Google Calendar Sync</h2>
+                <div style="font-size: 14px; opacity: 0.9;">Auto-sync schedules to Google Calendar for driver access</div>
+            </div>
+            
+            <div class="calendar-actions">
+                <div class="calendar-action" onclick="openCalendarLink()">
+                    <h3>🔗 Share Calendar Link</h3>
+                    <p>Get shareable link for drivers to add to their phones</p>
+                </div>
+                <div class="calendar-action" onclick="openGoogleCalendar()">
+                    <h3>📱 View Live Calendar</h3>
+                    <p>Open full Google Calendar view</p>
+                </div>
+                <div class="calendar-action" onclick="toggleEmbeddedCalendar()">
+                    <h3>📺 Toggle Embedded View</h3>
+                    <p>Show/hide calendar on this page</p>
+                </div>
+            </div>
+            
+            <div class="calendar-embed" id="calendar-embed" style="display: none;">
+                <h3>📅 Live Driver Schedule Calendar</h3>
+                <iframe id="calendar-frame" 
+                        src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=America%2FChicago&showTitle=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&src=YOUR_CALENDAR_ID&color=%234285F4" 
+                        style="border:0; width:100%; height:600px; border-radius:8px;">
+                </iframe>
+                <div style="text-align: center; margin-top: 10px; font-size: 12px; opacity: 0.8;">
+                    Drivers can view this calendar on their phones by clicking the share link above
+                </div>
+            </div>
+        </div>
+
+        <div class="date-section">
+            <label><strong>Schedule Date:</strong> 
+                <input type="date" id="schedule-date" value="">
+            </label>
+        </div>
+
+        <div class="alert-section">
+            <input type="text" class="alert-input" id="alert-message" placeholder="Enter important notice (will blink on schedule)" oninput="updateAlert()">
+            <div class="alert-display" id="alert-display"></div>
+        </div>
+
+        <div style="background: #f0f8ff; border: 2px solid #2196F3; border-radius: 5px; margin: 20px 0; padding: 15px;">
+            <button onclick="toggleReference()" style="background: #2196F3; color: white; border: none; padding: 8px 15px; border-radius: 3px; cursor: pointer;">
+                📋 Show/Hide Plant Codes
+            </button>
+            <div id="reference-panel" style="display: none; margin-top: 15px; font-size: 11px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong>🏗️ CONCRETE PLANTS:</strong><br>
+                        506=Decatur Concrete<br>
+                        507=Stringfield Huntsville<br>
+                        508=Nick Fitcheard Huntsville<br>
+                        511=250 Palmer Concrete<br>
+                        513=Greenbrier/Limestone<br>
+                        514=Arab<br>
+                        516=Laceys Concrete<br>
+                        518=Scottsboro<br>
+                        519=Muscle Shoals<br>
+                        525=Cullman<br>
+                        51=Fayettville
+                    </div>
+                    <div>
+                        <strong>🏭 SOURCES & PORTS:</strong><br>
+                        HH=Hollingshead Harbor<br>
+                        CHER=Cherokee Quarry<br>
+                        MH=Mount Hope Quarry<br>
+                        POF=Port of Florence<br>
+                        POD=Port of Decatur<br>
+                        MM=Martin Marietta<br><br>
+                        <strong>🧱 BLOCK PLANTS:</strong><br>
+                        907=656 Palmer Block<br>
+                        908=250 Palmer Block
+                    </div>
+                    <div>
+                        <strong>📦 MATERIALS:</strong><br>
+                        MSAND=Masonry Sand<br>
+                        CSAND=Concrete Sand<br>
+                        SCRAP=Scrap Material<br>
+                        67s=67 Stone<br>
+                        78s=78 Stone<br>
+                        57s=57 Stone<br>
+                        89/10s=89/10 Stone
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="driver-header">
+            <div>Driver Name</div>
+            <div>Parks At</div>
+            <div>Off Work</div>
+            <div>Start Time</div>
+            <div>Default Time</div>
+            <div>Tasks/Routes (Shorthand)</div>
+        </div>
+        
+        <div id="drivers-list">
+            <!-- Driver rows will be populated by JavaScript -->
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="save-btn" onclick="saveSchedule()">💾 Save Schedule (Local)</button>
+            <button class="calendar-btn" onclick="saveToGoogleCalendar()">📅 Save & Sync to Google Calendar</button>
+        </div>
+
+        <div id="status-message" class="status-message"></div>
+    </div>
+
+    <script>
+        // Your actual driver roster with real start times and parking locations
+        const drivers = [
+            { name: "Eddie Andrews", defaultTime: "04:15", currentTime: "04:15", parking: "519" },
+            { name: "Jamie Chaney", defaultTime: "04:30", currentTime: "04:30", parking: "519" },
+            { name: "Jimmy Combs", defaultTime: "04:15", currentTime: "04:15", parking: "506" },
+            { name: "Eboni Williams", defaultTime: "04:30", currentTime: "04:30", parking: "507" },
+            { name: "Charlie Hall", defaultTime: "04:30", currentTime: "04:30", parking: "519" },
+            { name: "Stacey Prater", defaultTime: "04:00", currentTime: "04:00", parking: "511" },
+            { name: "Jonathon Naylor", defaultTime: "04:15", currentTime: "04:15", parking: "506" },
+            { name: "Bryant Skipper", defaultTime: "04:30", currentTime: "04:30", parking: "519" },
+            { name: "Cobra Steele", defaultTime: "04:00", currentTime: "04:00", parking: "506" },
+            { name: "Kenny Swoopes", defaultTime: "04:30", currentTime: "04:30", parking: "506" },
+            { name: "Deletra Taft", defaultTime: "04:45", currentTime: "04:45", parking: "507" },
+            { name: "Marcus Williams", defaultTime: "04:45", currentTime: "04:45", parking: "507" },
+            { name: "Alexis Overton", defaultTime: "07:15", currentTime: "07:15", parking: "TBD" },
+            { name: "Jermicael", defaultTime: "05:30", currentTime: "05:30", parking: "507" },
+            { name: "Woody Duncan", defaultTime: "02:30", currentTime: "02:30", parking: "051" },
+            { name: "Chris Peters", defaultTime: "04:15", currentTime: "04:15", parking: "519" },
+            { name: "Roberto", defaultTime: "04:15", currentTime: "04:15", parking: "506" },
+            { name: "Tim Moman", defaultTime: "04:15", currentTime: "04:15", parking: "519" },
+            { name: "Brittany King", defaultTime: "04:45", currentTime: "04:45", parking: "507" }
+        ];
+
+        // Google Calendar Configuration
+        const CALENDAR_CONFIG = {
+            calendarId: 'f04ed4b2e8e5ac1a6e22dcc00d8e49690eb66dd2fcd798441d5fd2148519fbfe@group.calendar.google.com', // Replace with your calendar ID
+            apiKey: 'YOUR_GOOGLE_API_KEY', // Replace with your Google API key
+            shareableLink: 'https://calendar.google.com/calendar?cid=f04ed4b2e8e5ac1a6e22dcc00d8e49690eb66dd2fcd798441d5fd2148519fbfe@group.calendar.google.com',
+            publicViewLink: 'https://calendar.google.com/calendar/embed?src=f04ed4b2e8e5ac1a6e22dcc00d8e49690eb66dd2fcd798441d5fd2148519fbfe@group.calendar.google.com'
+        };
+
+        function initializeSchedule() {
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('schedule-date').value = today;
+
+            const driversList = document.getElementById('drivers-list');
+            
+            drivers.forEach((driver, index) => {
+                const driverRow = document.createElement('div');
+                driverRow.className = 'driver-row';
+                driverRow.id = `driver-row-${index}`;
+                
+                driverRow.innerHTML = `
+                    <div class="driver-name">${driver.name}</div>
+                    <div class="parking-location">${driver.parking}</div>
+                    <input type="checkbox" class="off-work-checkbox" id="off-${index}" onchange="toggleOffWork(${index})">
+                    <input type="time" class="start-time" value="${driver.currentTime}" id="time-${index}">
+                    <div class="default-time">Default: ${driver.defaultTime}</div>
+                    <textarea class="tasks" placeholder="MH → 67s → 511, CHER → 78s → 525..." id="tasks-${index}"></textarea>
+                `;
+                
+                driversList.appendChild(driverRow);
+            });
+        }
+
+        function toggleOffWork(index) {
+            const checkbox = document.getElementById(`off-${index}`);
+            const row = document.getElementById(`driver-row-${index}`);
+            const timeInput = document.getElementById(`time-${index}`);
+            const tasksInput = document.getElementById(`tasks-${index}`);
+            
+            if (checkbox.checked) {
+                row.classList.add('off-work');
+                timeInput.disabled = true;
+                tasksInput.disabled = true;
+                tasksInput.value = "OFF WORK";
+            } else {
+                row.classList.remove('off-work');
+                timeInput.disabled = false;
+                tasksInput.disabled = false;
+                tasksInput.value = "";
+            }
+        }
+
+        function updateAlert() {
+            const alertMessage = document.getElementById('alert-message').value;
+            const alertDisplay = document.getElementById('alert-display');
+            
+            if (alertMessage.trim()) {
+                alertDisplay.textContent = `🚨 ${alertMessage.toUpperCase()}`;
+                alertDisplay.style.display = 'block';
+            } else {
+                alertDisplay.style.display = 'none';
+            }
+        }
+
+        function toggleReference() {
+            const panel = document.getElementById('reference-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveSchedule() {
+            const scheduleDate = document.getElementById('schedule-date').value;
+            const alertMessage = document.getElementById('alert-message').value;
+            const activeDrivers = [];
+            
+            drivers.forEach((driver, index) => {
+                const isOffWork = document.getElementById(`off-${index}`).checked;
+                const startTime = document.getElementById(`time-${index}`).value;
+                const tasks = document.getElementById(`tasks-${index}`).value;
+                
+                activeDrivers.push({
+                    name: driver.name,
+                    parking: driver.parking,
+                    offWork: isOffWork,
+                    startTime: startTime,
+                    defaultTime: driver.defaultTime,
+                    tasks: tasks
+                });
+            });
+            
+            const scheduleData = {
+                date: scheduleDate,
+                alert: alertMessage,
+                drivers: activeDrivers,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to local storage
+            localStorage.setItem('driverSchedule', JSON.stringify(scheduleData));
+            
+            const workingDrivers = activeDrivers.filter(d => !d.offWork).length;
+            showStatus(`📅 Schedule saved locally for ${scheduleDate}! ${workingDrivers} drivers scheduled.`, 'success');
+            
+            console.log('Complete schedule saved:', scheduleData);
+        }
+
+        async function saveToGoogleCalendar() {
+            try {
+                showStatus('🔄 Syncing to Google Calendar...', 'success');
+                
+                const scheduleData = gatherScheduleData();
+                const events = createCalendarEvents(scheduleData);
+                
+                // For now, create calendar event URLs that drivers can click
+                let calendarLinks = '';
+                events.forEach(event => {
+                    const googleCalendarUrl = createGoogleCalendarUrl(event);
+                    calendarLinks += `${event.title}: ${googleCalendarUrl}\n`;
+                });
+                
+                // Save locally first
+                saveSchedule();
+                
+                // Show success with calendar links
+                showStatus(`✅ Schedule saved! Calendar links created for ${events.length} drivers. Check console for links.`, 'success');
+                console.log('Google Calendar Links:');
+                events.forEach(event => {
+                    console.log(`${event.title}: ${createGoogleCalendarUrl(event)}`);
+                });
+                
+                // TODO: Implement actual Google Calendar API posting
+                // This requires OAuth setup and API credentials
+                
+            } catch (error) {
+                console.error('Google Calendar sync failed:', error);
+                showStatus('❌ Google Calendar sync failed. Schedule saved locally only.', 'error');
+            }
+        }
+
+        function gatherScheduleData() {
+            const scheduleDate = document.getElementById('schedule-date').value;
+            const alertMessage = document.getElementById('alert-message').value;
+            const activeDrivers = [];
+            
+            drivers.forEach((driver, index) => {
+                const isOffWork = document.getElementById(`off-${index}`).checked;
+                const startTime = document.getElementById(`time-${index}`).value;
+                const tasks = document.getElementById(`tasks-${index}`).value;
+                
+                if (!isOffWork && tasks.trim()) {
+                    activeDrivers.push({
+                        name: driver.name,
+                        parking: driver.parking,
+                        startTime: startTime,
+                        tasks: tasks
+                    });
+                }
+            });
+            
+            return {
+                date: scheduleDate,
+                alert: alertMessage,
+                drivers: activeDrivers
+            };
+        }
+
+        function createCalendarEvents(scheduleData) {
+            const events = [];
+            
+            scheduleData.drivers.forEach(driver => {
+                const eventDateTime = `${scheduleData.date}T${driver.startTime}:00`;
+                const endDateTime = `${scheduleData.date}T23:59:00`;
+                
+                events.push({
+                    title: `${driver.name}: ${driver.startTime} - ${driver.tasks}`,
+                    description: `Driver: ${driver.name}\nStart Time: ${driver.startTime}\nParks At: ${driver.parking}\nRoute: ${driver.tasks}\n\nGenerated by Dispatch System`,
+                    start: eventDateTime,
+                    end: endDateTime,
+                    location: `Plant ${driver.parking}`
+                });
+            });
+            
+            if (scheduleData.alert) {
+                events.push({
+                    title: `🚨 DISPATCH ALERT: ${scheduleData.alert}`,
+                    description: `Important notice for all drivers: ${scheduleData.alert}`,
+                    start: `${scheduleData.date}T00:00:00`,
+                    end: `${scheduleData.date}T23:59:00`,
+                    location: 'All Locations'
+                });
+            }
+            
+            return events;
+        }
+
+        function createGoogleCalendarUrl(event) {
+            const baseUrl = 'https://calendar.google.com/calendar/render';
+            const params = new URLSearchParams({
+                action: 'TEMPLATE',
+                text: event.title,
+                dates: `${event.start.replace(/[-:]/g, '')}/${event.end.replace(/[-:]/g, '')}`,
+                details: event.description,
+                location: event.location,
+                ctz: 'America/Chicago'
+            });
+            
+            return `${baseUrl}?${params.toString()}`;
+        }
+
+        function openCalendarLink() {
+            const shareableLink = CALENDAR_CONFIG.shareableLink;
+            navigator.clipboard.writeText(shareableLink).then(() => {
+                showStatus('📋 Calendar link copied to clipboard! Share this with drivers.', 'success');
+            }).catch(() => {
+                prompt('Copy this link to share with drivers:', shareableLink);
+            });
+        }
+
+        function openGoogleCalendar() {
+            window.open(CALENDAR_CONFIG.publicViewLink, '_blank');
+        }
+
+        function toggleEmbeddedCalendar() {
+            const embed = document.getElementById('calendar-embed');
+            embed.style.display = embed.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load saved data on page load
+        function loadSavedSchedule() {
+            const saved = localStorage.getItem('driverSchedule');
+            if (saved) {
+                const data = JSON.parse(saved);
+                
+                // Load date and alert
+                if (data.date) document.getElementById('schedule-date').value = data.date;
+                if (data.alert) {
+                    document.getElementById('alert-message').value = data.alert;
+                    updateAlert();
+                }
+                
+                // Load driver data
+                if (data.drivers) {
+                    data.drivers.forEach((driver, index) => {
+                        if (document.getElementById(`off-${index}`)) {
+                            document.getElementById(`off-${index}`).checked = driver.offWork;
+                            document.getElementById(`time-${index}`).value = driver.startTime;
+                            document.getElementById(`tasks-${index}`).value = driver.tasks;
+                            toggleOffWork(index);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Initialize when page loads
+        window.onload = function() {
+            initializeSchedule();
+            loadSavedSchedule();
+        };
+    </script>
+</body>
+</html>

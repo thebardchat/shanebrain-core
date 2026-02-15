@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dispatch Brain</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    /* Weather Widget Styles */
+    .weather-container {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .weather-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .weather-current {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .current-temp {
+      text-align: center;
+      font-size: 36px;
+      font-weight: bold;
+    }
+    .current-details {
+      font-size: 14px;
+    }
+    .weather-alerts {
+      background: rgba(255,0,0,0.8);
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-weight: bold;
+      display: none;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    .forecast-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .forecast-day {
+      background: rgba(255,255,255,0.2);
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+      font-size: 12px;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+      background: white;
+      padding: 20px;
+      border-left: 6px solid orange;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .section h2 {
+      margin-top: 0;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #3f87f5;
+      color: white;
+    }
+    .badge {
+      background-color: #ff9900;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .nav-buttons {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .nav-buttons button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin: 0 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .nav-buttons button:hover {
+      background: #1976D2;
+    }
+  </style>
+</head>
+<body>
+  <!-- Weather Widget -->
+  <div class="weather-container">
+    <div class="weather-header">
+      <h2>🌤️ North Alabama Weather - Dispatch Planning</h2>
+      <div style="font-size: 12px; opacity: 0.8;">Huntsville/Decatur/Florence Region</div>
+    </div>
+    
+    <div class="weather-alerts" id="weather-alerts">
+      ⚠️ WEATHER ALERT: Check conditions before dispatching drivers
+    </div>
+    
+    <div class="weather-current">
+      <div>
+        <div class="current-temp" id="current-temp">--°</div>
+        <div id="current-condition">Loading...</div>
+      </div>
+      <div class="current-details">
+        <div>💧 Humidity: <span id="humidity">--%</span></div>
+        <div>💨 Wind: <span id="wind">-- mph</span></div>
+        <div>👁️ Visibility: <span id="visibility">-- mi</span></div>
+        <div>🌡️ Feels Like: <span id="feels-like">--°</span></div>
+      </div>
+      <div class="current-details">
+        <div>🌅 Sunrise: <span id="sunrise">--:--</span></div>
+        <div>🌇 Sunset: <span id="sunset">--:--</span></div>
+        <div>☔ Rain Chance: <span id="rain-chance">--%</span></div>
+        <div>❄️ Road Conditions: <span id="road-conditions">Good</span></div>
+      </div>
+    </div>
+    
+    <div class="forecast-container" id="forecast-container">
+      <!-- 5-day forecast will be populated here -->
+    </div>
+    
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; opacity: 0.8;">
+      Last Updated: <span id="last-updated">--</span> | 
+      <button onclick="updateWeather()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <button onclick="window.location.href='/'">📋 Orders</button>
+    <button onclick="window.location.href='schedule.html'">👥 Driver Schedule</button>
+    <button onclick="window.open('/routing-data', '_blank')">🗺️ Routing System</button>
+  </div>
+
+  <div class="section">
+    <h2>📌 Dispatch Brain To-Do:</h2>
+    <ul>
+      <li><strong>(Pickup)</strong> Add driver names to orders (and table layout)</li>
+      <li><strong>(Material)</strong> Add <strong>editing</strong>, <strong>deleting</strong>, maybe by grouping by time</li>
+      <li><strong>(Drop-off)</strong> Automate loads by shift, route, or brainwave 💡</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>🧠 Dispatch Brain Notes:</h2>
+    <ul>
+      <li>Orders are fetched from the server and displayed in a table.</li>
+      <li>Each order shows <strong>driver</strong>, pickup, material, dropoff, time, and loads.</li>
+      <li>Loads are displayed as <span class="badge">badges</span> for better visibility.</li>
+      <li><strong>Weather conditions</strong> help plan safe routing and timing.</li>
+    </ul>
+  </div>
+
+  <h1>Today's Orders</h1>
+  <table id="ordersTable">
+    <thead>
+      <tr>
+        <th>Driver</th>
+        <th>Pickup</th>
+        <th>Material</th>
+        <th>Dropoff</th>
+        <th>Time</th>
+        <th>Loads</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Weather functionality - REAL API CALLS
+    async function updateWeather() {
+      try {
+        // North Alabama coordinates (Huntsville area)
+        const lat = 34.7304;
+        const lon = -86.5861;
+        const apiKey = '5e7e908cb9e3339100792846222e1ba3'; // Your OpenWeatherMap API key
+        
+        // Check if API key is set
+        if (apiKey === '5e7e908cb9e3339100792846222e1ba3') {
+          throw new Error('API key not configured');
+        }
+        
+        // Current weather API call
+        const currentResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=imperial`);
+        const currentData = await currentResponse.json();
+        
+        if (currentData.cod !== 200) {
+          throw new Error('API call failed: ' + currentData.message);
+        }
+        
+        // 5-day forecast API call
+        const forecastResponse = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=imperial`);
+        const forecastData = await forecastResponse.json();
+        
+        displayWeather(currentData);
+        displayForecast(forecastData);
+        
+        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+        document.getElementById('api-status').textContent = '✅ Live North Alabama Weather Data';
+        document.getElementById('api-status').style.color = '#4caf50';
+        
+      } catch (error) {
+        console.error('Weather update failed:', error);
+        
+        // Fallback to demo data if API fails
+        const mockWeatherData = {
+          main: {
+            temp: 45,
+            feels_like: 38,
+            humidity: 78
+          },
+          weather: [
+            { main: "Clouds", description: "overcast clouds" }
+          ],
+          wind: {
+            speed: 8.5
+          },
+          visibility: 16093,
+          sys: {
+            sunrise: 1643205600,
+            sunset: 1643242800
+          }
+        };
+        
+        displayWeather(mockWeatherData);
+        updateForecast(); // Use mock forecast
+        
+        document.getElementById('last-updated').textContent = 'Demo Data';
+        
+        if (error.message.includes('API key')) {
+          document.getElementById('api-status').textContent = '⚠️ Add your OpenWeatherMap API key for live data';
+          document.getElementById('api-status').style.color = '#ffeb3b';
+        } else {
+          document.getElementById('api-status').textContent = '❌ API Error - Using demo data';
+          document.getElementById('api-status').style.color = '#f44336';
+        }
+      }
+    }
+
+    function displayWeather(data) {
+      document.getElementById('current-temp').textContent = Math.round(data.main.temp) + '°F';
+      document.getElementById('current-condition').textContent = data.weather[0].description.toUpperCase();
+      document.getElementById('humidity').textContent = data.main.humidity + '%';
+      document.getElementById('wind').textContent = Math.round(data.wind.speed) + ' mph';
+      document.getElementById('visibility').textContent = Math.round(data.visibility / 1609) + ' mi';
+      document.getElementById('feels-like').textContent = Math.round(data.main.feels_like) + '°F';
+      
+      // Convert sunrise/sunset from Unix timestamp to local time
+      const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      document.getElementById('sunrise').textContent = sunrise;
+      document.getElementById('sunset').textContent = sunset;
+      
+      // Calculate rain chance and road conditions based on current weather
+      const temp = data.main.temp;
+      const humidity = data.main.humidity;
+      const condition = data.weather[0].main.toLowerCase();
+      
+      let rainChance = 0;
+      let roadConditions = "Good";
+      
+      if (condition.includes('rain') || condition.includes('drizzle')) {
+        rainChance = 85;
+        roadConditions = "Wet - Use Caution";
+      } else if (condition.includes('snow')) {
+        rainChance = 90;
+        roadConditions = "Snow/Ice - EXTREME CAUTION";
+      } else if (condition.includes('thunderstorm')) {
+        rainChance = 95;
+        roadConditions = "Storms - Delay Deliveries";
+      } else if (temp < 35 && humidity > 80) {
+        rainChance = 45;
+        roadConditions = "Possible Ice Formation";
+      } else if (humidity > 70) {
+        rainChance = Math.round(humidity - 40);
+      }
+      
+      document.getElementById('rain-chance').textContent = rainChance + '%';
+      document.getElementById('road-conditions').textContent = roadConditions;
+      
+      // Show weather alerts for dangerous dispatch conditions
+      const alertsDiv = document.getElementById('weather-alerts');
+      let showAlert = false;
+      let alertMessage = '';
+      
+      if (temp < 32) {
+        showAlert = true;
+        alertMessage = '🧊 FREEZING CONDITIONS: Ice possible on roads - Extreme caution required';
+      } else if (condition.includes('thunderstorm')) {
+        showAlert = true;
+        alertMessage = '⛈️ THUNDERSTORMS: Consider delaying non-essential deliveries';
+      } else if (condition.includes('snow')) {
+        showAlert = true;
+        alertMessage = '❄️ SNOW CONDITIONS: Reduce speeds, allow extra time';
+      } else if (data.wind.speed > 25) {
+        showAlert = true;
+        alertMessage = '💨 HIGH WINDS: Secure loads, caution with empty trailers';
+      } else if (data.visibility < 1600) { // Less than 1 mile
+        showAlert = true;
+        alertMessage = '🌫️ LOW VISIBILITY: Reduce speeds, use headlights';
+      } else if (rainChance > 70) {
+        showAlert = true;
+        alertMessage = '☔ HIGH RAIN PROBABILITY: Plan for delays and wet roads';
+      }
+      
+      if (showAlert) {
+        alertsDiv.style.display = 'block';
+        alertsDiv.textContent = alertMessage;
+      } else {
+        alertsDiv.style.display = 'none';
+      }
+    }
+
+    function displayForecast(forecastData) {
+      const forecastContainer = document.getElementById('forecast-container');
+      forecastContainer.innerHTML = '';
+      
+      // Get daily forecasts (API gives 3-hour intervals, we want daily)
+      const dailyForecasts = {};
+      
+      forecastData.list.forEach(item => {
+        const date = new Date(item.dt * 1000);
+        const dateKey = date.toDateString();
+        
+        if (!dailyForecasts[dateKey]) {
+          dailyForecasts[dateKey] = {
+            date: date,
+            temps: [],
+            conditions: [],
+            pop: item.pop || 0
+          };
+        }
+        
+        dailyForecasts[dateKey].temps.push(item.main.temp);
+        dailyForecasts[dateKey].conditions.push(item.weather[0].main);
+        if (item.pop > dailyForecasts[dateKey].pop) {
+          dailyForecasts[dateKey].pop = item.pop;
+        }
+      });
+      
+      // Display first 5 days
+      const days = Object.values(dailyForecasts).slice(0, 5);
+      
+      days.forEach(day => {
+        const high = Math.round(Math.max(...day.temps));
+        const low = Math.round(Math.min(...day.temps));
+        const dayName = day.date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+        
+        // Get most common condition
+        const conditionCounts = {};
+        day.conditions.forEach(cond => {
+          conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
+        });
+        const mostCommon = Object.keys(conditionCounts).reduce((a, b) => 
+          conditionCounts[a] > conditionCounts[b] ? a : b
+        );
+        
+        // Convert condition to emoji
+        const conditionEmoji = {
+          'Clear': '☀️',
+          'Clouds': '⛅',
+          'Rain': '🌧️', 
+          'Snow': '❄️',
+          'Thunderstorm': '⛈️',
+          'Drizzle': '🌦️',
+          'Mist': '🌫️',
+          'Fog': '🌫️'
+        };
+        
+        const emoji = conditionEmoji[mostCommon] || '☁️';
+        
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'forecast-day';
+        dayDiv.innerHTML = `
+          <div style="font-weight: bold;">${dayName}</div>
+          <div style="font-size: 24px; margin: 5px 0;">${emoji}</div>
+          <div>${high}°/${low}°</div>
+          <div style="font-size: 10px; margin-top: 5px;">${Math.round(day.pop * 100)}% rain</div>
+        `;
+        forecastContainer.appendChild(dayDiv);
+      });
+    }
+
+    function updateForecast() {
+      // Fallback mock forecast if no real data
+      const forecastContainer = document.getElementById('forecast-container');
+      const days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+      const temps = [
+        { high: 52, low: 34, condition: '☀️' },
+        { high: 48, low: 31, condition: '⛅' },
+        { high: 45, low: 29, condition: '🌧️' },
+        { high: 41, low: 26, condition: '❄️' },
+        { high: 46, low: 32, condition: '☀️' }
+      ];
+      
+      forecastContainer.innerHTML = '';
+      
+      days.forEach((day, index) => {
+        const forecast = temps[index];
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'forecast-day';
+        dayDiv.innerHTML = `
+          <div style="font-weight: bold;">${day}</div>
+          <div style="font-size: 24px; margin: 5px 0;">${forecast.condition}</div>
+          <div>${forecast.high}°/${forecast.low}°</div>
+        `;
+        forecastContainer.appendChild(dayDiv);
+      });
+    }
+
+    // Orders functionality (existing)
+    async function fetchOrders() {
+      try {
+        const res = await fetch('/orders');
+        const orders = await res.json();
+        const tbody = document.querySelector('#ordersTable tbody');
+        tbody.innerHTML = '';
+
+        orders.forEach(order => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${order.driver || '—'}</td>
+            <td>${order.pickup}</td>
+            <td>${order.material}</td>
+            <td>${order.dropoff}</td>
+            <td>${order.time}</td>
+            <td><span class="badge">${order.loads || 1}</span></td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      }
+    }
+
+    // Initialize everything when page loads
+    window.onload = function() {
+      updateWeather();
+      fetchOrders();
+      
+      // Update weather every 30 minutes
+      setInterval(updateWeather, 30 * 60 * 1000);
+    };
+  </script>
+</body>
+</html>

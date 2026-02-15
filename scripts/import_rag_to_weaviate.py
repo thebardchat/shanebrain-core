@@ -18,7 +18,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 OLLAMA_URL = "http://localhost:11434/api/embed"
-EMBED_MODEL = "llama3.2:1b"
+EMBED_MODEL = "nomic-embed-text"
 
 # Colors for terminal output
 GREEN = '\033[92m'
