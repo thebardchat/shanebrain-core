@@ -3,14 +3,22 @@
 RAG.md Importer for ShaneBrain Core
 Parses RAG.md and imports chunks into Weaviate's LegacyKnowledge class.
 Compatible with weaviate-client v4.
+
+Uses client-side embedding via Ollama to bypass Weaviate's text2vec-ollama
+Docker networking timeout issues.
 """
 
 import weaviate
 from weaviate.classes.query import Filter
 import re
 import sys
+import json
+import requests
 from pathlib import Path
 from datetime import datetime, timezone
+
+OLLAMA_URL = "http://localhost:11434/api/embed"
+EMBED_MODEL = "llama3.2:1b"
 
 # Colors for terminal output
 GREEN = '\033[92m'
@@ -90,8 +98,37 @@ def parse_rag_file(filepath):
     return chunks
 
 
+def generate_embedding(text):
+    """Generate embedding vector via Ollama API (client-side)."""
+    try:
+        resp = requests.post(OLLAMA_URL, json={
+            "model": EMBED_MODEL,
+            "input": text[:4000]  # Truncate to avoid token limits
+        }, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        # Ollama returns {"embeddings": [[...]]} for /api/embed
+        if "embeddings" in data and len(data["embeddings"]) > 0:
+            return data["embeddings"][0]
+        # Fallback for older Ollama versions
+        if "embedding" in data:
+            return data["embedding"]
+        raise ValueError(f"Unexpected response format: {list(data.keys())}")
+    except Exception as e:
+        print(f"{RED}✗ Embedding error: {e}{RESET}")
+        return None
+
+
 def import_to_weaviate(chunks, clear_existing=False):
-    """Import chunks into LegacyKnowledge class."""
+    """Import chunks into LegacyKnowledge class with client-side embeddings."""
+    # First verify Ollama is reachable
+    print(f"\n{BLUE}Testing Ollama embeddings...{RESET}")
+    test_vec = generate_embedding("test")
+    if test_vec is None:
+        print(f"{RED}✗ Cannot reach Ollama at {OLLAMA_URL}{RESET}")
+        return 0
+    print(f"{GREEN}✓ Ollama responding ({len(test_vec)}-dim vectors){RESET}")
+
     print(f"\n{BLUE}Connecting to Weaviate...{RESET}")
 
     try:
@@ -128,15 +165,21 @@ def import_to_weaviate(chunks, clear_existing=False):
         print(f"\n{BLUE}Importing {len(chunks)} chunks...{RESET}\n")
 
         imported = 0
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
+            # Generate embedding client-side
+            embed_text = f"{chunk['title']}\n{chunk['content']}"
+            vector = generate_embedding(embed_text)
+            if vector is None:
+                print(f"{RED}✗{RESET} Failed to embed '{chunk['title']}'")
+                continue
+
             try:
-                collection.data.insert(chunk)
+                collection.data.insert(
+                    properties=chunk,
+                    vector=vector
+                )
                 imported += 1
-                # Truncate content for display
-                content_preview = chunk['content'][:50].replace('\n', ' ')
-                if len(chunk['content']) > 50:
-                    content_preview += "..."
-                print(f"{GREEN}✓{RESET} [{chunk['category']:10}] {chunk['title'][:30]}")
+                print(f"{GREEN}✓{RESET} [{chunk['category']:10}] {chunk['title'][:40]} ({i+1}/{len(chunks)})")
             except Exception as e:
                 print(f"{RED}✗{RESET} Error importing '{chunk['title']}': {e}")
 

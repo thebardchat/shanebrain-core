@@ -1,0 +1,16 @@
+[Unit]
+Description=Angel Arcade Discord Economy Bot
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shanebrain
+WorkingDirectory=/mnt/shanebrain-raid/shanebrain-core/arcade
+ExecStart=/usr/bin/python3 arcade_bot.py
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

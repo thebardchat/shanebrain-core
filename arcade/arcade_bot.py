@@ -27,7 +27,7 @@ import json
 # ============================================================
 # PATHS - Use absolute paths
 # ============================================================
-ARCADE_ROOT = r"D:\Angel_Cloud\shanebrain-core\arcade"
+ARCADE_ROOT = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(ARCADE_ROOT, "data", "arcade.db")
 
 load_dotenv(os.path.join(ARCADE_ROOT, ".env"))

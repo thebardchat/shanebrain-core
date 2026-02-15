@@ -1,0 +1,16 @@
+[Unit]
+Description=ShaneBrain Discord Bot v5.4
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shanebrain
+WorkingDirectory=/mnt/shanebrain-raid/shanebrain-core/bot
+ExecStart=/usr/bin/python3 bot.py
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
