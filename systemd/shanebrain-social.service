@@ -1,0 +1,23 @@
+[Unit]
+Description=ShaneBrain Social Bot - Facebook automation with Weaviate
+After=docker.service ollama.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=shanebrain
+WorkingDirectory=/mnt/shanebrain-raid/shanebrain-core
+ExecStart=/usr/bin/python3 -m social.fb_bot
+Restart=on-failure
+RestartSec=30
+
+# Environment
+EnvironmentFile=/mnt/shanebrain-raid/shanebrain-core/.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=shanebrain-social
+
+[Install]
+WantedBy=multi-user.target

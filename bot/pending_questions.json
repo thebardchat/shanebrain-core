@@ -16,5 +16,17 @@
     "asker": "iam2023.",
     "timestamp": "2026-01-27T01:01:17.016846",
     "answered": false
+  },
+  {
+    "question": "!help",
+    "asker": "iam2023.",
+    "timestamp": "2026-02-03T14:43:42.746229",
+    "answered": false
+  },
+  {
+    "question": "!info",
+    "asker": "iam2023.",
+    "timestamp": "2026-02-03T21:33:05.923215",
+    "answered": false
   }
 ]

@@ -72,6 +72,45 @@ def setup_schema(client):
                 Property(name="session_id", data_type=DataType.TEXT, description="Session identifier"),
                 Property(name="response_given", data_type=DataType.TEXT, description="Response provided to user"),
             ]
+        },
+        {
+            "name": "SocialKnowledge",
+            "description": "Knowledge harvested from Facebook interactions",
+            "vectorizer": Configure.Vectorizer.text2vec_ollama(
+                model="llama3.2:1b",
+                api_endpoint="http://host.docker.internal:11434"
+            ),
+            "properties": [
+                Property(name="content", data_type=DataType.TEXT, description="The interaction content"),
+                Property(name="author_name", data_type=DataType.TEXT, description="Name of the person"),
+                Property(name="author_id", data_type=DataType.TEXT, description="Facebook user ID"),
+                Property(name="interaction_type", data_type=DataType.TEXT, description="Type: comment, reaction, share, post"),
+                Property(name="sentiment", data_type=DataType.TEXT, description="Sentiment: positive, negative, neutral, supportive"),
+                Property(name="context", data_type=DataType.TEXT, description="Context about the interaction"),
+                Property(name="source_post_id", data_type=DataType.TEXT, description="Facebook post ID this came from"),
+                Property(name="timestamp", data_type=DataType.DATE, description="When the interaction occurred"),
+                Property(name="relationship_tags", data_type=DataType.TEXT_ARRAY, description="Tags like friend, family, supporter"),
+                Property(name="knowledge_extracted", data_type=DataType.TEXT, description="Key knowledge extracted from this interaction"),
+            ]
+        },
+        {
+            "name": "FriendProfile",
+            "description": "Living profiles of people who interact on Facebook",
+            "vectorizer": Configure.Vectorizer.text2vec_ollama(
+                model="llama3.2:1b",
+                api_endpoint="http://host.docker.internal:11434"
+            ),
+            "properties": [
+                Property(name="name", data_type=DataType.TEXT, description="Person's display name"),
+                Property(name="facebook_id", data_type=DataType.TEXT, description="Facebook user ID"),
+                Property(name="interaction_count", data_type=DataType.INT, description="Total interactions"),
+                Property(name="first_seen", data_type=DataType.DATE, description="First interaction timestamp"),
+                Property(name="last_seen", data_type=DataType.DATE, description="Most recent interaction"),
+                Property(name="sentiment_profile", data_type=DataType.TEXT, description="Overall sentiment pattern"),
+                Property(name="topics_discussed", data_type=DataType.TEXT_ARRAY, description="Topics this person engages with"),
+                Property(name="relationship_strength", data_type=DataType.NUMBER, description="0.0-1.0 relationship strength score"),
+                Property(name="summary", data_type=DataType.TEXT, description="AI-generated summary of this person"),
+            ]
         }
     ]
 
@@ -90,13 +129,17 @@ def setup_schema(client):
                 skipped += 1
                 continue
 
-            # Create the collection with no vectorizer (embeddings managed externally or via transformers module)
+            # Use custom vectorizer if specified, otherwise default to text2vec-ollama
+            vectorizer = schema.get("vectorizer", Configure.Vectorizer.text2vec_ollama(
+                model="llama3.2:1b",
+                api_endpoint="http://host.docker.internal:11434"
+            ) if class_name != "CrisisLog" else None)
+
             client.collections.create(
                 name=class_name,
                 description=schema["description"],
                 properties=schema["properties"],
-                # Use the text2vec-transformers module if available
-                vectorizer_config=Configure.Vectorizer.text2vec_transformers() if class_name != "CrisisLog" else None
+                vectorizer_config=vectorizer
             )
             print(f"{GREEN}✓ Created class: {class_name}{RESET}")
             created += 1

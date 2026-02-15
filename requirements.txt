@@ -32,3 +32,6 @@ rich>=13.7.0
 
 # Prompt toolkit (for interactive CLI)
 prompt_toolkit>=3.0.43
+
+# Scheduler (for social bot)
+APScheduler>=3.10.0

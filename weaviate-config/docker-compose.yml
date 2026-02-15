@@ -23,6 +23,8 @@ services:
     ports:
       - "8080:8080"      # REST API
       - "50051:50051"    # gRPC
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/var/lib/weaviate
       - ./backups:/var/lib/weaviate/backups
@@ -41,7 +43,7 @@ services:
       DEFAULT_VECTORIZER_MODULE: 'text2vec-ollama'
       ENABLE_MODULES: 'text2vec-ollama,generative-ollama,backup-filesystem'
 
-      # Ollama connection (host.docker.internal = your Windows machine)
+      # Ollama connection (host = Pi running Ollama natively)
       OLLAMA_API_ENDPOINT: 'http://host.docker.internal:11434'
 
       # Backup settings

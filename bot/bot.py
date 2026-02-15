@@ -1,18 +1,25 @@
 """
-ShaneBrainLegacyBot v5.3 - LEARNING EDITION
+ShaneBrainLegacyBot v5.4 - LEARNING + SOCIAL EDITION
 - Correct family info with birth dates
 - Strict brevity (2-4 sentences)
 - Logs questions it can't answer
 - !teach command for Shane to add knowledge
+- Weaviate SocialKnowledge + FriendProfile harvesting
 """
 import discord
 from discord.ext import commands
 import os
+import sys
 from dotenv import load_dotenv
 import asyncio
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
+
+# Add shanebrain-core root to path for imports
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _root not in sys.path:
+    sys.path.insert(0, _root)
 
 # Ollama
 try:
@@ -59,10 +66,18 @@ WEAVIATE_CLASS = "LegacyKnowledge"
 RAG_CHUNK_LIMIT = 5
 
 # Questions log file
-QUESTIONS_FILE = "D:\\Angel_Cloud\\shanebrain-core\\bot\\pending_questions.json"
+QUESTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pending_questions.json")
 
 # Global client
 weaviate_client = None
+
+# Social knowledge helper (uses same Weaviate as Facebook bot)
+try:
+    from scripts.weaviate_helpers import WeaviateHelper
+    SOCIAL_AVAILABLE = True
+except ImportError:
+    SOCIAL_AVAILABLE = False
+    print("WARNING: Could not import WeaviateHelper for social knowledge")
 
 # ============================================================
 # FAMILY DATA - BIRTH DATES FOR AGE CALCULATION
@@ -236,6 +251,78 @@ def get_weaviate_stats():
         return None
 
 # ============================================================
+# SOCIAL KNOWLEDGE HARVESTING
+# ============================================================
+POSITIVE_WORDS = ["love", "great", "amazing", "awesome", "thank", "blessed", "proud", "congrats", "lol", "haha"]
+NEGATIVE_WORDS = ["hate", "stupid", "terrible", "worst", "angry", "disappointed", "sucks"]
+SUPPORTIVE_WORDS = ["praying", "support", "here for you", "got your back", "amen", "keep going", "proud of you"]
+
+def quick_sentiment(text):
+    """Fast keyword-based sentiment analysis (no Ollama call)."""
+    text_lower = text.lower()
+    for word in SUPPORTIVE_WORDS:
+        if word in text_lower:
+            return "supportive"
+    for word in NEGATIVE_WORDS:
+        if word in text_lower:
+            return "negative"
+    for word in POSITIVE_WORDS:
+        if word in text_lower:
+            return "positive"
+    return "neutral"
+
+def quick_topics(text):
+    """Extract basic topic tags from message text."""
+    topic_keywords = {
+        "family": ["family", "kids", "son", "wife", "dad", "father", "brother"],
+        "tech": ["code", "ai", "python", "bot", "server", "raspberry", "ollama", "weaviate"],
+        "faith": ["god", "pray", "church", "faith", "blessed", "amen"],
+        "sobriety": ["sober", "sobriety", "drinking", "recovery"],
+        "adhd": ["adhd", "focus", "hyperfocus", "distracted"],
+        "work": ["dispatch", "truck", "job", "work", "hustle"],
+        "wrestling": ["wrestling", "wrestle", "match", "tournament"],
+    }
+    text_lower = text.lower()
+    found = []
+    for topic, words in topic_keywords.items():
+        if any(w in text_lower for w in words):
+            found.append(topic)
+    return found[:3] if found else ["general"]
+
+def log_discord_interaction(author_name, author_id, message, channel_name="", is_bot_reply=False):
+    """Log a Discord interaction to Weaviate SocialKnowledge + update FriendProfile."""
+    if not SOCIAL_AVAILABLE:
+        return
+    try:
+        with WeaviateHelper() as wv:
+            sentiment = quick_sentiment(message)
+            topics = quick_topics(message)
+            interaction_type = "bot_reply" if is_bot_reply else "discord_message"
+
+            wv.log_social_interaction(
+                content=message,
+                author_name=author_name,
+                author_id=str(author_id),
+                interaction_type=interaction_type,
+                source_post_id=f"discord:{channel_name}",
+                sentiment=sentiment,
+                context=f"Discord #{channel_name}" if channel_name else "Discord DM",
+                relationship_tags=["discord"],
+                knowledge_extracted="",
+                timestamp=datetime.now(timezone.utc),
+            )
+
+            if not is_bot_reply:
+                wv.upsert_friend_profile(
+                    name=author_name,
+                    facebook_id=f"discord:{author_id}",
+                    sentiment=sentiment,
+                    topics=topics,
+                )
+    except Exception as e:
+        print(f"[SOCIAL] Error logging interaction: {e}")
+
+# ============================================================
 # SYSTEM PROMPT - STRICT BREVITY + CORRECT FAMILY
 # ============================================================
 def get_system_prompt():
@@ -376,18 +463,37 @@ async def on_ready():
 async def on_message(message):
     if message.author.bot:
         return
-    
+
+    channel_name = getattr(message.channel, 'name', 'DM')
+
     # Respond to mentions or DMs
     if bot.user in message.mentions or isinstance(message.channel, discord.DMChannel):
         async with message.channel.typing():
             clean_msg = message.content.replace(f'<@{bot.user.id}>', '').strip()
             if clean_msg:
+                # Log the user's message to Weaviate
+                log_discord_interaction(
+                    message.author.display_name,
+                    message.author.id,
+                    clean_msg,
+                    channel_name,
+                )
+
                 response = await chat_with_shanebrain(clean_msg, message.author.name)
                 # Split long responses
                 if len(response) > 1900:
                     response = response[:1900] + "..."
                 await message.reply(response)
-    
+
+                # Log the bot's reply too
+                log_discord_interaction(
+                    bot.user.name,
+                    bot.user.id,
+                    response,
+                    channel_name,
+                    is_bot_reply=True,
+                )
+
     await bot.process_commands(message)
 
 # ============================================================
@@ -467,6 +573,7 @@ async def help_cmd(ctx):
     embed.add_field(name="!remember [text]", value="Save to memory", inline=True)
     embed.add_field(name="!questions", value="See pending questions", inline=True)
     embed.add_field(name="!teach [#] [answer]", value="Teach an answer (admin)", inline=True)
+    embed.add_field(name="!friends", value="Top interactors", inline=True)
     await ctx.send(embed=embed)
 
 @bot.command(name='brain')
@@ -486,7 +593,9 @@ async def brain_status(ctx):
     if stats:
         stats_text = "\n".join([f"• {k}: {v}" for k, v in stats.items()])
         embed.add_field(name="Knowledge", value=stats_text, inline=False)
-    
+
+    embed.add_field(name="Social Harvesting", value="ON" if SOCIAL_AVAILABLE else "OFF", inline=True)
+
     await ctx.send(embed=embed)
 
 @bot.command(name='quote')
@@ -501,6 +610,37 @@ async def remember(ctx, *, text: str):
         await ctx.send(f"🧠 Got it.")
     else:
         await ctx.send("❌ Weaviate offline")
+
+@bot.command(name='friends')
+async def friends_cmd(ctx):
+    """Show top people who interact with ShaneBrain"""
+    if not SOCIAL_AVAILABLE:
+        await ctx.send("Social knowledge not available.")
+        return
+    try:
+        with WeaviateHelper() as wv:
+            friends = wv.get_top_friends(limit=10)
+            if not friends:
+                await ctx.send("No friend profiles yet. Start chatting!")
+                return
+            embed = discord.Embed(title="Top Friends", color=0x00FFFF)
+            for i, f in enumerate(friends, 1):
+                name = f.get("name", "Unknown")
+                count = f.get("interaction_count", 0)
+                strength = f.get("relationship_strength", 0)
+                sentiment = f.get("sentiment_profile", "?")
+                topics = f.get("topics_discussed", [])
+                bar_len = int(strength * 10)
+                bar = f"{'█' * bar_len}{'░' * (10 - bar_len)}"
+                topics_str = ", ".join(topics[:3]) if topics else "various"
+                embed.add_field(
+                    name=f"{i}. {name}",
+                    value=f"[{bar}] {count} msgs | {sentiment} | {topics_str}",
+                    inline=False,
+                )
+            await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"Error: {str(e)[:100]}")
 
 @bot.command(name='search')
 async def search(ctx, *, query: str):
