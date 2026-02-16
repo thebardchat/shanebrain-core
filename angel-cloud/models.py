@@ -64,6 +64,9 @@ def init_db():
     if "last_activity" not in existing:
         conn.execute("ALTER TABLE users ADD COLUMN last_activity TEXT")
 
+    if "roblox_user_id" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN roblox_user_id TEXT")
+
     # Link codes table for Discord verification
     conn.execute("""
         CREATE TABLE IF NOT EXISTS link_codes (
@@ -358,11 +361,77 @@ def get_community_stats() -> dict:
     total = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     discord_linked = conn.execute("SELECT COUNT(*) FROM users WHERE discord_id IS NOT NULL").fetchone()[0]
     github_linked = conn.execute("SELECT COUNT(*) FROM users WHERE github_username IS NOT NULL").fetchone()[0]
+    roblox_linked = conn.execute("SELECT COUNT(*) FROM users WHERE roblox_user_id IS NOT NULL").fetchone()[0]
     total_interactions = conn.execute("SELECT COALESCE(SUM(interaction_count), 0) FROM users").fetchone()[0]
     conn.close()
     return {
         "total_angels": total,
         "discord_linked": discord_linked,
         "github_linked": github_linked,
+        "roblox_linked": roblox_linked,
         "total_interactions": total_interactions,
     }
+
+
+# ---------------------------------------------------------------------------
+# Roblox Link
+# ---------------------------------------------------------------------------
+
+def create_roblox_link_code(user_id: int) -> Optional[str]:
+    """Create a 6-digit code for Roblox verification. Called from the web profile."""
+    conn = get_db()
+    user = conn.execute("SELECT id, email, roblox_user_id FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not user:
+        conn.close()
+        return None
+    if user["roblox_user_id"]:
+        conn.close()
+        return None  # Already linked
+
+    code = str(random.randint(100000, 999999))
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(minutes=10)
+    conn.execute(
+        "INSERT INTO link_codes (code, discord_id, discord_name, email, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (code, "roblox_pending", "Roblox Link", user["email"], now.isoformat(), expires.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+    return code
+
+
+def verify_roblox_link(roblox_user_id: str, roblox_username: str, code: str) -> Optional[dict]:
+    """Validate a 6-digit code and bind the Roblox user ID. Returns user dict or None."""
+    conn = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    row = conn.execute(
+        "SELECT * FROM link_codes WHERE code = ? AND discord_id = 'roblox_pending' AND used = 0 AND expires_at > ? ORDER BY created_at DESC LIMIT 1",
+        (code, now),
+    ).fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    # Find user by email
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (row["email"],)).fetchone()
+    if not user:
+        conn.close()
+        return None
+    if user["roblox_user_id"]:
+        conn.close()
+        return None  # Already linked
+
+    conn.execute("UPDATE link_codes SET used = 1 WHERE id = ?", (row["id"],))
+    conn.execute("UPDATE users SET roblox_user_id = ? WHERE id = ?", (roblox_user_id, user["id"]))
+    conn.commit()
+
+    updated_user = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    conn.close()
+    return dict(updated_user) if updated_user else None
+
+
+def get_user_by_roblox_id(roblox_user_id: str) -> Optional[dict]:
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE roblox_user_id = ?", (roblox_user_id,)).fetchone()
+    conn.close()
+    return dict(user) if user else None

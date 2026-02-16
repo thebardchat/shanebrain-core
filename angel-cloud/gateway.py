@@ -415,6 +415,83 @@ async def api_discord_activity(request: Request, x_bot_secret: str | None = Head
 
 
 # ---------------------------------------------------------------------------
+# API — Roblox Link
+# ---------------------------------------------------------------------------
+
+@app.post("/api/create-roblox-link-code")
+def api_create_roblox_link_code(request: Request):
+    """Profile page: user generates a 6-digit code to link their Roblox account."""
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    code = models.create_roblox_link_code(user["id"])
+    if not code:
+        return RedirectResponse("/profile?error=Roblox+already+linked+or+error", status_code=303)
+    return RedirectResponse(f"/profile?success=Roblox+link+code:+{code}+(enter+at+The+Keeper+NPC+in+game)", status_code=303)
+
+
+@app.post("/api/verify-roblox")
+async def api_verify_roblox(request: Request, x_bot_secret: str | None = Header(None)):
+    """Called by Roblox game server to verify a link code."""
+    if not _check_bot_secret(x_bot_secret):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+    roblox_user_id = str(body.get("roblox_user_id", ""))
+    roblox_username = body.get("roblox_username", "")
+    code = str(body.get("code", "")).strip()
+
+    if not roblox_user_id or not code or len(code) != 6:
+        return JSONResponse({"error": "Missing roblox_user_id or invalid code"}, status_code=400)
+
+    user = models.verify_roblox_link(roblox_user_id, roblox_username, code)
+    if not user:
+        return JSONResponse({"error": "Code not found, expired, or already linked"}, status_code=404)
+
+    return JSONResponse({
+        "status": "ok",
+        "user_id": user["id"],
+        "username": user["username"],
+        "angel_level": user["angel_level"],
+        "interaction_count": user.get("interaction_count", 0),
+    })
+
+
+@app.post("/api/roblox-activity")
+async def api_roblox_activity(request: Request, x_bot_secret: str | None = Header(None)):
+    """Called by Roblox game server to report player activity for points."""
+    if not _check_bot_secret(x_bot_secret):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+    roblox_user_id = str(body.get("roblox_user_id", ""))
+    points = min(body.get("points", 1), 5)  # cap at 5 per call
+    activity_type = body.get("activity_type", "roblox_activity")
+    description = body.get("description", "Roblox activity")
+
+    user = models.get_user_by_roblox_id(roblox_user_id)
+    if not user:
+        return JSONResponse({"status": "ignored", "reason": "unlinked"})
+
+    models.add_interaction_points(user["id"], points, activity_type, description)
+    new_level = models.check_level_up(user["id"])
+
+    result = {"status": "ok", "points": points}
+    if new_level:
+        result["level_up"] = new_level
+    return JSONResponse(result)
+
+
+# ---------------------------------------------------------------------------
 # API — Public
 # ---------------------------------------------------------------------------
 
