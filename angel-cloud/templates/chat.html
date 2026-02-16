@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Chat — Angel Cloud{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-messages" id="messages">
+        <div class="msg-assistant">Hey {{ user.username }}. What's on your mind?</div>
+    </div>
+    <div class="chat-input-bar">
+        <input type="text" id="chat-input" placeholder="Talk to ShaneBrain..." autocomplete="off">
+        <button id="send-btn">SEND</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const input = document.getElementById('chat-input');
+    const btn = document.getElementById('send-btn');
+    const messages = document.getElementById('messages');
+    let sending = false;
+
+    function addMessage(text, cls) {
+        const div = document.createElement('div');
+        div.className = cls;
+        div.textContent = text;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+        return div;
+    }
+
+    async function send() {
+        const text = input.value.trim();
+        if (!text || sending) return;
+
+        sending = true;
+        btn.disabled = true;
+        input.value = '';
+
+        addMessage(text, 'msg-user');
+        const status = addMessage('Thinking...', 'msg-status');
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: text})
+            });
+            const data = await res.json();
+            status.remove();
+
+            if (data.error) {
+                addMessage(data.error, 'msg-status');
+            } else {
+                addMessage(data.response, 'msg-assistant');
+                if (data.level_up) {
+                    addMessage('LEVEL UP: ' + data.new_level + '!', 'level-up-banner');
+                }
+            }
+        } catch (e) {
+            status.remove();
+            addMessage('Connection error. Try again.', 'msg-status');
+        }
+
+        sending = false;
+        btn.disabled = false;
+        input.focus();
+    }
+
+    btn.addEventListener('click', send);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') send();
+    });
+    input.focus();
+})();
+</script>
+{% endblock %}

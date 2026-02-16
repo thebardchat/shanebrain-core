@@ -55,6 +55,35 @@ def register_user_in_weaviate(username: str, email: str) -> bool:
         return False
 
 
+def update_friend_level(email: str, username: str, new_level: str) -> bool:
+    """Update the FriendProfile summary when a user levels up."""
+    try:
+        with WeaviateHelper() as helper:
+            if not helper.is_ready():
+                return False
+            profile = helper.get_friend_profile(f"angel-cloud:{email}")
+            if not profile:
+                return False
+            # Update the summary with the new level
+            collection = helper.client.collections.get("FriendProfile")
+            collection.data.update(
+                uuid=profile["_uuid"],
+                properties={
+                    "summary": f"Angel Cloud {new_level}: {username}. Active member of the cloud.",
+                    "last_seen": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            helper.log_conversation(
+                message=f"{username} leveled up to {new_level}!",
+                role="system",
+                mode="CHAT",
+            )
+            return True
+    except Exception as e:
+        print(f"Weaviate level update error: {e}")
+        return False
+
+
 def get_weaviate_stats() -> dict:
     """Get collection counts for the stats endpoint."""
     stats = {}

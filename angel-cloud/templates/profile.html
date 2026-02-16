@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Profile — Angel Cloud{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <h1>{{ user.display_name or user.username }}</h1>
+    <div class="level">{{ user.angel_level }}</div>
+</div>
+
+<div class="progress-bar" style="max-width:400px; margin:1.5rem auto;">
+    <div class="fill" style="width: {{ progress }}%"></div>
+</div>
+<div class="progress-label">
+    {{ user.interaction_count or 0 }} interactions
+    {% if next_threshold %} &mdash; next level at {{ next_threshold }}{% endif %}
+</div>
+
+{% if success %}
+<div class="alert alert-success" style="max-width:440px; margin:1.5rem auto;">{{ success }}</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error" style="max-width:440px; margin:1.5rem auto;">{{ error }}</div>
+{% endif %}
+
+<div class="card-grid">
+    <div class="card">
+        <h3>// USERNAME</h3>
+        <p>{{ user.username }}</p>
+    </div>
+    <div class="card">
+        <h3>// EMAIL</h3>
+        <p>{{ user.email }}</p>
+    </div>
+    <div class="card">
+        <h3>// MEMBER SINCE</h3>
+        <p>{{ user.created_at[:10] }}</p>
+    </div>
+    <div class="card">
+        <h3>// INTERACTIONS</h3>
+        <p>{{ user.interaction_count or 0 }}</p>
+    </div>
+</div>
+
+<h3 class="section-title">// DISPLAY NAME</h3>
+<div class="form-wrap">
+    <form method="POST" action="/api/profile">
+        <div class="form-group">
+            <label>DISPLAY NAME</label>
+            <input type="text" name="display_name" value="{{ user.display_name or '' }}" maxlength="64" placeholder="How you want to be known">
+        </div>
+        <button type="submit" class="btn btn-solid">UPDATE</button>
+    </form>
+</div>
+
+<h3 class="section-title">// CHANGE PASSWORD</h3>
+<div class="form-wrap">
+    <form method="POST" action="/api/password">
+        <div class="form-group">
+            <label>CURRENT PASSWORD</label>
+            <input type="password" name="current_password" required>
+        </div>
+        <div class="form-group">
+            <label>NEW PASSWORD</label>
+            <input type="password" name="new_password" required minlength="8">
+        </div>
+        <div class="form-group">
+            <label>CONFIRM NEW PASSWORD</label>
+            <input type="password" name="new_password_confirm" required minlength="8">
+        </div>
+        <button type="submit" class="btn btn-solid">CHANGE PASSWORD</button>
+    </form>
+</div>
+{% endblock %}

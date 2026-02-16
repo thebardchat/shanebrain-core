@@ -10,6 +10,10 @@
 <div class="progress-bar">
     <div class="fill" style="width: {{ progress }}%"></div>
 </div>
+<div class="progress-label">
+    {{ user.interaction_count or 0 }} interactions
+    {% if next_threshold %} &mdash; next level at {{ next_threshold }}{% endif %}
+</div>
 
 <div class="card-grid">
     <div class="card">
@@ -21,8 +25,8 @@
         <p>{{ user.created_at[:10] }}</p>
     </div>
     <div class="card">
-        <h3>// LAST SEEN</h3>
-        <p>{{ user.last_seen[:10] }}</p>
+        <h3>// INTERACTIONS</h3>
+        <p>{{ user.interaction_count or 0 }}</p>
     </div>
 </div>
 

@@ -15,7 +15,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 import models
-from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats
+from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats, update_friend_level
+from chat_engine import generate_response
 
 START_TIME = time.time()
 
@@ -92,20 +93,49 @@ def welcome_page(request: Request):
         return RedirectResponse("/login", status_code=303)
     level_index = models.get_level_index(user["angel_level"])
     total_levels = len(models.ANGEL_LEVELS)
-    progress = int((level_index / max(total_levels - 1, 1)) * 100)
+    next_threshold = models.get_next_threshold(user["angel_level"])
+    count = user.get("interaction_count") or 0
+    if next_threshold:
+        progress = int((count / next_threshold) * 100)
+    else:
+        progress = 100
     return templates.TemplateResponse("welcome.html", {
         "request": request,
         "user": user,
         "level_index": level_index,
         "total_levels": total_levels,
-        "progress": progress,
+        "progress": min(progress, 100),
+        "next_threshold": next_threshold,
     })
 
 
-@app.get("/chat")
-def chat_redirect(request: Request):
-    # Redirect to Open WebUI chat interface
-    return RedirectResponse("http://localhost:3000", status_code=303)
+@app.get("/chat", response_class=HTMLResponse)
+def chat_page(request: Request):
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    return templates.TemplateResponse("chat.html", {"request": request, "user": user})
+
+
+@app.get("/profile", response_class=HTMLResponse)
+def profile_page(request: Request, success: str = None, error: str = None):
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    next_threshold = models.get_next_threshold(user["angel_level"])
+    count = user.get("interaction_count") or 0
+    if next_threshold:
+        progress = min(int((count / next_threshold) * 100), 100)
+    else:
+        progress = 100
+    return templates.TemplateResponse("profile.html", {
+        "request": request,
+        "user": user,
+        "progress": progress,
+        "next_threshold": next_threshold,
+        "success": success,
+        "error": error,
+    })
 
 
 @app.get("/logout")
@@ -196,6 +226,78 @@ def api_login(
     response = RedirectResponse("/welcome", status_code=303)
     response.set_cookie("session", token, httponly=True, samesite="lax", max_age=86400 * 30)
     return response
+
+
+# ---------------------------------------------------------------------------
+# API — Chat + Profile (requires login)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/chat")
+async def api_chat(request: Request):
+    user = _get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+    message = (body.get("message") or "").strip()
+    if not message:
+        return JSONResponse({"error": "Empty message"}, status_code=400)
+
+    # Generate response from ShaneBrain
+    result = generate_response(message, user)
+
+    # Increment interaction and check for level-up
+    models.increment_interaction(user["id"])
+    new_level = models.check_level_up(user["id"])
+
+    level_up = False
+    if new_level:
+        level_up = True
+        try:
+            update_friend_level(user["email"], user["username"], new_level)
+        except Exception as e:
+            print(f"Friend level update failed (non-fatal): {e}")
+
+    return JSONResponse({
+        "response": result["response"],
+        "level_up": level_up,
+        "new_level": new_level,
+    })
+
+
+@app.post("/api/profile")
+def api_profile(
+    request: Request,
+    display_name: str = Form(""),
+):
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    models.update_profile(user["id"], display_name)
+    return RedirectResponse("/profile?success=Display+name+updated", status_code=303)
+
+
+@app.post("/api/password")
+def api_password(
+    request: Request,
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    new_password_confirm: str = Form(...),
+):
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    if new_password != new_password_confirm:
+        return RedirectResponse("/profile?error=New+passwords+do+not+match", status_code=303)
+    if len(new_password) < 8:
+        return RedirectResponse("/profile?error=Password+must+be+at+least+8+characters", status_code=303)
+    if not models.update_password(user["id"], current_password, new_password):
+        return RedirectResponse("/profile?error=Current+password+is+incorrect", status_code=303)
+    return RedirectResponse("/profile?success=Password+changed+successfully", status_code=303)
 
 
 # ---------------------------------------------------------------------------
