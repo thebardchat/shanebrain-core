@@ -18,6 +18,11 @@ local LoreSystem = require(script.Parent.LoreSystem)
 local TrialManager = require(script.Parent.TrialManager)
 local CrossPlatformBridge = require(script.Parent.CrossPlatformBridge)
 local BadgeHandler = require(script.Parent.BadgeHandler)
+local WorldGenerator = require(script.Parent.WorldGenerator)
+local AtmosphereSystem = require(script.Parent.AtmosphereSystem)
+local NPCSystem = require(script.Parent.NPCSystem)
+local SoundManager = require(script.Parent.SoundManager)
+local ShopHandler = require(script.Parent.ShopHandler)
 
 local Layers = require(ReplicatedStorage.Config.Layers)
 
@@ -53,9 +58,23 @@ function GameManager.Init()
     TrialManager.Init()
     CrossPlatformBridge.Init()
     BadgeHandler.Init()
+    SoundManager.Init()
+    ShopHandler.Init()
+    NPCSystem.Init()
+    AtmosphereSystem.Init()
 
-    -- Spawn world content for MVP layers (1-2)
-    GameManager.SetupLayers()
+    -- Build the procedural world (replaces old SetupLayers)
+    WorldGenerator.Init()
+
+    -- Spawn gameplay content into generated world
+    GameManager.PopulateLayers()
+
+    -- Spawn The Keeper NPC in Layer 1
+    local nurseryFolder = workspace:FindFirstChild("Layer1_Nursery")
+    if nurseryFolder then
+        local nurseryDef = Layers.GetLayerByIndex(1)
+        NPCSystem.SpawnKeeper(nurseryFolder, nurseryDef.spawnPosition)
+    end
 
     -- Start auto-save
     DataManager.StartAutoSave()
@@ -126,6 +145,8 @@ function GameManager.OnPlayerRemoving(player: Player)
     -- Cleanup systems
     StaminaSystem.RemovePlayer(player)
     CrossPlatformBridge.RemovePlayer(player)
+    AtmosphereSystem.RemovePlayer(player)
+    NPCSystem.RemovePlayer(player)
 end
 
 function GameManager.SpawnAtLayer(player: Player, character: Model)
@@ -162,46 +183,58 @@ function GameManager.SyncProgress(player: Player)
     PlayerProgress:FireClient(player, progress)
 end
 
-function GameManager.SetupLayers()
-    -- Set up MVP layers (1 and 2)
-    local workspace = game.Workspace
-
+function GameManager.PopulateLayers()
+    -- Populate the WorldGenerator-created layer folders with gameplay content
     for i = 1, 2 do
         local layerDef = Layers.GetLayerByIndex(i)
-        local folderName = "Layer" .. i .. "_" .. layerDef.name:gsub("%s+", ""):gsub("The", "")
+        local folderName = "Layer" .. i .. "_" .. layerDef.name:gsub("The ", ""):gsub("%s+", "")
         local layerFolder = workspace:FindFirstChild(folderName)
 
         if not layerFolder then
-            layerFolder = Instance.new("Folder")
-            layerFolder.Name = folderName
-            layerFolder.Parent = workspace
+            warn("[GameManager] Layer folder not found: " .. folderName)
+            continue
         end
 
-        -- Spawn world motes
+        -- Spawn collectible motes
         local moteCount = i == 1 and 15 or 20
         MoteSystem.SpawnWorldMotes(layerFolder, moteCount, layerDef)
 
-        -- Spawn lore fragment points
+        -- Spawn lore fragment collection points
         LoreSystem.SpawnFragmentPoints(layerFolder, i)
 
-        -- Create layer gate (if not final layer)
+        -- Wire up layer gate (WorldGenerator created the visual, we add gameplay logic)
         if layerDef.gateThreshold then
-            GameManager.CreateLayerGate(layerFolder, layerDef, i + 1)
+            GameManager.WireLayerGate(layerFolder, i + 1)
         end
 
-        -- Create Reflection Pool
-        GameManager.CreateReflectionPool(layerFolder, layerDef)
+        -- Wire up reflection pool touch detection (WorldGenerator created the pool)
+        GameManager.WireReflectionPool(layerFolder)
 
-        -- Create Blessing Bluff (Layer 2+)
+        -- Wire up blessing bluff (WorldGenerator created it in Meadow)
         if i >= 2 then
-            GameManager.CreateBlessingBluff(layerFolder, layerDef)
+            GameManager.WireBlessingBluff(layerFolder)
         end
 
-        print("[GameManager] Layer " .. i .. " (" .. layerDef.name .. ") set up")
+        -- Wire up trial portal
+        GameManager.WireTrialPortal(layerFolder)
+
+        -- Wire up cosmetic re-application on character spawn
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function(character)
+                ShopHandler.OnCharacterAdded(player, character)
+            end)
+        end)
+
+        print("[GameManager] Layer " .. i .. " (" .. layerDef.name .. ") populated with gameplay")
     end
 end
 
-function GameManager.CreateLayerGate(layerFolder: Folder, layerDef: { [string]: any }, targetLayerIndex: number)
+function GameManager.WireLayerGate(layerFolder: Folder, targetLayerIndex: number)
+    -- Find the gate part created by WorldGenerator or the project file
+    -- WorldGenerator doesn't create gates yet — add one at the top of the layer
+    local layerDef = Layers.GetLayerByIndex(targetLayerIndex - 1)
+    if not layerDef then return end
+
     local gate = Instance.new("Part")
     gate.Name = "LayerGate"
     gate.Size = Vector3.new(20, 30, 3)
@@ -228,69 +261,60 @@ function GameManager.CreateLayerGate(layerFolder: Folder, layerDef: { [string]: 
 
     gate.Touched:Connect(function(hit)
         local character = hit.Parent
-        local player = Players:GetPlayerFromCharacter(character)
-        if player then
-            ProgressionSystem.HandleGateTouch(player, targetLayerIndex)
+        local hitPlayer = Players:GetPlayerFromCharacter(character)
+        if hitPlayer then
+            ProgressionSystem.HandleGateTouch(hitPlayer, targetLayerIndex)
         end
     end)
 
     gate.Parent = layerFolder
 end
 
-function GameManager.CreateReflectionPool(layerFolder: Folder, layerDef: { [string]: any })
-    local pool = Instance.new("Part")
-    pool.Name = "ReflectionPool"
-    pool.Shape = Enum.PartType.Cylinder
-    pool.Size = Vector3.new(2, 20, 20)
-    pool.Position = Vector3.new(30, layerDef.heightRange.min + 10, 30)
-    pool.Anchored = true
-    pool.CanCollide = false
-    pool.Material = Enum.Material.Glass
-    pool.Color = Color3.fromRGB(0, 180, 230)
-    pool.Transparency = 0.3
-    pool.Orientation = Vector3.new(0, 0, 90)
+function GameManager.WireReflectionPool(layerFolder: Folder)
+    -- Find the ReflectionPool created by WorldGenerator
+    local pool = layerFolder:FindFirstChild("ReflectionPool")
+    if not pool then return end
 
-    -- Detect nearby players for stamina boost
     pool.Touched:Connect(function(hit)
         local character = hit.Parent
-        local player = Players:GetPlayerFromCharacter(character)
-        if player then
-            StaminaSystem.SetPlayerState(player, "nearReflectionPool", true)
+        local hitPlayer = Players:GetPlayerFromCharacter(character)
+        if hitPlayer then
+            StaminaSystem.SetPlayerState(hitPlayer, "nearReflectionPool", true)
         end
     end)
     pool.TouchEnded:Connect(function(hit)
         local character = hit.Parent
-        local player = Players:GetPlayerFromCharacter(character)
-        if player then
-            StaminaSystem.SetPlayerState(player, "nearReflectionPool", false)
+        local hitPlayer = Players:GetPlayerFromCharacter(character)
+        if hitPlayer then
+            StaminaSystem.SetPlayerState(hitPlayer, "nearReflectionPool", false)
         end
     end)
-
-    pool.Parent = layerFolder
 end
 
-function GameManager.CreateBlessingBluff(layerFolder: Folder, layerDef: { [string]: any })
-    local bluff = Instance.new("Part")
-    bluff.Name = "BlessingBluff"
-    bluff.Size = Vector3.new(10, 2, 10)
-    bluff.Position = Vector3.new(-50, layerDef.heightRange.min + 30, -50)
-    bluff.Anchored = true
-    bluff.Material = Enum.Material.Neon
-    bluff.Color = Color3.fromRGB(255, 215, 0)  -- golden glow
-    bluff.Transparency = 0.2
+function GameManager.WireBlessingBluff(layerFolder: Folder)
+    -- Find the BlessingBluff created by WorldGenerator
+    local bluff = layerFolder:FindFirstChild("BlessingBluff")
+    if not bluff then return end
 
-    local prompt = Instance.new("ProximityPrompt")
-    prompt.ActionText = "Send Blessing (2 Motes)"
-    prompt.ObjectText = "Blessing Bluff"
-    prompt.HoldDuration = 1
-    prompt.MaxActivationDistance = 15
-    prompt.Parent = bluff
+    -- WorldGenerator already added a ProximityPrompt — wire its Triggered event
+    local prompt = bluff:FindFirstChildWhichIsA("ProximityPrompt")
+    if prompt then
+        prompt.Triggered:Connect(function(hitPlayer)
+            BlessingSystem.SendBlessing(hitPlayer)
+        end)
+    end
+end
 
-    prompt.Triggered:Connect(function(player)
-        BlessingSystem.SendBlessing(player)
-    end)
+function GameManager.WireTrialPortal(layerFolder: Folder)
+    local portalRing = layerFolder:FindFirstChild("TrialPortalRing")
+    if not portalRing then return end
 
-    bluff.Parent = layerFolder
+    local prompt = portalRing:FindFirstChildWhichIsA("ProximityPrompt")
+    if prompt then
+        prompt.Triggered:Connect(function(hitPlayer)
+            TrialManager.HandleJoinRequest(hitPlayer, nil)  -- auto-pick available trial
+        end)
+    end
 end
 
 -- Initialize on require

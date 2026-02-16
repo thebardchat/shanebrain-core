@@ -89,6 +89,15 @@ function ClientController.Init()
     local LevelUpCinematic = require(script.Parent.LevelUpCinematic)
     LevelUpCinematic.Init()
 
+    local DialogueUI = require(script.Parent.DialogueUI)
+    DialogueUI.Init()
+
+    local ShopUI = require(script.Parent.ShopUI)
+    ShopUI.Init()
+
+    local SoundPlayer = require(script.Parent.SoundPlayer)
+    SoundPlayer.Init()
+
     print("[ClientController] Angel Cloud client initialized")
 end
 
