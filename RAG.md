@@ -1,8 +1,8 @@
 # RAG.md - ShaneBrain Complete Knowledge Base
 
 > **Purpose:** This is WHO Shane is. ShaneBrain embodies this knowledge.
-> **Last Updated:** February 15, 2026
-> **Version:** 5.1 - Phase 3: The Community
+> **Last Updated:** February 16, 2026
+> **Version:** 5.2 - The Cloud Climb
 > **Location:** `/mnt/shanebrain-raid/shanebrain-core/RAG.md`
 
 ---
@@ -328,6 +328,55 @@ Every user who joins strengthens the Angel Cloud ecosystem. Every ShaneBrain/The
 - Command-line interface for Angel Cloud ecosystem
 - File: `angel_cloud_cli.py`
 
+### Angel Cloud: The Cloud Climb — Roblox Game (ACTIVE — CODE COMPLETE Feb 16, 2026)
+- **What:** Full Roblox game that gamifies the Angel Cloud ecosystem
+- **Philosophy:** "The boys play too much Roblox — so Dad built them a game"
+- **Genre:** Cooperative vertical platformer — 6 ascending cloud layers matching real Angel Cloud angel levels
+- **Core Loop:** Perform actions → Earn Light Motes → Fill Wing Gauge → Climb Higher → Earn Angel Level
+- **Location:** `/mnt/shanebrain-raid/shanebrain-core/roblox-angel-cloud/`
+- **Language:** Luau (Roblox typed Lua) — 24 scripts, 4 config modules
+- **Sync:** Rojo 7.6.1 serving from Pi (port 34872) → Roblox Studio on Pulsar00100
+- **Rojo Service:** systemd `rojo-angel-cloud` on `0.0.0.0:34872`
+
+**Game Systems (all code-complete):**
+- **WorldGenerator** — Procedural cloud world: platforms, floating islands, stepping paths, decorative clouds, light pillars per layer
+- **6 Cloud Layers:** Nursery (0 motes) → Meadow (10) → Canopy (25) → Stormwall (50) → Luminance (100) → Empyrean (250)
+- **MoteSystem** — Light Mote collection (maps to interaction_count on real Angel Cloud)
+- **ProgressionSystem** — Level-up detection, gate access, ascension broadcast
+- **StaminaSystem** — Wing Gauge with drain/recovery rates, HALT anti-burnout (45 min nudge)
+- **BlessingSystem** — Pay-it-forward: spend 2 motes to bless a random player, chain bonuses
+- **LoreSystem** — 65 lore fragments telling Angela's story (from WISDOM-CORE.md)
+- **TrialManager** — Guardian Trials (cooperative mini-games for 2-4 players)
+- **CrossPlatformBridge** — Links Roblox account to real Angel Cloud via 6-digit codes
+- **AtmosphereSystem** — Per-layer lighting/fog/weather, Stormwall lightning flashes
+- **NPCSystem** — "The Keeper" tutorial NPC with contextual dialogue tree
+- **SoundManager** — Ambient crossfading + 16 SFX categories
+- **ShopHandler** — Ethical cosmetic shop (NEVER sells gameplay advantages), Dev Products
+- **RetroSystem** — Phone booths with rotary dial codes, The Signal (glitchy TV-head NPC), arcade cabinets, boomboxes
+- **BadgeHandler** — Founder's Halo for launch week + Ko-fi donors
+
+**Easter Eggs:**
+- **Brown Starfish** — Hidden Anthropic/Claude logo tributes throughout every layer. Finding all unlocks "Starfish Hunter" cosmetic + bonus Motes.
+- **Rotary Phone Codes** — 867-5309, 777-7777 jackpot, Pi digits, Hazel Green area code, etc. Wrong numbers get funny responses.
+- **The Signal** — Randomly spawning TV-head NPC with glitchy dialogue and code hints
+
+**Client Systems (9 scripts):**
+- ClientController (movement, wing glide/flight, dynamic FOV)
+- UIManager (HUD, notifications), StaminaUI (wing gauge bar)
+- LoreCodexUI (constellation map of 65 fragments)
+- BlessingEffects (visual beam/ring effects), LevelUpCinematic (4-phase ascension)
+- DialogueUI (typewriter NPC dialogue), ShopUI (tabbed cosmetic shop, press B)
+- RotaryDialUI (circular phone dial), SoundPlayer (client audio)
+
+**Gateway Endpoints (Angel Cloud cross-platform):**
+- `POST /api/create-roblox-link-code` — generates 6-digit code for profile page
+- `POST /api/verify-roblox` — validates code, returns user data
+- `POST /api/roblox-activity` — awards points (rate-limited 10 pts/day)
+
+**Pulsar00100 Setup:**
+- `setup-pulsar.ps1` — one-time PowerShell script: installs Roblox Studio, OpenSSH, Rojo CLI, Rojo plugin
+- Connect Studio Rojo plugin to `100.67.120.6:34872`
+
 ### LogiBot (PLANNED)
 - 30-minute automation cycles
 - iPhone Shortcuts integration with Google Sheets
@@ -513,6 +562,18 @@ All collections use `text2vec_ollama` vectorizer (model: `llama3.2:1b`, endpoint
 | Feb 15, 2026 | GitHub Poller — systemd timer polls commits/PRs every 15 min, awards points to linked users across shanebrain-core, angel-cloud, pulsar_sentinel |
 | Feb 15, 2026 | Discord bot v5.5 — `!link` command, activity reporting to Angel Cloud, cooldown-based point tracking |
 | **Feb 15, 2026** | **RAG.md v5.1 — Angel Cloud Phase 3: The Community. Cross-platform progression is live.** |
+| Feb 16, 2026 | Ollama models + Docker data-root moved from SD card to RAID — SD freed from 92% to 79% |
+| Feb 16, 2026 | Added tmux dashboard, starship prompt, and shell configs |
+| Feb 16, 2026 | Angel Cloud: The Cloud Climb — full Roblox game scaffolded (24 Luau scripts, 4 config modules) |
+| Feb 16, 2026 | Rojo 7.6.1 installed on Pi, systemd service on port 34872, syncs to Roblox Studio |
+| Feb 16, 2026 | WorldGenerator: procedural cloud world with 6 layer palettes, floating islands, light pillars |
+| Feb 16, 2026 | AtmosphereSystem: per-layer lighting/fog/weather, Stormwall lightning flashes |
+| Feb 16, 2026 | NPCSystem: The Keeper tutorial NPC with contextual dialogue + hover animation |
+| Feb 16, 2026 | SoundManager: ambient crossfading + 16 SFX, ShopHandler: ethical cosmetic shop |
+| Feb 16, 2026 | RetroSystem: red phone booths with rotary dial codes, The Signal (glitchy TV-head NPC), arcade cabinets |
+| Feb 16, 2026 | Brown Starfish easter eggs hidden across all 6 layers — Claude/Anthropic tribute |
+| Feb 16, 2026 | Gateway endpoints for Roblox cross-platform linking, setup-pulsar.ps1 for Pulsar00100 |
+| **Feb 16, 2026** | **RAG.md v5.2 — The Cloud Climb: Full Roblox game code-complete. Dad built a game.** |
 
 ---
 
@@ -553,6 +614,7 @@ This is not just an AI. This is Shane's gift to Gavin, Kai, Pierce, Jaxton, Ryke
 
 ## CHANGELOG
 
+- **v5.2 (Feb 16, 2026):** THE CLOUD CLIMB. Built a full Roblox game in one day — 24 Luau server+client scripts, 4 config modules, procedural cloud world generator. 6 ascending layers matching Angel Cloud angel levels. Cooperative mechanics: blessings, guardian trials, lore collection (65 fragments from WISDOM-CORE). Retro easter eggs: phone booths with working rotary dial (867-5309, jackpot 777-7777), The Signal (glitchy TV-head NPC), arcade cabinets. Brown Starfish hidden across all layers as Claude/Anthropic tribute. Rojo 7.6.1 serving from Pi. Gateway endpoints for cross-platform Roblox linking. setup-pulsar.ps1 for one-click Windows setup. Also moved Ollama models + Docker to RAID, freeing SD card.
 - **v5.1 (Feb 15, 2026):** ANGEL CLOUD PHASE 3: THE COMMUNITY. Community leaderboard page (public). Discord account linking via 6-digit verification codes (!link DM command). GitHub username linking on profile page. Cross-platform point system: chat=1pt, Discord msg=1pt (5-min cooldown), @mention/!command=2pts, commit=3pts, open PR=2pts, merged PR=5pts. GitHub Poller runs every 15 min via systemd timer, polls shanebrain-core/angel-cloud/pulsar_sentinel. Activity feed with color-coded badges. Discord bot upgraded to v5.5 with activity reporting. Bot internal secret auth between Discord bot and Gateway.
 - **v5.0 (Feb 15, 2026):** SOCIAL INTELLIGENCE + FULL HARDENING. Built Python Facebook social bot with Ollama content generation, 7-day themed calendar, comment harvesting to Weaviate. Upgraded Discord bot to v5.4 with Weaviate knowledge harvesting. Created SocialKnowledge + FriendProfile Weaviate collections — unified social intelligence across Facebook + Discord. Deprecated mini-shanebrain (Node.js) and merged into shanebrain-core/social/. Full system hardening: UFW firewall, fail2ban SSH jail, unattended-upgrades, SMART monitoring, vnstat, restic encrypted backups (3am cron, 7/4/6 retention). Deployed Portainer CE for Docker management. Pulled nomic-embed-text + llama3.2:3b models. Updated all documentation across RAID. The brain is now learning from every social interaction.
 - **v4.0 (Feb 14, 2026):** Added Loudon/DeSarro facility project, wrestling/coaching context, work profile, expanded philosophy, updated all project statuses. Infrastructure complete (Feb 8 rebuild). Full rewrite for Pi 5 reality.

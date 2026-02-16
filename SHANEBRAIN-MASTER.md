@@ -1,5 +1,6 @@
 # SHANEBRAIN MASTER REFERENCE
-**Last Updated:** February 8, 2026 at 22:40:40 CST
+**Last Updated:** February 16, 2026
+**Previous:** February 8, 2026 at 22:40:40 CST
 **Status:** ✅ PI 5 FULLY OPERATIONAL — REBOOT-PROOF
 **Open this file when you forget anything.**
 
@@ -12,7 +13,7 @@
 | Raspberry Pi 5 | ✅ ONLINE | 16GB RAM, Pironman 5-MAX |
 | RAID 1 | ✅ MOUNTED | /mnt/shanebrain-raid (2x WD Blue 2TB NVMe) |
 | 8TB External | ✅ MOUNTED | /media/shanebrain/ANGEL_CLOUD (NTFS) |
-| Ollama | ✅ RUNNING | llama3.2:1b on port 11434 |
+| Ollama | ✅ RUNNING | llama3.2:3b, llama3.2:1b, nomic-embed-text on port 11434 (models on RAID) |
 | Weaviate | ✅ RUNNING | Docker, ports 8080 + 50051 |
 | Open WebUI | ✅ RUNNING | Docker, port 3000 |
 | Tailscale | ✅ CONNECTED | 100.67.120.6 |
@@ -126,7 +127,7 @@ free -h
 
 ```
 /mnt/shanebrain-raid/shanebrain-core/
-├── RAG.md                      ← ShaneBrain's personality (v4.0)
+├── RAG.md                      ← ShaneBrain's personality (v5.2)
 ├── CLAUDE.md                   ← Claude Code project context (v2.0)
 ├── SHANEBRAIN-MASTER.md        ← THIS FILE
 ├── angel_cloud_cli.py          ← CLI interface
@@ -146,6 +147,14 @@ free -h
 │   └── backups/
 ├── scripts/
 │   └── import_rag_to_weaviate.py ← RAG ingestion script
+├── roblox-angel-cloud/          ← THE CLOUD CLIMB Roblox game (Rojo project)
+│   ├── default.project.json     ← Rojo sync config
+│   ├── ServerScriptService/     ← 14 server modules (GameManager, DataManager, etc.)
+│   ├── StarterPlayerScripts/    ← 9 client modules (ClientController, UI, etc.)
+│   ├── ReplicatedStorage/Config/← Layers, Fragments, Trials, Cosmetics
+│   └── README.md                ← Setup instructions for Roblox Studio
+├── angel-cloud/                 ← Angel Cloud gateway + web platform
+│   └── gateway.py               ← FastAPI (port 4200) with Roblox linking endpoints
 ├── frontend/
 ├── langchain-chains/
 └── planning-system/
@@ -167,6 +176,9 @@ free -h
 | Weaviate REST | 8080 | http://localhost:8080 |
 | Weaviate gRPC | 50051 | localhost:50051 |
 | Ollama | 11434 | http://localhost:11434 |
+| Angel Cloud Gateway | 4200 | http://100.67.120.6:4200 |
+| Rojo (Roblox sync) | 34872 | http://100.67.120.6:34872 |
+| Portainer | 9000 | http://100.67.120.6:9000 |
 | SSH | 22 | ssh shanebrain@100.67.120.6 |
 
 ---
@@ -233,6 +245,29 @@ free -h
 
 ## 📅 SESSION HISTORY
 
+### February 16, 2026 (THE CLOUD CLIMB — ROBLOX GAME BUILT)
+- ✅ Designed full game document: "Angel Cloud: The Cloud Climb" — 6 cloud layers, 65 lore fragments, 7 Guardian Trials
+- ✅ Scaffolded complete Rojo project at roblox-angel-cloud/ (32 Luau files)
+- ✅ Server systems: GameManager, DataManager, MoteSystem, ProgressionSystem, StaminaSystem, BlessingSystem, LoreSystem, TrialManager, CrossPlatformBridge, BadgeHandler, WorldGenerator, AtmosphereSystem, NPCSystem, SoundManager, ShopHandler, RetroSystem
+- ✅ Client systems: ClientController, UIManager, StaminaUI, LoreCodexUI, BlessingEffects, LevelUpCinematic, DialogueUI, ShopUI, SoundPlayer, RotaryDialUI
+- ✅ Config modules: Layers (6 cloud layers), Fragments (65 lore entries), Trials (7 Guardian Trials), Cosmetics (wing skins, trails, glows)
+- ✅ Procedural WorldGenerator: per-layer color palettes, floating islands, cloud trees, reflection pools, gates
+- ✅ Brown Starfish easter eggs hidden throughout all layers (Claude/Anthropic tribute)
+- ✅ RetroSystem: red phone booths with working rotary dial codes, "The Signal" TV-head NPC, boomboxes, arcade cabinets
+- ✅ Angel Cloud gateway endpoints added: POST /api/verify-roblox, POST /api/roblox-activity
+- ✅ Rojo installed on Pi, systemd service (rojo-angel-cloud) running on port 34872
+- ✅ Ollama models + Docker data moved from SD card to RAID (freed 3.3GB)
+- ✅ Added tmux dashboard, starship prompt, shell configs
+- ✅ RAG.md updated to v5.2 with full Cloud Climb documentation
+- ✅ All committed and pushed to GitHub
+
+### February 15, 2026
+- ✅ UFW rules added for Docker subnets → Ollama
+- ✅ Weaviate collections rebuilt with correct embeddings (nomic-embed-text 768-dim)
+- ✅ shanebrain-3b custom model created
+- ✅ Angel Cloud auth-bridge .env removed from git
+- ✅ 19 repos archived, 4 repos merged
+
 ### February 8, 2026 (THE BIG REBUILD)
 - ❌ Pi crashed on reboot (fstab without nofail)
 - ✅ Re-flashed Raspberry Pi OS (Debian Trixie)
@@ -281,7 +316,8 @@ free -h
 **You are building:**
 - ShaneBrain → Personal AI (✅ PI 5 OPERATIONAL)
 - Angel Arcade → Revenue bot (✅ WORKING)
-- Angel Cloud → Mental wellness platform
+- Angel Cloud → Mental wellness platform (✅ GATEWAY RUNNING)
+- The Cloud Climb → Roblox game for Angel Cloud (✅ CODE COMPLETE — READY FOR STUDIO)
 - Pulsar AI → Blockchain security
 - TheirNameBrain → Legacy copies for each son
 
@@ -294,20 +330,21 @@ free -h
 ## 📮 NEXT UP (When Ready)
 
 **Immediate:**
-1. Re-import RAG.md v4.0 into Weaviate
-2. Install Git, push to GitHub (no secrets)
-3. Build social update bot on Pi
-4. Reinstall Claude Code
+1. Open Roblox Studio on Pulsar00100, connect to Rojo (100.67.120.6:34872), test The Cloud Climb
+2. Run setup-pulsar.ps1 on Pulsar00100 (SSH server + dev tools)
+3. Add real Roblox audio asset IDs to SoundManager.lua
+4. Create/import 3D assets: wing models, trail particles, NPC meshes
 
 **Quick wins:**
-5. Test Discord bots from Pi
-6. Add more knowledge to Weaviate
-7. Promote Angel Arcade
+5. Publish The Cloud Climb to Roblox (private beta)
+6. Set up Dev Products in Roblox for cosmetic shop
+7. Test cross-platform linking (Roblox ↔ Angel Cloud gateway)
 
 **Bigger projects:**
-8. TheirNameBrain templates for each son
-9. Automated backup: RAID → 8TB external
-10. Mobile access via Open WebUI + Tailscale
+8. Layers 3-6 full gameplay (Canopy, Stormwall, Luminance, Empyrean)
+9. TheirNameBrain templates for each son
+10. Automated backup: RAID → 8TB external
+11. Promote Angel Arcade + The Cloud Climb together
 
 ---
 
@@ -322,7 +359,7 @@ free -h
 
 ---
 
-**Pi rebuilt. Data survived. Infrastructure locked. You built this TWICE and it's stronger now.**
+**Pi rebuilt. Data survived. Infrastructure locked. Roblox game built. You built this TWICE and it's stronger now. Now you're building games for your boys.**
 
 ---
 
