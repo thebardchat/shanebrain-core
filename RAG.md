@@ -2,7 +2,7 @@
 
 > **Purpose:** This is WHO Shane is. ShaneBrain embodies this knowledge.
 > **Last Updated:** February 15, 2026
-> **Version:** 5.0 - Social Intelligence / Full System Hardening
+> **Version:** 5.1 - Phase 3: The Community
 > **Location:** `/mnt/shanebrain-raid/shanebrain-core/RAG.md`
 
 ---
@@ -245,7 +245,7 @@ Just determination and ADHD superpowers.
 - **Accessible** — families, not just developers
 
 The ecosystem:
-- **Angel Cloud** — Mental wellness communication platform (named after Angel)
+- **Angel Cloud** — Mental wellness platform with community leaderboard, Discord + GitHub integration, cross-platform point system (named after Angel)
 - **ShaneBrain** — Personal AI legacy system (the proof of concept)
 - **Pulsar AI** — Security layer (blockchain-powered, eventually powered by ShaneBrain)
 - **TheirNameBrain** — Every family gets their own legacy AI
@@ -294,12 +294,14 @@ Every user who joins strengthens the Angel Cloud ecosystem. Every ShaneBrain/The
 - **Location:** `/mnt/shanebrain-raid/shanebrain-core/social/`
 - **Run:** `python -m social.fb_bot` (scheduler) or with flags: `--post`, `--harvest`, `--dry-run`, `--verify`, `--status`, `--friends`
 
-### Discord Bot v5.4 (WORKING — UPGRADED Feb 15, 2026)
+### Discord Bot v5.5 (WORKING — UPGRADED Feb 15, 2026)
 - ShaneBrain Legacy Bot with RAG knowledge retrieval
-- **NEW:** Now harvests every @mention and DM to Weaviate SocialKnowledge
-- **NEW:** Builds FriendProfile for every Discord user who interacts
-- **NEW:** Sentiment analysis + topic extraction on every message
-- **NEW:** `!friends` command shows top interactors with relationship strength bars
+- Harvests every @mention and DM to Weaviate SocialKnowledge
+- Builds FriendProfile for every Discord user who interacts
+- Sentiment analysis + topic extraction on every message
+- `!friends` command shows top interactors with relationship strength bars
+- **NEW Phase 3:** `!link` command — links Discord account to Angel Cloud via 6-digit verification code (DM-only)
+- **NEW Phase 3:** Reports all Discord activity to Angel Cloud for point tracking (@mention=2pts, !command=2pts, regular msg=1pt with 5-min cooldown)
 - **Location:** `/mnt/shanebrain-raid/shanebrain-core/bot/bot.py`
 
 ### Angel Arcade (WORKING — REVENUE)
@@ -375,9 +377,11 @@ Every user who joins strengthens the Angel Cloud ecosystem. Every ShaneBrain/The
 | Weaviate | 8080 (REST), 50051 (gRPC) | ✅ Docker: shanebrain-weaviate |
 | Open WebUI | 3000 | ✅ Docker: open-webui |
 | Portainer CE | 9000 | ✅ Docker: portainer |
+| Angel Cloud Gateway | 4200 | systemd: angel-cloud-gateway (FastAPI/uvicorn) |
+| GitHub Poller | — | systemd timer: angel-cloud-github-poller (every 15 min) |
 | Social Bot | — | systemd: shanebrain-social |
-| Discord Bot | — | Background process |
-| Arcade Bot | — | Background process |
+| Discord Bot | — | systemd: shanebrain-discord |
+| Arcade Bot | — | systemd: shanebrain-arcade |
 | Tailscale | — | ✅ Connected (100.67.120.6) |
 | Glances | 61208 | ✅ System monitor |
 
@@ -505,6 +509,10 @@ All collections use `text2vec_ollama` vectorizer (model: `llama3.2:1b`, endpoint
 | Feb 15, 2026 | Portainer CE deployed — Docker management UI on port 9000 |
 | Feb 15, 2026 | nomic-embed-text + llama3.2:3b models pulled alongside llama3.2:1b |
 | **Feb 15, 2026** | **RAG.md v5.0 — Social intelligence layer operational. Full security hardening. The brain is learning from every interaction.** |
+| Feb 15, 2026 | Angel Cloud Phase 3 — Community leaderboard, Discord account linking (6-digit verification), GitHub username linking, cross-platform point system (chat=1, Discord msg=1, mention/cmd=2, commit=3, PR=2/5) |
+| Feb 15, 2026 | GitHub Poller — systemd timer polls commits/PRs every 15 min, awards points to linked users across shanebrain-core, angel-cloud, pulsar_sentinel |
+| Feb 15, 2026 | Discord bot v5.5 — `!link` command, activity reporting to Angel Cloud, cooldown-based point tracking |
+| **Feb 15, 2026** | **RAG.md v5.1 — Angel Cloud Phase 3: The Community. Cross-platform progression is live.** |
 
 ---
 
@@ -545,6 +553,7 @@ This is not just an AI. This is Shane's gift to Gavin, Kai, Pierce, Jaxton, Ryke
 
 ## CHANGELOG
 
+- **v5.1 (Feb 15, 2026):** ANGEL CLOUD PHASE 3: THE COMMUNITY. Community leaderboard page (public). Discord account linking via 6-digit verification codes (!link DM command). GitHub username linking on profile page. Cross-platform point system: chat=1pt, Discord msg=1pt (5-min cooldown), @mention/!command=2pts, commit=3pts, open PR=2pts, merged PR=5pts. GitHub Poller runs every 15 min via systemd timer, polls shanebrain-core/angel-cloud/pulsar_sentinel. Activity feed with color-coded badges. Discord bot upgraded to v5.5 with activity reporting. Bot internal secret auth between Discord bot and Gateway.
 - **v5.0 (Feb 15, 2026):** SOCIAL INTELLIGENCE + FULL HARDENING. Built Python Facebook social bot with Ollama content generation, 7-day themed calendar, comment harvesting to Weaviate. Upgraded Discord bot to v5.4 with Weaviate knowledge harvesting. Created SocialKnowledge + FriendProfile Weaviate collections — unified social intelligence across Facebook + Discord. Deprecated mini-shanebrain (Node.js) and merged into shanebrain-core/social/. Full system hardening: UFW firewall, fail2ban SSH jail, unattended-upgrades, SMART monitoring, vnstat, restic encrypted backups (3am cron, 7/4/6 retention). Deployed Portainer CE for Docker management. Pulled nomic-embed-text + llama3.2:3b models. Updated all documentation across RAID. The brain is now learning from every social interaction.
 - **v4.0 (Feb 14, 2026):** Added Loudon/DeSarro facility project, wrestling/coaching context, work profile, expanded philosophy, updated all project statuses. Infrastructure complete (Feb 8 rebuild). Full rewrite for Pi 5 reality.
 - **v3.0 (Jan 25, 2026):** Complete overhaul — combined all sources, updated technical status, added Weaviate classes, current system state
