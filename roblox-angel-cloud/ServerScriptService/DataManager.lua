@@ -41,6 +41,7 @@ local DEFAULT_DATA = {
     robloxLinkCode = nil,
     founderHalo = false,
     starfishFound = {},       -- { starfishId = true } — brown starfish easter eggs
+    redeemedDialCodes = {},   -- { code = true } — rotary phone codes redeemed
     firstJoin = 0,
     lastSeen = 0,
 }

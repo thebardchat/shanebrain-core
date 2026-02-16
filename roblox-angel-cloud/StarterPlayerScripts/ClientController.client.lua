@@ -98,6 +98,9 @@ function ClientController.Init()
     local SoundPlayer = require(script.Parent.SoundPlayer)
     SoundPlayer.Init()
 
+    local RotaryDialUI = require(script.Parent.RotaryDialUI)
+    RotaryDialUI.Init()
+
     print("[ClientController] Angel Cloud client initialized")
 end
 

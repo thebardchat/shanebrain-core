@@ -23,6 +23,7 @@ local AtmosphereSystem = require(script.Parent.AtmosphereSystem)
 local NPCSystem = require(script.Parent.NPCSystem)
 local SoundManager = require(script.Parent.SoundManager)
 local ShopHandler = require(script.Parent.ShopHandler)
+local RetroSystem = require(script.Parent.RetroSystem)
 
 local Layers = require(ReplicatedStorage.Config.Layers)
 
@@ -62,6 +63,7 @@ function GameManager.Init()
     ShopHandler.Init()
     NPCSystem.Init()
     AtmosphereSystem.Init()
+    RetroSystem.Init()
 
     -- Build the procedural world (replaces old SetupLayers)
     WorldGenerator.Init()
@@ -150,6 +152,7 @@ function GameManager.OnPlayerRemoving(player: Player)
     CrossPlatformBridge.RemovePlayer(player)
     AtmosphereSystem.RemovePlayer(player)
     NPCSystem.RemovePlayer(player)
+    RetroSystem.RemovePlayer(player)
 end
 
 function GameManager.SpawnAtLayer(player: Player, character: Model)
@@ -227,6 +230,9 @@ function GameManager.PopulateLayers()
                 ShopHandler.OnCharacterAdded(player, character)
             end)
         end)
+
+        -- Spawn retro objects (phone booths, boomboxes, arcade cabinets)
+        RetroSystem.PopulateLayer(layerFolder, i, layerDef)
 
         print("[GameManager] Layer " .. i .. " (" .. layerDef.name .. ") populated with gameplay")
     end
