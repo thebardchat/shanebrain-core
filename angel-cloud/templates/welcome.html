@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Angel Cloud{% endblock %}
+
+{% block content %}
+<div class="welcome-header">
+    <h1>Welcome, {{ user.username }}</h1>
+    <div class="level">{{ user.angel_level }}</div>
+</div>
+
+<div class="progress-bar">
+    <div class="fill" style="width: {{ progress }}%"></div>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>// YOUR LEVEL</h3>
+        <p>{{ user.angel_level }} ({{ level_index + 1 }} of {{ total_levels }})</p>
+    </div>
+    <div class="card">
+        <h3>// MEMBER SINCE</h3>
+        <p>{{ user.created_at[:10] }}</p>
+    </div>
+    <div class="card">
+        <h3>// LAST SEEN</h3>
+        <p>{{ user.last_seen[:10] }}</p>
+    </div>
+</div>
+
+<h2 style="text-align:center; font-family: var(--font-mono); color: var(--text-bright); margin: 2rem 0 1rem;">
+    // FIRST STEPS
+</h2>
+
+<ul class="steps-list">
+    <li><span class="marker">&gt;</span> Explore the <a href="/chat">Chat</a> &mdash; talk with ShaneBrain</li>
+    <li><span class="marker">&gt;</span> Ask about the knowledge base &mdash; 165+ wisdom entries</li>
+    <li><span class="marker">&gt;</span> Share your story &mdash; every conversation strengthens the cloud</li>
+    <li><span class="marker">&gt;</span> Grow your angel level through meaningful interactions</li>
+</ul>
+{% endblock %}

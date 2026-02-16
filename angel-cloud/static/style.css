@@ -1,0 +1,328 @@
+:root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-card: #1a1a2e;
+    --accent: #00d4ff;
+    --accent-dim: #0099bb;
+    --accent-glow: rgba(0, 212, 255, 0.15);
+    --text-primary: #e0e0e0;
+    --text-secondary: #8888aa;
+    --text-bright: #ffffff;
+    --danger: #ff4466;
+    --success: #00ff88;
+    --border: #2a2a3e;
+    --font-mono: 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* Header */
+header {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+}
+
+nav a {
+    margin-left: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+nav a:hover { color: var(--accent); text-decoration: none; }
+
+/* Hero */
+.hero {
+    text-align: center;
+    padding: 4rem 0 3rem;
+}
+
+.hero h1 {
+    font-size: 2.8rem;
+    color: var(--text-bright);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+}
+
+.hero .tagline {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.hero .mission {
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    font-family: var(--font-mono);
+}
+
+.btn:hover {
+    background: var(--accent);
+    color: var(--bg-primary);
+    text-decoration: none;
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.btn-solid {
+    background: var(--accent);
+    color: var(--bg-primary);
+}
+
+.btn-solid:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+}
+
+.btn-small {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+}
+
+/* Cards */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.card h3 {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Forms */
+.form-wrap {
+    max-width: 440px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.form-wrap h2 {
+    text-align: center;
+    color: var(--text-bright);
+    font-family: var(--font-mono);
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+    font-family: var(--font-mono);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: var(--accent);
+}
+
+.form-wrap .btn {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Alerts */
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.alert-error {
+    background: rgba(255, 68, 102, 0.1);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+.alert-success {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+/* Welcome Dashboard */
+.welcome-header {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.welcome-header h1 {
+    color: var(--text-bright);
+    font-family: var(--font-mono);
+}
+
+.welcome-header .level {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    margin-top: 0.3rem;
+}
+
+.progress-bar {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    height: 8px;
+    margin: 1.5rem auto;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+.progress-bar .fill {
+    background: var(--accent);
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.steps-list {
+    list-style: none;
+    max-width: 500px;
+    margin: 1.5rem auto;
+}
+
+.steps-list li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+}
+
+.steps-list li .marker {
+    display: inline-block;
+    width: 1.5rem;
+    color: var(--accent);
+}
+
+/* Stats */
+.stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat .number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--font-mono);
+}
+
+.stat .label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Footer */
+footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 3rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .hero h1 { font-size: 2rem; }
+    .container { padding: 1.5rem 1rem; }
+    .stats-row { gap: 1rem; }
+}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Sign In — Angel Cloud{% endblock %}
+
+{% block content %}
+<div class="form-wrap">
+    <h2>// WELCOME BACK</h2>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    <form method="post" action="/api/login">
+        <div class="form-group">
+            <label>EMAIL</label>
+            <input type="email" name="email" required autocomplete="email"
+                   value="{{ email or '' }}">
+        </div>
+        <div class="form-group">
+            <label>PASSWORD</label>
+            <input type="password" name="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-solid">Sign In</button>
+    </form>
+
+    <div class="form-footer">
+        New here? <a href="/register">Begin your journey</a>
+    </div>
+</div>
+{% endblock %}

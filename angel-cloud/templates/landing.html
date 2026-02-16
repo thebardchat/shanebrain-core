@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Angel Cloud — Begin Your Journey{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>ANGEL CLOUD</h1>
+    <p class="tagline">A living knowledge system for growth, legacy, and community</p>
+    <p class="mission">
+        Angel Cloud is the heart of the ShaneBrain ecosystem &mdash; an AI-powered platform
+        where knowledge becomes wisdom, conversations build connections, and every interaction
+        strengthens the cloud. Start as a Newborn and grow into a Guardian Angel.
+    </p>
+    <a href="/register" class="btn btn-solid">Begin Your Journey</a>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>// KNOWLEDGE</h3>
+        <p>A growing library of wisdom, family legacy, technical insights, and life lessons &mdash; all searchable by meaning, not just keywords.</p>
+    </div>
+    <div class="card">
+        <h3>// CONVERSATION</h3>
+        <p>Talk with ShaneBrain &mdash; an AI that remembers context, learns from every interaction, and genuinely cares about your growth.</p>
+    </div>
+    <div class="card">
+        <h3>// COMMUNITY</h3>
+        <p>Every Angel strengthens the cloud. Your journey from Newborn to Angel contributes to a shared intelligence that lifts everyone up.</p>
+    </div>
+</div>
+
+{% if stats %}
+<div class="stats-row">
+    <div class="stat">
+        <div class="number">{{ stats.get('users', 0) }}</div>
+        <div class="label">Angels</div>
+    </div>
+    <div class="stat">
+        <div class="number">{{ stats.get('knowledge', 0) }}</div>
+        <div class="label">Knowledge Objects</div>
+    </div>
+    <div class="stat">
+        <div class="number">{{ stats.get('conversations', 0) }}</div>
+        <div class="label">Conversations</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

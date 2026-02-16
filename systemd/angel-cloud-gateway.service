@@ -1,0 +1,16 @@
+[Unit]
+Description=Angel Cloud Gateway (FastAPI port 4200)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shanebrain
+WorkingDirectory=/mnt/shanebrain-raid/shanebrain-core/angel-cloud
+ExecStart=/home/shanebrain/.local/bin/uvicorn gateway:app --host 0.0.0.0 --port 4200
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
