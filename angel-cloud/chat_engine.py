@@ -142,14 +142,8 @@ def quick_topics(text):
     return found[:3] if found else ["general"]
 
 
-def generate_response(user_message: str, user: dict) -> dict:
-    """
-    Generate a ShaneBrain response for an Angel Cloud user.
-    Returns {"response": str, "session_id": str}
-    """
-    session_id = f"angel-cloud:{user['id']}"
-
-    # 1. RAG — search LegacyKnowledge
+def _rag_search(user_message: str) -> list:
+    """Search LegacyKnowledge for RAG chunks."""
     chunks = []
     try:
         with WeaviateHelper() as helper:
@@ -162,41 +156,21 @@ def generate_response(user_message: str, user: dict) -> dict:
                         chunks.append(f"[{title}]\n{content}" if title else content)
     except Exception as e:
         print(f"[CHAT-ENGINE] RAG search failed: {e}")
+    return chunks
 
-    # 2. Build system prompt with RAG context
-    system_prompt = build_rag_prompt(chunks)
 
-    # 3. Call Ollama
-    try:
-        result = ollama.chat(
-            model=MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
-            options={"temperature": 0.3, "num_predict": 200},
-        )
-        response_text = result["message"]["content"].strip()
-    except Exception as e:
-        print(f"[CHAT-ENGINE] Ollama error: {e}")
-        return {"response": "ShaneBrain is resting. Try again in a moment.", "session_id": session_id}
-
-    # 4. Log conversation + update FriendProfile in Weaviate
+def log_chat(user_message: str, response_text: str, user: dict):
+    """Log conversation + update FriendProfile in Weaviate (fire-and-forget)."""
+    session_id = f"angel-cloud:{user['id']}"
     try:
         sentiment = quick_sentiment(user_message)
         topics = quick_topics(user_message)
         with WeaviateHelper() as helper:
             helper.log_conversation(
-                message=user_message,
-                role="user",
-                mode="CHAT",
-                session_id=session_id,
+                message=user_message, role="user", mode="CHAT", session_id=session_id,
             )
             helper.log_conversation(
-                message=response_text,
-                role="assistant",
-                mode="CHAT",
-                session_id=session_id,
+                message=response_text, role="assistant", mode="CHAT", session_id=session_id,
             )
             helper.upsert_friend_profile(
                 name=user.get("display_name") or user["username"],
@@ -207,4 +181,30 @@ def generate_response(user_message: str, user: dict) -> dict:
     except Exception as e:
         print(f"[CHAT-ENGINE] Weaviate logging failed (non-fatal): {e}")
 
-    return {"response": response_text, "session_id": session_id}
+
+def stream_response(user_message: str, user: dict):
+    """
+    Generator that yields response tokens as they arrive from Ollama.
+    Yields str chunks. Caller should collect them for logging afterwards.
+    """
+    chunks = _rag_search(user_message)
+    system_prompt = build_rag_prompt(chunks)
+
+    try:
+        stream = ollama.chat(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            options={"temperature": 0.3, "num_predict": 200},
+            stream=True,
+            keep_alive="10m",
+        )
+        for chunk in stream:
+            token = chunk["message"]["content"]
+            if token:
+                yield token
+    except Exception as e:
+        print(f"[CHAT-ENGINE] Ollama error: {e}")
+        yield "ShaneBrain is resting. Try again in a moment."

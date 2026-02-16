@@ -39,7 +39,13 @@
         input.value = '';
 
         addMessage(text, 'msg-user');
-        const status = addMessage('Thinking...', 'msg-status');
+
+        // Create assistant bubble that we'll stream into
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-assistant';
+        bubble.textContent = '';
+        messages.appendChild(bubble);
+        messages.scrollTop = messages.scrollHeight;
 
         try {
             const res = await fetch('/api/chat', {
@@ -47,20 +53,37 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({message: text})
             });
-            const data = await res.json();
-            status.remove();
 
-            if (data.error) {
-                addMessage(data.error, 'msg-status');
-            } else {
-                addMessage(data.response, 'msg-assistant');
-                if (data.level_up) {
-                    addMessage('LEVEL UP: ' + data.new_level + '!', 'level-up-banner');
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                buf += decoder.decode(value, {stream: true});
+
+                let lines = buf.split('\n');
+                buf = lines.pop();
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const data = JSON.parse(line.slice(6));
+                    if (data.token) {
+                        bubble.textContent += data.token;
+                        messages.scrollTop = messages.scrollHeight;
+                    }
+                    if (data.done && data.level_up) {
+                        addMessage('LEVEL UP: ' + data.new_level + '!', 'level-up-banner');
+                    }
                 }
             }
+
+            if (!bubble.textContent) {
+                bubble.textContent = 'No response received.';
+            }
         } catch (e) {
-            status.remove();
-            addMessage('Connection error. Try again.', 'msg-status');
+            bubble.textContent = 'Connection error. Try again.';
         }
 
         sending = false;

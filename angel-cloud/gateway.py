@@ -9,14 +9,16 @@ import time
 import secrets
 from datetime import datetime, timezone
 
+import json
+
 from fastapi import FastAPI, Request, Form, Response
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 import models
 from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats, update_friend_level
-from chat_engine import generate_response
+from chat_engine import stream_response, log_chat
 
 START_TIME = time.time()
 
@@ -247,26 +249,30 @@ async def api_chat(request: Request):
     if not message:
         return JSONResponse({"error": "Empty message"}, status_code=400)
 
-    # Generate response from ShaneBrain
-    result = generate_response(message, user)
+    def event_stream():
+        full_response = []
+        for token in stream_response(message, user):
+            full_response.append(token)
+            yield f"data: {json.dumps({'token': token})}\n\n"
 
-    # Increment interaction and check for level-up
-    models.increment_interaction(user["id"])
-    new_level = models.check_level_up(user["id"])
+        # After streaming completes: progression + logging
+        response_text = "".join(full_response).strip()
+        models.increment_interaction(user["id"])
+        new_level = models.check_level_up(user["id"])
 
-    level_up = False
-    if new_level:
-        level_up = True
-        try:
-            update_friend_level(user["email"], user["username"], new_level)
-        except Exception as e:
-            print(f"Friend level update failed (non-fatal): {e}")
+        if new_level:
+            try:
+                update_friend_level(user["email"], user["username"], new_level)
+            except Exception:
+                pass
+            yield f"data: {json.dumps({'done': True, 'level_up': True, 'new_level': new_level})}\n\n"
+        else:
+            yield f"data: {json.dumps({'done': True})}\n\n"
 
-    return JSONResponse({
-        "response": result["response"],
-        "level_up": level_up,
-        "new_level": new_level,
-    })
+        # Log to Weaviate after stream is done
+        log_chat(message, response_text, user)
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.post("/api/profile")
