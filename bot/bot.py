@@ -15,6 +15,7 @@ import asyncio
 import random
 from datetime import datetime, timedelta, timezone
 import json
+import aiohttp
 
 # Add shanebrain-core root to path for imports
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,6 +49,8 @@ except ImportError:
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+ANGEL_CLOUD_URL = os.getenv('ANGEL_CLOUD_URL', 'http://localhost:4200')
+BOT_INTERNAL_SECRET = os.getenv('BOT_INTERNAL_SECRET', '')
 
 # ============================================================
 # CONFIGURATION
@@ -435,6 +438,34 @@ ALL_QUOTES = [
 ]
 
 # ============================================================
+# ANGEL CLOUD INTEGRATION
+# ============================================================
+_last_message_report: dict[int, float] = {}  # discord user id -> timestamp
+
+async def report_discord_activity(discord_id: int, points: int, activity_type: str, description: str):
+    """POST activity to Angel Cloud gateway for point tracking."""
+    if not BOT_INTERNAL_SECRET:
+        return
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{ANGEL_CLOUD_URL}/api/discord-activity",
+                json={
+                    "discord_id": str(discord_id),
+                    "points": points,
+                    "activity_type": activity_type,
+                    "description": description,
+                },
+                headers={"X-Bot-Secret": BOT_INTERNAL_SECRET},
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
+                data = await resp.json()
+                if data.get("level_up"):
+                    print(f"[ANGEL CLOUD] Level up for {discord_id}: {data['level_up']}")
+    except Exception as e:
+        print(f"[ANGEL CLOUD] Activity report failed: {e}")
+
+# ============================================================
 # BOT EVENTS
 # ============================================================
 @bot.event
@@ -494,6 +525,29 @@ async def on_message(message):
                     is_bot_reply=True,
                 )
 
+                # Report bot interaction to Angel Cloud (2 points)
+                await report_discord_activity(
+                    message.author.id, 2, "discord_mention",
+                    f"@ShaneBrain: {clean_msg[:60]}",
+                )
+    elif message.content.startswith("!"):
+        # Bot command — 2 points (no cooldown)
+        cmd_name = message.content.split()[0]
+        await report_discord_activity(
+            message.author.id, 2, "discord_command",
+            f"Command: {cmd_name}",
+        )
+    else:
+        # Regular server message — 1 point with 5-min cooldown
+        now = datetime.now(timezone.utc).timestamp()
+        last = _last_message_report.get(message.author.id, 0)
+        if now - last >= 300:
+            _last_message_report[message.author.id] = now
+            await report_discord_activity(
+                message.author.id, 1, "discord_message",
+                f"#{channel_name}: message",
+            )
+
     await bot.process_commands(message)
 
 # ============================================================
@@ -546,6 +600,44 @@ async def teach(ctx, question_num: int, *, answer: str):
     else:
         await ctx.send("❌ Couldn't save - Weaviate offline")
 
+@bot.command(name='link')
+async def link_cmd(ctx, *, email: str = ""):
+    """Link your Discord to Angel Cloud. DM-only: !link your@email.com"""
+    if not isinstance(ctx.channel, discord.DMChannel):
+        await ctx.send("Use this command in a DM for privacy: `!link your@email.com`")
+        return
+    if not email or "@" not in email:
+        await ctx.send("Usage: `!link your@email.com` (the email you registered with on Angel Cloud)")
+        return
+    if not BOT_INTERNAL_SECRET:
+        await ctx.send("Angel Cloud link not configured. Tell Shane.")
+        return
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{ANGEL_CLOUD_URL}/api/create-link-code",
+                json={
+                    "discord_id": str(ctx.author.id),
+                    "discord_name": ctx.author.display_name,
+                    "email": email.strip(),
+                },
+                headers={"X-Bot-Secret": BOT_INTERNAL_SECRET},
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
+                data = await resp.json()
+                if resp.status == 200 and "code" in data:
+                    await ctx.send(
+                        f"Your verification code: **{data['code']}**\n"
+                        f"Go to your Angel Cloud profile and enter it in the Discord Link section.\n"
+                        f"Code expires in 10 minutes."
+                    )
+                else:
+                    error = data.get("error", "Unknown error")
+                    await ctx.send(f"Could not create link code: {error}")
+    except Exception as e:
+        await ctx.send(f"Error contacting Angel Cloud: {str(e)[:100]}")
+
 @bot.command(name='family')
 async def family_cmd(ctx):
     """Show family information"""
@@ -574,6 +666,7 @@ async def help_cmd(ctx):
     embed.add_field(name="!questions", value="See pending questions", inline=True)
     embed.add_field(name="!teach [#] [answer]", value="Teach an answer (admin)", inline=True)
     embed.add_field(name="!friends", value="Top interactors", inline=True)
+    embed.add_field(name="!link [email]", value="Link Discord to Angel Cloud (DM)", inline=True)
     await ctx.send(embed=embed)
 
 @bot.command(name='brain')

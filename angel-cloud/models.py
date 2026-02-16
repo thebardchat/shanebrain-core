@@ -5,7 +5,8 @@ Angel Cloud User Models — SQLite storage for user accounts and angel progressi
 import sqlite3
 import bcrypt
 import os
-from datetime import datetime, timezone
+import random
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "angel_cloud.db")
@@ -56,6 +57,40 @@ def init_db():
         conn.execute("ALTER TABLE users ADD COLUMN interaction_count INTEGER DEFAULT 0")
     if "display_name" not in existing:
         conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''")
+    if "discord_id" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN discord_id TEXT")
+    if "github_username" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN github_username TEXT")
+    if "last_activity" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN last_activity TEXT")
+
+    # Link codes table for Discord verification
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS link_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT NOT NULL,
+            discord_id TEXT NOT NULL,
+            discord_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used INTEGER DEFAULT 0
+        )
+    """)
+
+    # Activity log for all point-earning events
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS activity_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            points INTEGER NOT NULL,
+            activity_type TEXT NOT NULL,
+            description TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -126,6 +161,24 @@ def increment_interaction(user_id: int) -> int:
     return count
 
 
+def add_interaction_points(user_id: int, points: int, activity_type: str, description: str) -> int:
+    """Add points to a user's interaction count and log the activity. Returns new count."""
+    now = datetime.now(timezone.utc).isoformat()
+    conn = get_db()
+    conn.execute(
+        "UPDATE users SET interaction_count = interaction_count + ?, last_activity = ? WHERE id = ?",
+        (points, now, user_id),
+    )
+    conn.execute(
+        "INSERT INTO activity_log (user_id, points, activity_type, description, created_at) VALUES (?, ?, ?, ?, ?)",
+        (user_id, points, activity_type, description, now),
+    )
+    conn.commit()
+    count = conn.execute("SELECT interaction_count FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+    conn.close()
+    return count
+
+
 def check_level_up(user_id: int) -> Optional[str]:
     """Check if user qualifies for a level up. Returns new level name or None."""
     conn = get_db()
@@ -185,3 +238,131 @@ def update_password(user_id: int, current_password: str, new_password: str) -> b
     conn.commit()
     conn.close()
     return True
+
+
+# ---------------------------------------------------------------------------
+# Discord Link
+# ---------------------------------------------------------------------------
+
+def create_link_code(discord_id: str, discord_name: str, email: str) -> Optional[str]:
+    """Create a 6-digit link code for Discord verification. Returns the code or None if email not found."""
+    conn = get_db()
+    user = conn.execute("SELECT id FROM users WHERE email = ?", (email.lower(),)).fetchone()
+    if not user:
+        conn.close()
+        return None
+
+    # Check if already linked
+    existing = conn.execute("SELECT discord_id FROM users WHERE id = ?", (user["id"],)).fetchone()
+    if existing and existing["discord_id"]:
+        conn.close()
+        return None
+
+    code = str(random.randint(100000, 999999))
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(minutes=10)
+    conn.execute(
+        "INSERT INTO link_codes (code, discord_id, discord_name, email, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (code, discord_id, discord_name, email.lower(), now.isoformat(), expires.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+    return code
+
+
+def verify_link_code(user_id: int, code: str) -> Optional[str]:
+    """Validate a 6-digit code and bind the Discord ID to the user. Returns discord_name or None."""
+    conn = get_db()
+    user = conn.execute("SELECT email, discord_id FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not user:
+        conn.close()
+        return None
+    if user["discord_id"]:
+        conn.close()
+        return None  # Already linked
+
+    now = datetime.now(timezone.utc).isoformat()
+    row = conn.execute(
+        "SELECT * FROM link_codes WHERE code = ? AND email = ? AND used = 0 AND expires_at > ? ORDER BY created_at DESC LIMIT 1",
+        (code, user["email"], now),
+    ).fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    conn.execute("UPDATE link_codes SET used = 1 WHERE id = ?", (row["id"],))
+    conn.execute("UPDATE users SET discord_id = ? WHERE id = ?", (row["discord_id"], user_id))
+    conn.commit()
+    conn.close()
+    return row["discord_name"]
+
+
+def get_user_by_discord_id(discord_id: str) -> Optional[dict]:
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE discord_id = ?", (discord_id,)).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def get_user_by_github(github_username: str) -> Optional[dict]:
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE github_username = ?", (github_username,)).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def link_github(user_id: int, github_username: str) -> bool:
+    """Store a GitHub username on the user. Returns False if username already taken."""
+    conn = get_db()
+    existing = conn.execute(
+        "SELECT id FROM users WHERE github_username = ? AND id != ?", (github_username, user_id)
+    ).fetchone()
+    if existing:
+        conn.close()
+        return False
+    conn.execute("UPDATE users SET github_username = ? WHERE id = ?", (github_username.strip(), user_id))
+    conn.commit()
+    conn.close()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Leaderboard & Community
+# ---------------------------------------------------------------------------
+
+def get_leaderboard(limit: int = 20) -> list[dict]:
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, username, display_name, angel_level, interaction_count, discord_id, github_username "
+        "FROM users ORDER BY interaction_count DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_recent_activity(limit: int = 30) -> list[dict]:
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT a.activity_type, a.description, a.points, a.created_at, u.username, u.display_name "
+        "FROM activity_log a JOIN users u ON a.user_id = u.id "
+        "ORDER BY a.created_at DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_community_stats() -> dict:
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    discord_linked = conn.execute("SELECT COUNT(*) FROM users WHERE discord_id IS NOT NULL").fetchone()[0]
+    github_linked = conn.execute("SELECT COUNT(*) FROM users WHERE github_username IS NOT NULL").fetchone()[0]
+    total_interactions = conn.execute("SELECT COALESCE(SUM(interaction_count), 0) FROM users").fetchone()[0]
+    conn.close()
+    return {
+        "total_angels": total,
+        "discord_linked": discord_linked,
+        "github_linked": github_linked,
+        "total_interactions": total_interactions,
+    }

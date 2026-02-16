@@ -1,0 +1,13 @@
+[Unit]
+Description=Angel Cloud GitHub Poller
+After=network.target
+
+[Service]
+Type=oneshot
+User=shanebrain
+WorkingDirectory=/mnt/shanebrain-raid/shanebrain-core/angel-cloud
+ExecStart=/usr/bin/python3 /mnt/shanebrain-raid/shanebrain-core/angel-cloud/github_poller.py
+Environment=PYTHONPATH=/mnt/shanebrain-raid/shanebrain-core/angel-cloud
+
+[Install]
+WantedBy=multi-user.target

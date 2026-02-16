@@ -462,6 +462,138 @@ footer {
     margin-top: 0.3rem;
 }
 
+/* Leaderboard */
+.leaderboard {
+    margin: 1rem 0 2rem;
+    overflow-x: auto;
+}
+
+.leaderboard table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+}
+
+.leaderboard th {
+    color: var(--accent);
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+
+.leaderboard td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.leaderboard .rank {
+    width: 3rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.leaderboard tr.highlight td {
+    background: var(--accent-glow);
+    color: var(--text-bright);
+}
+
+.link-badge {
+    display: inline-block;
+    width: 1.4rem;
+    height: 1.4rem;
+    line-height: 1.4rem;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 0.2rem;
+}
+
+.link-badge.discord {
+    background: #5865F2;
+    color: #fff;
+}
+
+.link-badge.github {
+    background: #333;
+    color: #fff;
+}
+
+/* Activity Feed */
+.activity-feed {
+    margin: 1rem 0 2rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.activity-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 4.5rem;
+    text-align: center;
+}
+
+.activity-badge.chat {
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--accent);
+}
+
+.activity-badge.discord_mention, .activity-badge.discord_command {
+    background: rgba(88, 101, 242, 0.2);
+    color: #7289da;
+}
+
+.activity-badge.discord_message {
+    background: rgba(88, 101, 242, 0.1);
+    color: #5865F2;
+}
+
+.activity-badge.github_commit {
+    background: rgba(0, 255, 136, 0.1);
+    color: var(--success);
+}
+
+.activity-badge.github_pr, .activity-badge.github_pr_merged {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+}
+
+.activity-user {
+    color: var(--text-bright);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.activity-desc {
+    color: var(--text-secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-points {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .hero h1 { font-size: 2rem; }

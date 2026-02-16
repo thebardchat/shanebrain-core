@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 import json
 
-from fastapi import FastAPI, Request, Form, Response
+from fastapi import FastAPI, Request, Form, Response, Header
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -32,6 +32,9 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 SESSION_SECRET = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 _sessions: dict[str, int] = {}  # token -> user_id
 
+# Bot internal secret for Discord bot -> Gateway communication
+BOT_INTERNAL_SECRET = os.environ.get("BOT_INTERNAL_SECRET", "")
+
 
 def _get_current_user(request: Request) -> dict | None:
     token = request.cookies.get("session")
@@ -39,6 +42,10 @@ def _get_current_user(request: Request) -> dict | None:
         user = models.get_user_by_id(_sessions[token])
         return user
     return None
+
+
+def _check_bot_secret(x_bot_secret: str | None) -> bool:
+    return BOT_INTERNAL_SECRET and x_bot_secret == BOT_INTERNAL_SECRET
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +144,21 @@ def profile_page(request: Request, success: str = None, error: str = None):
         "next_threshold": next_threshold,
         "success": success,
         "error": error,
+    })
+
+
+@app.get("/community", response_class=HTMLResponse)
+def community_page(request: Request):
+    user = _get_current_user(request)
+    leaderboard = models.get_leaderboard()
+    activity = models.get_recent_activity()
+    stats = models.get_community_stats()
+    return templates.TemplateResponse("community.html", {
+        "request": request,
+        "user": user,
+        "leaderboard": leaderboard,
+        "activity": activity,
+        "stats": stats,
     })
 
 
@@ -257,7 +279,7 @@ async def api_chat(request: Request):
 
         # After streaming completes: progression + logging
         response_text = "".join(full_response).strip()
-        models.increment_interaction(user["id"])
+        models.add_interaction_points(user["id"], 1, "chat", f"Chat: {message[:80]}")
         new_level = models.check_level_up(user["id"])
 
         if new_level:
@@ -304,6 +326,92 @@ def api_password(
     if not models.update_password(user["id"], current_password, new_password):
         return RedirectResponse("/profile?error=Current+password+is+incorrect", status_code=303)
     return RedirectResponse("/profile?success=Password+changed+successfully", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# API — Discord Link
+# ---------------------------------------------------------------------------
+
+@app.post("/api/create-link-code")
+async def api_create_link_code(request: Request, x_bot_secret: str | None = Header(None)):
+    """Called by Discord bot to create a verification code."""
+    if not _check_bot_secret(x_bot_secret):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+    discord_id = body.get("discord_id", "")
+    discord_name = body.get("discord_name", "")
+    email = body.get("email", "").strip()
+    if not discord_id or not email:
+        return JSONResponse({"error": "Missing discord_id or email"}, status_code=400)
+
+    code = models.create_link_code(str(discord_id), discord_name, email)
+    if not code:
+        return JSONResponse({"error": "Email not found or already linked"}, status_code=404)
+
+    return JSONResponse({"code": code})
+
+
+@app.post("/api/verify-discord")
+def api_verify_discord(request: Request, code: str = Form(...)):
+    """Profile page form: user enters 6-digit code to link Discord."""
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    discord_name = models.verify_link_code(user["id"], code.strip())
+    if discord_name:
+        return RedirectResponse(f"/profile?success=Discord+linked+as+{discord_name}", status_code=303)
+    return RedirectResponse("/profile?error=Invalid+or+expired+code", status_code=303)
+
+
+@app.post("/api/link-github")
+def api_link_github(request: Request, github_username: str = Form(...)):
+    """Profile page form: user enters GitHub username."""
+    user = _get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    username = github_username.strip()
+    if not username:
+        return RedirectResponse("/profile?error=GitHub+username+cannot+be+empty", status_code=303)
+
+    if models.link_github(user["id"], username):
+        return RedirectResponse(f"/profile?success=GitHub+linked+as+{username}", status_code=303)
+    return RedirectResponse("/profile?error=GitHub+username+already+linked+to+another+account", status_code=303)
+
+
+@app.post("/api/discord-activity")
+async def api_discord_activity(request: Request, x_bot_secret: str | None = Header(None)):
+    """Called by Discord bot to report user activity for points."""
+    if not _check_bot_secret(x_bot_secret):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+    discord_id = str(body.get("discord_id", ""))
+    points = body.get("points", 1)
+    activity_type = body.get("activity_type", "discord_message")
+    description = body.get("description", "Discord activity")
+
+    user = models.get_user_by_discord_id(discord_id)
+    if not user:
+        return JSONResponse({"status": "ignored", "reason": "unlinked"})
+
+    models.add_interaction_points(user["id"], points, activity_type, description)
+    new_level = models.check_level_up(user["id"])
+
+    result = {"status": "ok", "points": points}
+    if new_level:
+        result["level_up"] = new_level
+    return JSONResponse(result)
 
 
 # ---------------------------------------------------------------------------

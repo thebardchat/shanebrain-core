@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Community — Angel Cloud{% endblock %}
+
+{% block content %}
+<div class="welcome-header">
+    <h1>// THE COMMUNITY</h1>
+</div>
+
+<div class="stats-row">
+    <div class="stat">
+        <div class="number">{{ stats.total_angels }}</div>
+        <div class="label">ANGELS</div>
+    </div>
+    <div class="stat">
+        <div class="number">{{ stats.discord_linked }}</div>
+        <div class="label">DISCORD</div>
+    </div>
+    <div class="stat">
+        <div class="number">{{ stats.github_linked }}</div>
+        <div class="label">GITHUB</div>
+    </div>
+    <div class="stat">
+        <div class="number">{{ stats.total_interactions }}</div>
+        <div class="label">INTERACTIONS</div>
+    </div>
+</div>
+
+<h3 class="section-title">// LEADERBOARD</h3>
+<div class="leaderboard">
+    <table>
+        <thead>
+            <tr>
+                <th class="rank">#</th>
+                <th>NAME</th>
+                <th>LEVEL</th>
+                <th>PTS</th>
+                <th>LINKS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in leaderboard %}
+            <tr{% if user and entry.id == user.id %} class="highlight"{% endif %}>
+                <td class="rank">{{ loop.index }}</td>
+                <td>{{ entry.display_name or entry.username }}</td>
+                <td>{{ entry.angel_level }}</td>
+                <td>{{ entry.interaction_count or 0 }}</td>
+                <td>
+                    {% if entry.discord_id %}<span class="link-badge discord" title="Discord">D</span>{% endif %}
+                    {% if entry.github_username %}<span class="link-badge github" title="GitHub">G</span>{% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center; color: var(--text-secondary);">No angels yet. Be the first.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h3 class="section-title">// RECENT ACTIVITY</h3>
+<div class="activity-feed">
+    {% for event in activity %}
+    <div class="activity-item">
+        <span class="activity-badge {{ event.activity_type }}">{{ event.activity_type | upper | replace("_", " ") | truncate(8, True, "") }}</span>
+        <span class="activity-user">{{ event.display_name or event.username }}</span>
+        <span class="activity-desc">{{ event.description }}</span>
+        <span class="activity-points">+{{ event.points }}</span>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-secondary);">No activity yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
