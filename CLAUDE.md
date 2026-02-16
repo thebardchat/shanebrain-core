@@ -27,6 +27,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 | Weaviate | 8080 (REST), 50051 (gRPC) | Docker: shanebrain-weaviate |
 | Open WebUI | 3000 | Docker: open-webui |
 | Portainer CE | 9000 | Docker: portainer |
+| Angel Cloud Gateway | 4200 | systemd: angel-cloud-gateway (FastAPI/uvicorn) |
 | Social Bot | — | systemd: shanebrain-social |
 | Discord Bot | — | Background process |
 | Arcade Bot | — | Background process |
@@ -50,6 +51,11 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - social/comment_harvester.py — Polls comments, stores in Weaviate
 - social/friend_profiler.py — Builds living friend profiles
 - systemd/shanebrain-social.service — systemd unit file
+- angel-cloud/ — Angel Cloud Gateway (FastAPI, port 4200)
+- angel-cloud/gateway.py — Main FastAPI app (registration, login, dashboard)
+- angel-cloud/models.py — SQLite user model + angel level progression
+- angel-cloud/weaviate_bridge.py — Creates FriendProfile on registration
+- systemd/angel-cloud-gateway.service — systemd unit file
 - langchain-chains/ — Agent modes: CHAT, MEMORY, WELLNESS, SECURITY, DISPATCH, CODE
 
 ## Ecosystem Projects
@@ -60,7 +66,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 | Pulsar Sentinel | pulsar_sentinel | Active | Post-quantum security framework, full UI |
 | Loudon/DeSarro | loudon-desarro | Active | 50,000 SF athletic complex 3D visualizations |
 | Mini-ShaneBrain | mini-shanebrain | DEPRECATED | Merged into shanebrain-core/social/ (Feb 15) |
-| Angel Cloud | (in shanebrain-core) | Building | Mental wellness platform |
+| Angel Cloud Gateway | (in shanebrain-core/angel-cloud/) | Active | Front door — registration, login, angel progression, Weaviate integration |
 | Angel Arcade | (in shanebrain-core) | Active | Discord economy/casino bot |
 | Legacy AI | Planned | Planned | Personal "TheirNameBrain" for each family member |
 | LogiBot | Planned | Planned | SRM Dispatch automation |
@@ -104,6 +110,12 @@ python -m social.fb_bot --harvest      # Poll comments into Weaviate
 python -m social.fb_bot --status       # Show page stats
 python -m social.fb_bot --friends      # Show friend profiles
 python -m social.fb_bot                # Start scheduler (posting + harvesting)
+
+# Angel Cloud Gateway
+sudo systemctl start angel-cloud-gateway    # Start gateway on port 4200
+sudo systemctl status angel-cloud-gateway   # Check status
+curl http://localhost:4200/api/health        # Health check
+curl http://localhost:4200/api/stats         # Public stats
 ```
 
 ## Security
