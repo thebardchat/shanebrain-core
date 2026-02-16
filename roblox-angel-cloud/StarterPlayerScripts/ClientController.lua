@@ -34,6 +34,12 @@ local GLIDE_FALL_SPEED = -8    -- slow descent
 local GLIDE_HORIZONTAL_BOOST = 1.3
 local NORMAL_JUMP_POWER = 50
 
+-- Dynamic FOV (inspired by Gemini's FlightEngine — smooth camera zoom at speed)
+local BASE_FOV = 70
+local GLIDE_FOV = 80
+local FLIGHT_FOV = 95
+local FOV_LERP_SPEED = 0.1  -- smooth interpolation factor
+
 -- Double-tap detection for flight
 local lastSpacePress = 0
 local DOUBLE_TAP_WINDOW = 0.3
@@ -342,6 +348,17 @@ function ClientController.Update(dt: number)
             )
         end
     end
+
+    -- Dynamic FOV: widens during flight/glide based on speed
+    local targetFOV = BASE_FOV
+    if isFlying then
+        local velocity = humanoidRootPart.AssemblyLinearVelocity.Magnitude
+        targetFOV = math.clamp(FLIGHT_FOV + velocity * 0.1, FLIGHT_FOV, FLIGHT_FOV + 10)
+    elseif isGliding then
+        local velocity = humanoidRootPart.AssemblyLinearVelocity.Magnitude
+        targetFOV = math.clamp(GLIDE_FOV + velocity * 0.08, GLIDE_FOV, FLIGHT_FOV)
+    end
+    camera.FieldOfView = camera.FieldOfView + (targetFOV - camera.FieldOfView) * FOV_LERP_SPEED
 end
 
 function ClientController.OnStaminaUpdate(data: { [string]: any })

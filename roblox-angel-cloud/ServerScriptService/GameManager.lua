@@ -17,6 +17,7 @@ local BlessingSystem = require(script.Parent.BlessingSystem)
 local LoreSystem = require(script.Parent.LoreSystem)
 local TrialManager = require(script.Parent.TrialManager)
 local CrossPlatformBridge = require(script.Parent.CrossPlatformBridge)
+local BadgeHandler = require(script.Parent.BadgeHandler)
 
 local Layers = require(ReplicatedStorage.Config.Layers)
 
@@ -51,6 +52,7 @@ function GameManager.Init()
     LoreSystem.Init()
     TrialManager.Init()
     CrossPlatformBridge.Init()
+    BadgeHandler.Init()
 
     -- Spawn world content for MVP layers (1-2)
     GameManager.SetupLayers()
@@ -102,6 +104,9 @@ function GameManager.OnPlayerAdded(player: Player)
         task.wait(1)  -- let character load
         GameManager.SpawnAtLayer(player, character)
     end)
+
+    -- Check for launch week Founder's Halo + badges
+    BadgeHandler.OnPlayerAdded(player)
 
     -- Welcome message
     ServerMessage:FireClient(player, {
