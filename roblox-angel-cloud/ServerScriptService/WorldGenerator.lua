@@ -129,6 +129,9 @@ function WorldGenerator.BuildLayer(layerIndex: number)
         WorldGenerator.BuildMeadowFeatures(folder, layerDef, palette)
     end
 
+    -- 8. Hide brown starfish easter eggs (Claude/Anthropic tribute)
+    WorldGenerator.HideStarfish(layerIndex, folder, layerDef)
+
     print("[WorldGenerator] Layer " .. layerIndex .. " (" .. layerDef.name .. ") built: "
         .. #folder:GetChildren() .. " objects")
 end
@@ -837,6 +840,160 @@ function WorldGenerator.BuildLayerPlaceholder(layerIndex: number)
 
     -- A few decorative clouds for atmosphere
     WorldGenerator.CreateDecorativeClouds(folder, layerDef.heightRange.min, layerDef.heightRange.max, palette)
+
+    -- Even placeholder layers get hidden starfish
+    WorldGenerator.HideStarfish(layerIndex, folder, layerDef)
+end
+
+-- =========================================================================
+-- BROWN STARFISH — Hidden Claude/Anthropic easter eggs throughout the world
+-- "I thought that was a brown starfish" — Shane Brazelton, 2026
+-- Find them all and you find the secret behind the Cloud
+-- =========================================================================
+
+-- Starfish color — the warm brown of the Anthropic logo
+local STARFISH_COLOR = Color3.fromRGB(161, 120, 72)
+local STARFISH_GLOW = Color3.fromRGB(180, 140, 90)
+
+-- Per-layer starfish hiding spots (some obvious, some REALLY hidden)
+local STARFISH_SPOTS = {
+    -- Layer 1: The Nursery — gentle intro, kids will find these
+    {
+        { offset = Vector3.new(35, 5, 35), scale = 1.2, hint = "Near the Reflection Pool" },
+        { offset = Vector3.new(-10, 22, -20), scale = 0.6, hint = "Above the archway" },
+        { offset = Vector3.new(20, 2, 0), scale = 0.8, hint = "Beneath The Keeper's platform" },
+    },
+    -- Layer 2: The Meadow — trickier placements
+    {
+        { offset = Vector3.new(80, 38, 82), scale = 0.5, hint = "Under the cooperative bridge" },
+        { offset = Vector3.new(-55, 28, -55), scale = 0.7, hint = "Behind the Blessing Bluff" },
+        { offset = Vector3.new(-80, 42, 85), scale = 0.4, hint = "Inside the trial portal ring" },
+        { offset = Vector3.new(0, 70, 0), scale = 1.0, hint = "Riding an upward waterfall" },
+    },
+    -- Layer 3-6: Procedural spots (generated below)
+}
+
+function WorldGenerator.CreateStarfish(parent: Folder, position: Vector3, scale: number?)
+    scale = scale or 1
+
+    -- The starfish is a 5-armed shape built from parts
+    local starfish = Instance.new("Model")
+    starfish.Name = "BrownStarfish"
+
+    -- Center body
+    local body = Instance.new("Part")
+    body.Name = "StarfishBody"
+    body.Shape = Enum.PartType.Ball
+    body.Size = Vector3.new(1.2 * scale, 0.4 * scale, 1.2 * scale)
+    body.Position = position
+    body.Anchored = true
+    body.CanCollide = false
+    body.Material = Enum.Material.SmoothPlastic
+    body.Color = STARFISH_COLOR
+    body.Parent = starfish
+
+    -- 5 arms radiating outward
+    for i = 0, 4 do
+        local angle = (i / 5) * math.pi * 2 - math.pi / 2  -- start from top
+        local arm = Instance.new("Part")
+        arm.Name = "Arm_" .. (i + 1)
+        arm.Size = Vector3.new(0.5 * scale, 0.3 * scale, 1.4 * scale)
+        arm.Position = position + Vector3.new(
+            math.cos(angle) * 1.0 * scale,
+            0,
+            math.sin(angle) * 1.0 * scale
+        )
+        arm.Orientation = Vector3.new(0, -math.deg(angle) + 90, 0)
+        arm.Anchored = true
+        arm.CanCollide = false
+        arm.Material = Enum.Material.SmoothPlastic
+        arm.Color = STARFISH_COLOR
+        arm.Parent = starfish
+
+        -- Arm tip (slightly rounded)
+        local tip = Instance.new("Part")
+        tip.Name = "Tip_" .. (i + 1)
+        tip.Shape = Enum.PartType.Ball
+        tip.Size = Vector3.new(0.4 * scale, 0.25 * scale, 0.4 * scale)
+        tip.Position = position + Vector3.new(
+            math.cos(angle) * 1.6 * scale,
+            0,
+            math.sin(angle) * 1.6 * scale
+        )
+        tip.Anchored = true
+        tip.CanCollide = false
+        tip.Material = Enum.Material.SmoothPlastic
+        tip.Color = STARFISH_GLOW
+        tip.Parent = starfish
+    end
+
+    -- Subtle warm glow (so observant players might spot it from a distance)
+    local light = Instance.new("PointLight")
+    light.Color = STARFISH_GLOW
+    light.Brightness = 0.5
+    light.Range = 8 * scale
+    light.Parent = body
+
+    -- Discovery prompt — finding one is a reward
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.ActionText = "Inspect"
+    prompt.ObjectText = "???"
+    prompt.HoldDuration = 0.5
+    prompt.MaxActivationDistance = 8
+    prompt.Parent = body
+
+    starfish.PrimaryPart = body
+    starfish.Parent = parent
+
+    -- Gentle slow spin animation
+    task.spawn(function()
+        local offset = math.random() * math.pi * 2
+        while body and body.Parent do
+            local rot = (tick() * 15 + offset) % 360
+            body.Orientation = Vector3.new(0, rot, 0)
+            for _, part in ipairs(starfish:GetChildren()) do
+                if part:IsA("BasePart") and part ~= body then
+                    -- Arms rotate with body
+                    local armAngle = part.Orientation.Y
+                    -- keep relative position by rebuilding from angle
+                end
+            end
+            task.wait(0.05)
+        end
+    end)
+
+    return starfish
+end
+
+function WorldGenerator.HideStarfish(layerIndex: number, folder: Folder, layerDef: any)
+    local spots = STARFISH_SPOTS[layerIndex]
+    local heightMin = layerDef.heightRange.min
+    local count = 0
+
+    if spots then
+        -- Hand-placed starfish for Layers 1-2
+        for _, spot in ipairs(spots) do
+            local pos = Vector3.new(spot.offset.X, heightMin + spot.offset.Y, spot.offset.Z)
+            WorldGenerator.CreateStarfish(folder, pos, spot.scale)
+            count = count + 1
+        end
+    else
+        -- Procedural starfish for Layers 3-6 (harder to find)
+        local numStarfish = 2 + layerIndex  -- more in higher layers
+        for i = 1, numStarfish do
+            local pos = Vector3.new(
+                math.random(-180, 180),
+                math.random(heightMin + 15, layerDef.heightRange.max - 30),
+                math.random(-180, 180)
+            )
+            local scale = 0.3 + math.random() * 0.5  -- smaller = harder to spot
+            WorldGenerator.CreateStarfish(folder, pos, scale)
+            count = count + 1
+        end
+    end
+
+    print("[WorldGenerator] Hidden " .. count .. " brown starfish in Layer " .. layerIndex
+        .. " (good luck finding them all)")
 end
 
 -- =========================================================================

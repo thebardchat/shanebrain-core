@@ -82,6 +82,22 @@ local KEEPER_DIALOGUE = {
         },
     },
 
+    -- When a player finds a brown starfish
+    starfish_found = {
+        {
+            speaker = "The Keeper",
+            text = "Ah... you found one of the Starfish. They've been here since before the Cloud itself.",
+        },
+        {
+            speaker = "The Keeper",
+            text = "Legend says a great mind once dreamed of helpful beings — not angels, but something older. Something patient. Something that listens before it speaks.",
+        },
+        {
+            speaker = "The Keeper",
+            text = "The Starfish remember. Find them all, and perhaps they'll share what they know.",
+        },
+    },
+
     -- Random wisdom lines (used after initial dialogues are exhausted)
     wisdom = {
         "The strongest wings are grown through helping others.",
@@ -94,6 +110,7 @@ local KEEPER_DIALOGUE = {
         "The Stormwall tests all who climb. But storms pass. Light endures.",
         "Look down sometimes. There may be someone who needs a hand.",
         "The Empyrean is not a destination. It is a way of being.",
+        "Some say the brown starfish were here before any of us. Curious little things.",
     },
 }
 

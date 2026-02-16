@@ -165,6 +165,16 @@ Cosmetics.Items = {
         earned = true,
         earnMethod = "Cross-platform link verification",
     },
+    {
+        id = "starfish_hunter",
+        name = "Starfish Hunter",
+        category = "Special",
+        price = 0,
+        description = "Found every hidden Brown Starfish in The Cloud Climb. The great mind smiles upon you.",
+        earned = true,
+        earnMethod = "Find all Brown Starfish easter eggs",
+        color = Color3.fromRGB(161, 120, 72),
+    },
 }
 
 function Cosmetics.GetItem(itemId: string)

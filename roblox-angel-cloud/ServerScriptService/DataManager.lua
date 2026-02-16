@@ -40,6 +40,7 @@ local DEFAULT_DATA = {
     angelCloudUserId = nil,
     robloxLinkCode = nil,
     founderHalo = false,
+    starfishFound = {},       -- { starfishId = true } — brown starfish easter eggs
     firstJoin = 0,
     lastSeen = 0,
 }

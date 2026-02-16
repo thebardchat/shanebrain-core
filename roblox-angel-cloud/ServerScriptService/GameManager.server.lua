@@ -76,6 +76,9 @@ function GameManager.Init()
         NPCSystem.SpawnKeeper(nurseryFolder, nurseryDef.spawnPosition)
     end
 
+    -- Wire up all brown starfish ProximityPrompts
+    GameManager.WireStarfish()
+
     -- Start auto-save
     DataManager.StartAutoSave()
 
@@ -318,6 +321,109 @@ function GameManager.WireTrialPortal(layerFolder: Folder)
                 TrialManager.JoinQueue(hitPlayer, Trials.MVP_TRIAL_IDS[1])
             end
         end)
+    end
+end
+
+function GameManager.WireStarfish()
+    -- Find all BrownStarfish models across all layer folders and wire their prompts
+    local starfishFound = {}  -- per-player tracking: { userId = { [starfishId] = true } }
+    local totalStarfish = 0
+
+    for _, folder in ipairs(workspace:GetChildren()) do
+        if folder:IsA("Folder") and folder.Name:match("^Layer%d") then
+            for _, child in ipairs(folder:GetDescendants()) do
+                if child:IsA("Model") and child.Name == "BrownStarfish" then
+                    totalStarfish = totalStarfish + 1
+                    local starfishId = folder.Name .. "_" .. totalStarfish
+                    local body = child:FindFirstChild("StarfishBody")
+                    if body then
+                        local prompt = body:FindFirstChildWhichIsA("ProximityPrompt")
+                        if prompt then
+                            prompt.Triggered:Connect(function(player)
+                                GameManager.OnStarfishFound(player, starfishId, totalStarfish)
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    print("[GameManager] Wired " .. totalStarfish .. " brown starfish across all layers")
+end
+
+function GameManager.OnStarfishFound(player: Player, starfishId: string, totalInWorld: number)
+    local data = DataManager.GetData(player)
+    if not data then return end
+
+    -- Track discoveries
+    if not data.starfishFound then
+        data.starfishFound = {}
+    end
+
+    if data.starfishFound[starfishId] then
+        -- Already found this one
+        ServerMessage:FireClient(player, {
+            type = "info",
+            message = "You've already found this starfish. It seems to recognize you.",
+        })
+        return
+    end
+
+    -- New discovery!
+    data.starfishFound[starfishId] = true
+    local count = 0
+    for _ in pairs(data.starfishFound) do
+        count = count + 1
+    end
+
+    -- Award a bonus mote for finding one
+    MoteSystem.AwardMotes(player, 2, "starfish_discovery")
+
+    -- Notify player
+    ServerMessage:FireClient(player, {
+        type = "starfish",
+        message = "You found a Brown Starfish! (" .. count .. " discovered) +2 Motes",
+    })
+
+    -- First starfish triggers Keeper dialogue about them
+    if count == 1 then
+        task.delay(2, function()
+            local NPCDialogue = ReplicatedStorage:FindFirstChild("NPCDialogue")
+            if NPCDialogue then
+                NPCDialogue:FireClient(player, {
+                    npcId = "the_keeper",
+                    npcName = "The Keeper",
+                    lines = {
+                        {
+                            speaker = "The Keeper",
+                            text = "Ah... you found one of the Starfish. They've been here since before the Cloud itself.",
+                        },
+                        {
+                            speaker = "The Keeper",
+                            text = "Legend says a great mind once dreamed of helpful beings — not angels, but something older. Something patient. Something that listens before it speaks.",
+                        },
+                        {
+                            speaker = "The Keeper",
+                            text = "The Starfish remember. Find them all, and perhaps they'll share what they know.",
+                        },
+                    },
+                })
+            end
+        end)
+    end
+
+    -- Found ALL starfish — special reward
+    if count >= totalInWorld and totalInWorld > 0 then
+        ServerMessage:FireClient(player, {
+            type = "starfish_complete",
+            message = "You found every Brown Starfish in The Cloud Climb! The great mind smiles upon you.",
+        })
+        -- Grant special cosmetic
+        if not data.ownedCosmetics["starfish_hunter"] then
+            data.ownedCosmetics["starfish_hunter"] = true
+            MoteSystem.AwardMotes(player, 10, "starfish_complete")
+        end
     end
 end
 
