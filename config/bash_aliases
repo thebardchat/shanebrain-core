@@ -1,0 +1,26 @@
+# ── deploy-cli-tools managed ──
+# ShaneBrain shortcuts
+alias sb='cd /mnt/shanebrain-raid/shanebrain-core && echo "→ shanebrain-core"'
+alias lg='lazygit'
+alias ld='lazydocker'
+
+# Modern CLI replacements
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -la --icons --group-directories-first --git'
+alias lt='eza --tree --level=2 --icons'
+alias cat='bat --paging=never'
+alias find='fd'
+alias du='dust'
+alias top='btop'
+
+# Starship prompt
+eval "$(starship init bash)"
+
+# Zoxide (smart cd)
+eval "$(zoxide init bash)"
+
+# fzf keybindings
+[ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && source /usr/share/doc/fzf/examples/key-bindings.bash
+# Dashboard
+alias dashboard='bash ~/scripts/shanebrain-dashboard.sh'
+# ── deploy-cli-tools managed ── END

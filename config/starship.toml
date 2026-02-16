@@ -1,0 +1,80 @@
+# ShaneBrain Starship Prompt Config
+# Pi-friendly: basic unicode only, no nerd font icons
+
+format = """
+$username$hostname $directory $git_branch$git_status $python$nodejs$cmd_duration
+$character"""
+
+right_format = """$memory_usage $battery $time"""
+
+[username]
+style_user = "bold cyan"
+style_root = "bold red"
+show_always = true
+format = "[$user]($style)"
+
+[hostname]
+ssh_only = false
+style = "bold green"
+format = "@[$hostname]($style)"
+
+[directory]
+truncation_length = 3
+truncation_symbol = ".../"
+style = "bold cyan"
+format = "[$path]($style)[$read_only]($read_only_style)"
+
+[git_branch]
+style = "bold yellow"
+format = "[$symbol$branch]($style)"
+symbol = ""
+
+[git_status]
+style = "yellow"
+format = '([$all_status$ahead_behind]($style))'
+
+[python]
+style = "green"
+format = '[py $version]($style) '
+detect_files = ["*.py", "requirements.txt", "pyproject.toml"]
+
+[nodejs]
+style = "green"
+format = '[node $version]($style) '
+
+[cmd_duration]
+min_time = 2000
+style = "yellow"
+format = '[took $duration]($style)'
+
+[character]
+success_symbol = "[>>](bold green)"
+error_symbol = "[>>](bold red)"
+
+[memory_usage]
+disabled = false
+threshold = 0
+style = "cyan"
+format = "[$ram]($style)"
+
+[battery]
+disabled = false
+format = "[$symbol$percentage]($style) "
+
+[[battery.display]]
+threshold = 30
+style = "bold red"
+
+[[battery.display]]
+threshold = 70
+style = "yellow"
+
+[[battery.display]]
+threshold = 100
+style = "green"
+
+[time]
+disabled = false
+style = "cyan"
+format = "[$time]($style)"
+time_format = "%H:%M"
