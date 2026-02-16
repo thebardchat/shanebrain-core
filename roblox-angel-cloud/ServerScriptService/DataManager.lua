@@ -25,6 +25,7 @@ local DEFAULT_DATA = {
     layerIndex = 1,
     collectedFragments = {},  -- { fragmentId = true }
     ownedCosmetics = {},      -- { cosmeticId = true }
+    equippedCosmetics = {},   -- { category = cosmeticId }
     equippedWingSkin = nil,
     equippedTrail = nil,
     equippedNameGlow = nil,

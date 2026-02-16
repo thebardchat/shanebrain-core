@@ -312,7 +312,11 @@ function GameManager.WireTrialPortal(layerFolder: Folder)
     local prompt = portalRing:FindFirstChildWhichIsA("ProximityPrompt")
     if prompt then
         prompt.Triggered:Connect(function(hitPlayer)
-            TrialManager.HandleJoinRequest(hitPlayer, nil)  -- auto-pick available trial
+            -- Join first available MVP trial queue
+            local Trials = require(ReplicatedStorage.Config.Trials)
+            if Trials.MVP_TRIAL_IDS and #Trials.MVP_TRIAL_IDS > 0 then
+                TrialManager.JoinQueue(hitPlayer, Trials.MVP_TRIAL_IDS[1])
+            end
         end)
     end
 end
