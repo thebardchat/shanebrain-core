@@ -1,0 +1,82 @@
+{
+  "name": "AngelCloud_TheCloudClimb",
+  "tree": {
+    "$className": "DataModel",
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "ServerScriptService"
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "StarterPlayerScripts"
+      }
+    },
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+
+      "Config": {
+        "$className": "Folder",
+        "$path": "ReplicatedStorage/Config"
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": true
+      },
+
+      "Layer1_Nursery": {
+        "$className": "Folder"
+      },
+      "Layer2_Meadow": {
+        "$className": "Folder"
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future",
+        "Ambient": [10, 10, 15],
+        "OutdoorAmbient": [80, 100, 120],
+        "ClockTime": 10,
+        "GeographicLatitude": 35
+      },
+
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.3,
+          "Offset": 0.25,
+          "Color": [200, 220, 255],
+          "Decay": [180, 200, 230],
+          "Glare": 0,
+          "Haze": 2
+        }
+      },
+
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.5,
+          "Size": 24,
+          "Threshold": 0.9
+        }
+      }
+    },
+
+    "SoundService": {
+      "$className": "SoundService",
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
