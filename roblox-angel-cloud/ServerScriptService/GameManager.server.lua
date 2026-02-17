@@ -37,9 +37,6 @@ local ServerMessage    -- Server -> Client: system messages
 function GameManager.Init()
     print("[GameManager] Initializing The Cloud Climb...")
 
-    -- Safety: set a low FallenPartsDestroyHeight so players don't fall forever
-    workspace.FallenPartsDestroyHeight = -100
-
     -- Create a temporary baseplate so players don't fall during init
     local tempBase = Instance.new("Part")
     tempBase.Name = "TempBaseplate"
