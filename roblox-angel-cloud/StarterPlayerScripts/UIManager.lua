@@ -307,11 +307,11 @@ function UIManager.ShowTutorial()
 
     -- Instructions
     local instructions = {
-        { icon = ">>",  text = "COLLECT glowing Light Motes everywhere" },
-        { icon = "^^",  text = "JUMP off edges + hold SPACE to GLIDE with wings!" },
-        { icon = "ZZ",  text = "Hit GREEN PADS for SPEED BOOSTS" },
-        { icon = "??",  text = "TALK to The Keeper (glowing figure with halo)" },
-        { icon = "CC",  text = "Press C for Lore Codex | B for Shop" },
+        { icon = "F",   text = "Press F to FLY! (or double-tap Space)" },
+        { icon = "^^",  text = "While flying: WASD move, SPACE = up, SHIFT = down" },
+        { icon = ">>",  text = "COLLECT glowing Light Motes to level up" },
+        { icon = "!!",  text = "Visit the WING FORGE to upgrade your wings" },
+        { icon = "ZZ",  text = "Hit GREEN PADS for speed, CYAN for updrafts" },
         { icon = "10",  text = "Get 10 Motes to unlock THE MEADOW (Layer 2)" },
     }
 

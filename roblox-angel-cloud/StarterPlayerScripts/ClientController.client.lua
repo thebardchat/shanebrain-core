@@ -1,10 +1,12 @@
 --[[
     ClientController.lua — Main client-side input and movement controller
-    Handles: movement, wing glide, flight (higher layers), interaction prompts
+    Handles: movement, wing glide, full flight, interaction prompts
     Input: WASD + Space + Action Key (E)
 
-    Wing Glide: Hold Space while airborne (Layer 2+)
-    Flight: Double-tap Space (Layer 5+, drains stamina faster)
+    HOLD Space while airborne = glide (slow fall + horizontal speed)
+    DOUBLE-TAP Space = toggle FREE FLIGHT (fly anywhere!)
+    While flying: WASD to move, Space = go up, Shift = go down
+    F key = quick toggle flight on/off
 ]]
 
 local Players = game:GetService("Players")
@@ -22,8 +24,8 @@ local camera = workspace.CurrentCamera
 -- State
 local isGliding = false
 local isFlying = false
-local canGlide = true    -- UNLOCKED FROM THE START — everyone can glide!
-local canFly = false      -- unlocked at Layer 5
+local canGlide = true    -- UNLOCKED FROM THE START
+local canFly = true      -- EVERYONE CAN FLY from the start!
 local currentLayer = 1
 local currentLevel = "Newborn"
 local stamina = 100
@@ -34,6 +36,10 @@ local GLIDE_FALL_SPEED = -4    -- very slow descent (hang time!)
 local GLIDE_HORIZONTAL_BOOST = 2.5  -- zip across the sky
 local NORMAL_JUMP_POWER = 70
 
+-- Flight speed
+local FLIGHT_SPEED = 60       -- base horizontal flight speed
+local FLIGHT_VERTICAL = 40    -- up/down speed while flying
+
 -- Dynamic FOV (inspired by Gemini's FlightEngine — smooth camera zoom at speed)
 local BASE_FOV = 70
 local GLIDE_FOV = 80
@@ -42,7 +48,7 @@ local FOV_LERP_SPEED = 0.1  -- smooth interpolation factor
 
 -- Double-tap detection for flight
 local lastSpacePress = 0
-local DOUBLE_TAP_WINDOW = 0.3
+local DOUBLE_TAP_WINDOW = 0.35
 
 -- RemoteEvents (populated after they exist)
 local StaminaUpdate
@@ -117,15 +123,21 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
     if input.KeyCode == Enum.KeyCode.Space then
         local now = tick()
 
-        -- Double-tap space for flight (Layer 5+)
+        -- Double-tap space = toggle flight
         if canFly and (now - lastSpacePress) < DOUBLE_TAP_WINDOW then
             ClientController.ToggleFlight()
             lastSpacePress = 0
+            return
         else
             lastSpacePress = now
         end
 
-        -- Hold space for glide (Layer 2+)
+        -- If already flying, space = go up (handled in Update loop)
+        if isFlying then
+            return
+        end
+
+        -- Hold space while falling = glide
         if canGlide and not isFlying then
             local character = player.Character
             if character then
@@ -136,9 +148,14 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
             end
         end
 
+    elseif input.KeyCode == Enum.KeyCode.F then
+        -- F key = quick toggle flight on/off
+        if canFly then
+            ClientController.ToggleFlight()
+        end
+
     elseif input.KeyCode == Enum.KeyCode.E then
-        -- Action key — handled by proximity prompts mostly,
-        -- but also used for meditation spots
+        -- Action key — handled by proximity prompts mostly
         ClientController.HandleAction()
 
     elseif input.KeyCode == Enum.KeyCode.C then
@@ -270,38 +287,19 @@ function ClientController.HandleAction()
     end
 end
 
-function ClientController.ShowWings(visible: boolean)
+function ClientController.ShowWings(active: boolean)
+    -- Server already creates wings — just make them glow brighter when flying/gliding
     local character = player.Character
-    if not character then
-        return
+    if not character then return end
+
+    local leftWing = character:FindFirstChild("AngelWings")
+    local rightWing = character:FindFirstChild("AngelWingR")
+
+    if leftWing then
+        leftWing.Transparency = active and 0.1 or 0.25
     end
-
-    local wings = character:FindFirstChild("AngelWings")
-    if visible and not wings then
-        -- Create simple wing visual
-        wings = Instance.new("Part")
-        wings.Name = "AngelWings"
-        wings.Size = Vector3.new(0.5, 4, 6)
-        wings.Material = Enum.Material.ForceField
-        wings.Color = Color3.fromRGB(0, 212, 255)
-        wings.Transparency = 0.4
-        wings.CanCollide = false
-        wings.Massless = true
-
-        local weld = Instance.new("WeldConstraint")
-        weld.Part0 = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-        weld.Part1 = wings
-        weld.Parent = wings
-
-        local torso = weld.Part0
-        if torso then
-            wings.CFrame = torso.CFrame * CFrame.new(0, 0.5, 1)
-        end
-
-        wings.Parent = character
-
-    elseif not visible and wings then
-        wings:Destroy()
+    if rightWing then
+        rightWing.Transparency = active and 0.1 or 0.25
     end
 end
 
@@ -323,25 +321,27 @@ function ClientController.Update(dt: number)
         if flightForce and stamina > 0 then
             local moveDirection = humanoid.MoveDirection
             local cameraLook = camera.CFrame.LookVector
-            local speed = 50
+            local cameraRight = camera.CFrame.RightVector
 
+            local velocity = Vector3.zero
+
+            -- WASD moves you in camera direction (true 3D flight)
             if moveDirection.Magnitude > 0 then
-                flightForce.Velocity = Vector3.new(
-                    moveDirection.X * speed,
-                    cameraLook.Y * speed * 0.5,
-                    moveDirection.Z * speed
-                )
-            else
-                -- Hover in place
-                flightForce.Velocity = Vector3.zero
+                -- Project move direction onto camera-relative axes
+                local flatLook = Vector3.new(cameraLook.X, 0, cameraLook.Z).Unit
+                local flatRight = Vector3.new(cameraRight.X, 0, cameraRight.Z).Unit
+                velocity = (flatLook * moveDirection.Z * -1 + flatRight * moveDirection.X) * -FLIGHT_SPEED
             end
 
-            -- Space to go up, Shift to go down while flying
+            -- Space = go UP, Shift = go DOWN
             if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                flightForce.Velocity = flightForce.Velocity + Vector3.new(0, 30, 0)
-            elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                flightForce.Velocity = flightForce.Velocity + Vector3.new(0, -30, 0)
+                velocity = velocity + Vector3.new(0, FLIGHT_VERTICAL, 0)
             end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                velocity = velocity + Vector3.new(0, -FLIGHT_VERTICAL, 0)
+            end
+
+            flightForce.Velocity = velocity
         elseif stamina <= 0 then
             ClientController.ToggleFlight()  -- forced landing
         end
@@ -392,8 +392,8 @@ function ClientController.OnLevelUp(data: { [string]: any })
     currentLayer = data.layerIndex
 
     -- Update capabilities
-    canGlide = true  -- always on
-    canFly = currentLayer >= 3  -- flight unlocked at Layer 3
+    canGlide = true
+    canFly = true  -- everyone flies!
 
     -- Trigger cinematic
     local LevelUpCinematic = require(script.Parent.LevelUpCinematic)
@@ -405,8 +405,8 @@ function ClientController.OnServerMessage(data: { [string]: any })
         currentLevel = data.angelLevel
         local levelIndex = Layers.GetLevelIndex(currentLevel)
         currentLayer = levelIndex
-        canGlide = true  -- always on
-        canFly = levelIndex >= 3
+        canGlide = true
+        canFly = true
     end
 
     local UIManager = require(script.Parent.UIManager)
