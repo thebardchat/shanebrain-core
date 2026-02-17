@@ -250,10 +250,159 @@ end
 
 function UIManager.ShowMessage(data: { [string]: any })
     if data.type == "welcome" then
-        UIManager.ShowNotification(data.message, COLORS.accent, 5)
+        UIManager.ShowNotification(data.message, COLORS.accent, 6)
+        -- Show tutorial overlay for first-time players
+        UIManager.ShowTutorial()
+    elseif data.type == "info" then
+        UIManager.ShowNotification(data.message or "", COLORS.accent, 4)
+    elseif data.type == "starfish" then
+        UIManager.ShowNotification(data.message or "", COLORS.gold, 4)
     else
         UIManager.ShowNotification(data.message or "", COLORS.white, 3)
     end
+end
+
+function UIManager.ShowTutorial()
+    -- Full-screen tutorial overlay that fades in and auto-dismisses
+    local tutorialFrame = Instance.new("Frame")
+    tutorialFrame.Name = "TutorialOverlay"
+    tutorialFrame.Size = UDim2.new(1, 0, 1, 0)
+    tutorialFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    tutorialFrame.BackgroundTransparency = 0.5
+    tutorialFrame.BorderSizePixel = 0
+    tutorialFrame.ZIndex = 10
+    tutorialFrame.Parent = screenGui
+
+    -- Center card
+    local card = Instance.new("Frame")
+    card.Name = "TutorialCard"
+    card.Size = UDim2.new(0, 500, 0, 320)
+    card.Position = UDim2.new(0.5, -250, 0.5, -160)
+    card.BackgroundColor3 = COLORS.bg
+    card.BackgroundTransparency = 0.05
+    card.BorderSizePixel = 0
+    card.ZIndex = 11
+    card.Parent = tutorialFrame
+
+    local cardCorner = Instance.new("UICorner")
+    cardCorner.CornerRadius = UDim.new(0, 14)
+    cardCorner.Parent = card
+
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = COLORS.accent
+    cardStroke.Thickness = 2
+    cardStroke.Parent = card
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -30, 0, 40)
+    title.Position = UDim2.new(0, 15, 0, 15)
+    title.BackgroundTransparency = 1
+    title.Text = "THE CLOUD CLIMB"
+    title.TextColor3 = COLORS.accent
+    title.TextSize = 28
+    title.Font = Enum.Font.GothamBold
+    title.ZIndex = 12
+    title.Parent = card
+
+    -- Instructions
+    local instructions = {
+        { icon = ">>",  text = "WALK toward the golden markers ahead" },
+        { icon = "**",  text = "COLLECT glowing cyan Light Motes" },
+        { icon = "??",  text = "TALK to The Keeper (the glowing figure nearby)" },
+        { icon = "~~",  text = "VISIT the Reflection Pool to restore energy" },
+        { icon = "CC",  text = "Press C to open Lore Codex" },
+        { icon = "BB",  text = "Press B to open Shop" },
+    }
+
+    for i, instr in ipairs(instructions) do
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, -40, 0, 30)
+        row.Position = UDim2.new(0, 20, 0, 55 + (i - 1) * 35)
+        row.BackgroundTransparency = 1
+        row.ZIndex = 12
+        row.Parent = card
+
+        local icon = Instance.new("TextLabel")
+        icon.Size = UDim2.new(0, 30, 1, 0)
+        icon.BackgroundTransparency = 1
+        icon.Text = instr.icon
+        icon.TextColor3 = COLORS.accent
+        icon.TextSize = 16
+        icon.Font = Enum.Font.Code
+        icon.ZIndex = 12
+        icon.Parent = row
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -40, 1, 0)
+        label.Position = UDim2.new(0, 35, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = instr.text
+        label.TextColor3 = COLORS.white
+        label.TextSize = 16
+        label.Font = Enum.Font.GothamMedium
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = 12
+        label.Parent = row
+    end
+
+    -- Motto at bottom
+    local motto = Instance.new("TextLabel")
+    motto.Size = UDim2.new(1, -30, 0, 20)
+    motto.Position = UDim2.new(0, 15, 1, -55)
+    motto.BackgroundTransparency = 1
+    motto.Text = "Every Angel strengthens the cloud."
+    motto.TextColor3 = COLORS.gold
+    motto.TextSize = 14
+    motto.Font = Enum.Font.GothamMedium
+    motto.ZIndex = 12
+    motto.Parent = card
+
+    -- Dismiss button
+    local dismissBtn = Instance.new("TextButton")
+    dismissBtn.Size = UDim2.new(0, 160, 0, 36)
+    dismissBtn.Position = UDim2.new(0.5, -80, 1, -45)
+    dismissBtn.BackgroundColor3 = COLORS.accent
+    dismissBtn.BorderSizePixel = 0
+    dismissBtn.Text = "BEGIN CLIMBING"
+    dismissBtn.TextColor3 = COLORS.bg
+    dismissBtn.TextSize = 16
+    dismissBtn.Font = Enum.Font.GothamBold
+    dismissBtn.ZIndex = 12
+    dismissBtn.Parent = card
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = dismissBtn
+
+    -- Click or auto-dismiss
+    local function dismiss()
+        if tutorialFrame and tutorialFrame.Parent then
+            TweenService:Create(tutorialFrame, TweenInfo.new(0.5), {
+                BackgroundTransparency = 1,
+            }):Play()
+            TweenService:Create(card, TweenInfo.new(0.5), {
+                BackgroundTransparency = 1,
+            }):Play()
+            for _, desc in ipairs(card:GetDescendants()) do
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                    TweenService:Create(desc, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+                end
+                if desc:IsA("UIStroke") then
+                    TweenService:Create(desc, TweenInfo.new(0.5), { Transparency = 1 }):Play()
+                end
+            end
+            task.delay(0.6, function()
+                if tutorialFrame and tutorialFrame.Parent then
+                    tutorialFrame:Destroy()
+                end
+            end)
+        end
+    end
+
+    dismissBtn.MouseButton1Click:Connect(dismiss)
+    -- Auto-dismiss after 15 seconds
+    task.delay(15, dismiss)
 end
 
 function UIManager.ShowHALTNotification(data: { [string]: any })

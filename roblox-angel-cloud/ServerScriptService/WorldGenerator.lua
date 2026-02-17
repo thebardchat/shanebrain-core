@@ -141,12 +141,13 @@ end
 -- =========================================================================
 
 function WorldGenerator.CreateSpawnPlatform(folder: Folder, position: Vector3, palette: any, layerIndex: number)
-    -- Large circular spawn area
+    -- Large circular spawn area (bigger for Layer 1 so new players don't fall off)
+    local platformSize = layerIndex == 1 and 120 or 60
     local base = Instance.new("Part")
     base.Name = "SpawnPlatform"
     base.Shape = Enum.PartType.Cylinder
-    base.Size = Vector3.new(4, 60, 60)
-    base.Position = position - Vector3.new(0, 2, 0)
+    base.Size = Vector3.new(6, platformSize, platformSize)
+    base.Position = position - Vector3.new(0, 3, 0)
     base.Orientation = Vector3.new(0, 0, 90)
     base.Anchored = true
     base.Material = CLOUD_MATERIAL
@@ -157,7 +158,7 @@ function WorldGenerator.CreateSpawnPlatform(folder: Folder, position: Vector3, p
     local rim = Instance.new("Part")
     rim.Name = "SpawnRim"
     rim.Shape = Enum.PartType.Cylinder
-    rim.Size = Vector3.new(1, 62, 62)
+    rim.Size = Vector3.new(1, platformSize + 4, platformSize + 4)
     rim.Position = position - Vector3.new(0, 0.5, 0)
     rim.Orientation = Vector3.new(0, 0, 90)
     rim.Anchored = true
@@ -193,6 +194,28 @@ function WorldGenerator.CreateSpawnPlatform(folder: Folder, position: Vector3, p
     spawn.CanCollide = false
     spawn.Enabled = layerIndex == 1  -- only Layer 1 is default spawn
     spawn.Parent = folder
+
+    -- Layer 1: invisible safety rim so new players can't easily walk off the edge
+    if layerIndex == 1 then
+        local wallHeight = 8
+        local wallRadius = platformSize / 2
+        for angle = 0, 330, 30 do
+            local rad = math.rad(angle)
+            local wall = Instance.new("Part")
+            wall.Name = "SafetyWall"
+            wall.Size = Vector3.new(platformSize * 0.27, wallHeight, 2)
+            wall.Position = position + Vector3.new(
+                math.cos(rad) * wallRadius,
+                wallHeight / 2 - 2,
+                math.sin(rad) * wallRadius
+            )
+            wall.Orientation = Vector3.new(0, -angle, 0)
+            wall.Anchored = true
+            wall.Transparency = 1
+            wall.CanCollide = true
+            wall.Parent = folder
+        end
+    end
 end
 
 -- =========================================================================

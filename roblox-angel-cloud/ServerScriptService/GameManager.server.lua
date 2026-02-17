@@ -128,9 +128,10 @@ function GameManager.Init()
         GameManager.SyncProgress(player)
     end)
 
-    -- Main update loop
+    -- Main update loop (stamina + fall detection)
     RunService.Heartbeat:Connect(function(dt)
         StaminaSystem.Update(dt)
+        GameManager.CheckFallingPlayers()
     end)
 
     -- Periodic tasks
@@ -467,6 +468,33 @@ function GameManager.OnStarfishFound(player: Player, starfishId: string, totalIn
         if not data.ownedCosmetics["starfish_hunter"] then
             data.ownedCosmetics["starfish_hunter"] = true
             MoteSystem.AwardMotes(player, 10, "starfish_complete")
+        end
+    end
+end
+
+-- Fall detection: teleport players back to spawn if they fall below their layer
+function GameManager.CheckFallingPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if not character then continue end
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        local y = hrp.Position.Y
+        if y < 20 then
+            -- Fallen below the world — respawn at Layer 1
+            local data = DataManager.GetData(player)
+            local layerIndex = (data and data.layerIndex) or 1
+            local layerDef = Layers.GetLayerByIndex(layerIndex)
+            if layerDef then
+                hrp.CFrame = CFrame.new(layerDef.spawnPosition + Vector3.new(0, 5, 0))
+                hrp.AssemblyLinearVelocity = Vector3.zero
+
+                ServerMessage:FireClient(player, {
+                    type = "info",
+                    message = "You fell from the clouds! The wind carries you back...",
+                })
+            end
         end
     end
 end
