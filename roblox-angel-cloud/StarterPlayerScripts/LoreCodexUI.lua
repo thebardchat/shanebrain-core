@@ -1,6 +1,6 @@
 --[[
     LoreCodexUI.lua — Constellation map codex for Lore Fragments
-    Press C to toggle. Each fragment is a star; connected stars form Angela's silhouette.
+    Press C to toggle. Each fragment is a star; connected stars form Angel's silhouette.
     Collected fragments show narrative passage + wisdom principle.
 ]]
 
@@ -31,7 +31,7 @@ local COLORS = {
         Strength = Color3.fromRGB(255, 100, 50),
         Suffering = Color3.fromRGB(120, 50, 180),
         Guardian = Color3.fromRGB(100, 255, 100),
-        Angela = Color3.fromRGB(255, 255, 255),
+        Angel = Color3.fromRGB(255, 255, 255),
     },
 }
 
@@ -55,7 +55,7 @@ function LoreCodexUI.Init()
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = "THE LORE OF ANGELA"
+    title.Text = "THE LORE OF ANGEL"
     title.TextColor3 = COLORS.gold
     title.TextSize = 28
     title.Font = Enum.Font.GothamBold
@@ -68,7 +68,7 @@ function LoreCodexUI.Init()
     subtitle.Size = UDim2.new(1, 0, 0, 25)
     subtitle.Position = UDim2.new(0, 0, 0, 55)
     subtitle.BackgroundTransparency = 1
-    subtitle.Text = "Each star is a fragment of Angela's scattered light"
+    subtitle.Text = "Each star is a fragment of Angel's scattered light"
     subtitle.TextColor3 = COLORS.dim
     subtitle.TextSize = 14
     subtitle.Font = Enum.Font.GothamMedium
@@ -125,7 +125,7 @@ function LoreCodexUI.Init()
     sidebarLayout.Padding = UDim.new(0, 5)
     sidebarLayout.Parent = sidebar
 
-    local categories = { "Decision", "Emotion", "Relationship", "Strength", "Suffering", "Guardian", "Angela" }
+    local categories = { "Decision", "Emotion", "Relationship", "Strength", "Suffering", "Guardian", "Angel" }
     for i, cat in ipairs(categories) do
         local tab = Instance.new("TextButton")
         tab.Name = "Tab_" .. cat

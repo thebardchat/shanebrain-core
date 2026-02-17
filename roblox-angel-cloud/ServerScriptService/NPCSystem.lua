@@ -50,7 +50,7 @@ local KEEPER_DIALOGUE = {
         },
         {
             speaker = "The Keeper",
-            text = "And keep an eye out for Lore Fragments. They tell the story of Angela... the first Angel, who gave everything so others could rise.",
+            text = "And keep an eye out for Lore Fragments. They tell the story of Angel... the first Angel, who gave everything so others could rise.",
         },
     },
 
@@ -101,7 +101,7 @@ local KEEPER_DIALOGUE = {
     -- Random wisdom lines (used after initial dialogues are exhausted)
     wisdom = {
         "The strongest wings are grown through helping others.",
-        "Angela didn't fall from weakness. She fell so her light could reach everyone.",
+        "Angel didn't fall from weakness. She fell so her light could reach everyone.",
         "A blessing given freely returns tenfold.",
         "Rest is not the opposite of progress. It is part of it.",
         "The Cloud grows not from one great act, but from a thousand small kindnesses.",

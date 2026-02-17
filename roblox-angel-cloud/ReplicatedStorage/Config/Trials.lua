@@ -136,8 +136,8 @@ Trials.Definitions = {
         minLayer = 6,
         players = { min = 4, max = 4 },
         moteReward = 15,
-        fragmentReward = "Angela Fragment",
-        fragmentCategory = "Angela",
+        fragmentReward = "Angel Fragment",
+        fragmentCategory = "Angel",
         description = "Synchronize 4 elements (Light/Wind/Rain/Thunder) in rhythm "
             .. "to trigger server-wide Blessing Rain.",
         mechanic = "rhythm_sync",
@@ -149,7 +149,7 @@ Trials.Definitions = {
             "Press action key on YOUR element's beat",
             "Must maintain sync for 60 consecutive seconds",
             "Success triggers Blessing Rain for entire server",
-            "Rewards Angela Fragment (extremely rare)",
+            "Rewards Angel Fragment (extremely rare)",
         },
     },
 }

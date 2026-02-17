@@ -1,6 +1,6 @@
 --[[
     LoreSystem.lua — Lore Fragment collection and codex management
-    65 fragments across 7 categories telling the story of Angela's fall
+    65 fragments across 7 categories telling the story of Angel's fall
     Server tracks collection; client renders codex constellation map
 ]]
 
@@ -69,9 +69,9 @@ function LoreSystem.TryCollectFragment(player: Player, fragmentId: string): bool
         return false
     end
 
-    -- Angela fragments have special requirements (checked elsewhere)
-    if fragment.category == "Angela" then
-        if not LoreSystem.CheckAngelaRequirement(player, fragment) then
+    -- Angel fragments have special requirements (checked elsewhere)
+    if fragment.category == "Angel" then
+        if not LoreSystem.CheckAngelRequirement(player, fragment) then
             return false
         end
     end
@@ -93,14 +93,14 @@ function LoreSystem.TryCollectFragment(player: Player, fragmentId: string): bool
     return true
 end
 
-function LoreSystem.CheckAngelaRequirement(player: Player, fragment: { [string]: any }): boolean
+function LoreSystem.CheckAngelRequirement(player: Player, fragment: { [string]: any }): boolean
     local data = DataManager.GetData(player)
     if not data then
         return false
     end
 
-    if fragment.id == "angela_01" then
-        -- Angela's Wing: must have at least 1 fragment from each non-Guardian, non-Angela category
+    if fragment.id == "angel_01" then
+        -- Angel's Wing: must have at least 1 fragment from each non-Guardian, non-Angel category
         local categories = { Decision = false, Emotion = false, Relationship = false, Strength = false, Suffering = false }
         for fragId, _ in pairs(data.collectedFragments) do
             local frag = Fragments.GetFragment(fragId)
@@ -115,23 +115,23 @@ function LoreSystem.CheckAngelaRequirement(player: Player, fragment: { [string]:
         end
         return true
 
-    elseif fragment.id == "angela_02" then
-        -- Angela's Voice: during a blessing chain of 5+
+    elseif fragment.id == "angel_02" then
+        -- Angel's Voice: during a blessing chain of 5+
         -- This is checked by BlessingSystem and triggers collection
         return false  -- must be triggered externally
 
-    elseif fragment.id == "angela_03" then
-        -- Angela's Heart: 4 Angel-rank players at Cloud Core with emote sequence
+    elseif fragment.id == "angel_03" then
+        -- Angel's Heart: 4 Angel-rank players at Cloud Core with emote sequence
         -- This is checked by a special interaction in Layer 6
         return false  -- must be triggered externally
 
-    elseif fragment.id == "angela_04" then
-        -- Angela's Light: enter Empyrean with all other 60 fragments at server dawn
+    elseif fragment.id == "angel_04" then
+        -- Angel's Light: enter Empyrean with all other 60 fragments at server dawn
         local count = LoreSystem.GetCollectedCount(player)
-        return count >= 60  -- all non-Angela fragments
+        return count >= 60  -- all non-Angel fragments
 
-    elseif fragment.id == "angela_05" then
-        -- Angela's Promise: Angel rank + helped 20+ Newborns
+    elseif fragment.id == "angel_05" then
+        -- Angel's Promise: Angel rank + helped 20+ Newborns
         return data.angelLevel == "Angel" and (data.newbornsHelped or 0) >= 20
     end
 
@@ -252,7 +252,7 @@ function LoreSystem.SpawnFragmentPoints(layerFolder: Folder, layerIndex: number)
             Strength = Color3.fromRGB(255, 100, 50),     -- orange
             Suffering = Color3.fromRGB(120, 50, 180),    -- purple
             Guardian = Color3.fromRGB(100, 255, 100),    -- green
-            Angela = Color3.fromRGB(255, 255, 255),      -- white
+            Angel = Color3.fromRGB(255, 255, 255),      -- white
         }
         point.Color = categoryColors[fragment.category] or Color3.fromRGB(200, 200, 200)
 

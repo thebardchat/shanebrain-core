@@ -1,6 +1,6 @@
 # Angel Cloud: The Cloud Climb — Roblox Game
 
-A cooperative Roblox game that gamifies the Angel Cloud mental wellness platform. Players ascend through six cloud layers, collect Lore Fragments telling the story of Angela, and help each other climb higher.
+A cooperative Roblox game that gamifies the Angel Cloud mental wellness platform. Players ascend through six cloud layers, collect Lore Fragments telling the story of Angel, and help each other climb higher.
 
 **Every Angel strengthens the cloud.**
 
@@ -152,4 +152,4 @@ After importing scripts, you'll need to build in Studio:
 - **Ethical monetization** — Cosmetics only, never gameplay advantages
 - **Mental wellness** — HALT system, reflection pools, wisdom in every fragment
 - **Pay it forward** — Blessing chains, Guardian Duty, community board
-- **Angela's story** — Every fragment honors Angel Brazelton and carries real wisdom from WISDOM-CORE.md
+- **Angel's story** — Every fragment honors Angel Brazelton and carries real wisdom from WISDOM-CORE.md

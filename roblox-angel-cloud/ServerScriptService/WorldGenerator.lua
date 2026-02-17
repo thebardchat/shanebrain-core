@@ -125,6 +125,7 @@ function WorldGenerator.BuildLayer(layerIndex: number)
     -- 7. Layer-specific features
     if layerIndex == 1 then
         WorldGenerator.BuildNurseryFeatures(folder, layerDef, palette)
+        WorldGenerator.BuildWingForge(folder, layerDef, palette)
     elseif layerIndex == 2 then
         WorldGenerator.BuildMeadowFeatures(folder, layerDef, palette)
     end
@@ -633,6 +634,104 @@ function WorldGenerator.BuildNurseryFeatures(folder: Folder, layerDef: any, pale
         marker.Parent = folder
         WorldGenerator.AddBobAnimation(marker, 0.8)
     end
+end
+
+-- WING FORGE — glowing anvil station where you power up your wings
+function WorldGenerator.BuildWingForge(folder: Folder, layerDef: any, palette: any)
+    local forgePos = Vector3.new(-25, layerDef.spawnPosition.Y, 25)
+
+    -- Forge platform (hexagonal-ish with dark stone look)
+    local platform = Instance.new("Part")
+    platform.Name = "WingForgePlatform"
+    platform.Shape = Enum.PartType.Cylinder
+    platform.Size = Vector3.new(3, 25, 25)
+    platform.Position = forgePos - Vector3.new(0, 1.5, 0)
+    platform.Orientation = Vector3.new(0, 0, 90)
+    platform.Anchored = true
+    platform.Material = Enum.Material.Basalt
+    platform.Color = Color3.fromRGB(30, 25, 40)
+    platform.Parent = folder
+
+    -- Forge anvil (center piece)
+    local anvil = Instance.new("Part")
+    anvil.Name = "WingForgeAnvil"
+    anvil.Size = Vector3.new(4, 3, 3)
+    anvil.Position = forgePos + Vector3.new(0, 1.5, 0)
+    anvil.Anchored = true
+    anvil.Material = Enum.Material.Metal
+    anvil.Color = Color3.fromRGB(60, 50, 80)
+    anvil.Parent = folder
+
+    -- Glowing forge fire (on top of anvil)
+    local fire = Instance.new("Part")
+    fire.Name = "ForgeFire"
+    fire.Shape = Enum.PartType.Ball
+    fire.Size = Vector3.new(3, 4, 3)
+    fire.Position = forgePos + Vector3.new(0, 4, 0)
+    fire.Anchored = true
+    fire.CanCollide = false
+    fire.Material = Enum.Material.Neon
+    fire.Color = Color3.fromRGB(255, 150, 0)
+    fire.Transparency = 0.2
+    fire.Parent = folder
+
+    -- Fire light
+    local fireLight = Instance.new("PointLight")
+    fireLight.Color = Color3.fromRGB(255, 150, 0)
+    fireLight.Brightness = 4
+    fireLight.Range = 30
+    fireLight.Parent = fire
+
+    -- Pillar columns around the forge
+    for angle = 0, 300, 60 do
+        local rad = math.rad(angle)
+        local pillar = Instance.new("Part")
+        pillar.Name = "ForgePillar"
+        pillar.Size = Vector3.new(2, 8, 2)
+        pillar.Position = forgePos + Vector3.new(math.cos(rad) * 10, 3, math.sin(rad) * 10)
+        pillar.Anchored = true
+        pillar.Material = Enum.Material.Neon
+        pillar.Color = Color3.fromRGB(255, 100, 0)
+        pillar.Transparency = 0.4
+        pillar.Parent = folder
+
+        local pillarLight = Instance.new("PointLight")
+        pillarLight.Color = Color3.fromRGB(255, 100, 0)
+        pillarLight.Brightness = 1
+        pillarLight.Range = 10
+        pillarLight.Parent = pillar
+    end
+
+    -- Sign
+    local sign = Instance.new("Part")
+    sign.Name = "ForgeSign"
+    sign.Size = Vector3.new(10, 4, 0.5)
+    sign.Position = forgePos + Vector3.new(0, 9, -5)
+    sign.Anchored = true
+    sign.Material = Enum.Material.SmoothPlastic
+    sign.Color = Color3.fromRGB(20, 15, 30)
+    sign.Parent = folder
+
+    local gui = Instance.new("SurfaceGui")
+    gui.Face = Enum.NormalId.Front
+    gui.Parent = sign
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "WING FORGE"
+    label.TextColor3 = Color3.fromRGB(255, 150, 0)
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.Parent = gui
+
+    -- ProximityPrompt to upgrade
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.ActionText = "Forge Wings (5 Motes)"
+    prompt.ObjectText = "Wing Forge"
+    prompt.HoldDuration = 1
+    prompt.MaxActivationDistance = 15
+    prompt.Parent = anvil
 end
 
 function WorldGenerator.BuildMeadowFeatures(folder: Folder, layerDef: any, palette: any)

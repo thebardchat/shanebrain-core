@@ -89,7 +89,7 @@ Layers.Definitions = {
         features = {
             "Wind mechanics (gusts push players)",
             "Shield Wings (protect nearby players)",
-            "Angela lore items",
+            "Angel lore items",
         },
         spawnPosition = Vector3.new(0, 900, 0),
         heightRange = { min = 800, max = 1100 },

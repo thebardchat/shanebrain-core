@@ -49,7 +49,7 @@ local DEFAULT_DATA = {
     blessingsReceived = 0,
     longestBlessingChain = 0,
     trialsCompleted = {},     -- { trialId = completionCount }
-    newbornsHelped = 0,       -- for Guardian Duty / Angela's Promise
+    newbornsHelped = 0,       -- for Guardian Duty / Angel's Promise
     totalPlaytime = 0,        -- seconds
     sessionStart = 0,
     linkedAngelCloud = false,
@@ -58,6 +58,7 @@ local DEFAULT_DATA = {
     founderHalo = false,
     starfishFound = {},       -- { starfishId = true } — brown starfish easter eggs
     redeemedDialCodes = {},   -- { code = true } — rotary phone codes redeemed
+    wingLevel = 1,            -- Wing Forge upgrade level (1-10)
     firstJoin = 0,
     lastSeen = 0,
 }

@@ -108,6 +108,9 @@ function GameManager.Init()
         pcall(NPCSystem.SpawnKeeper, nurseryFolder, nurseryDef.spawnPosition)
     end
 
+    -- Wire up the Wing Forge in Layer 1
+    pcall(GameManager.WireWingForge)
+
     -- Wire up all brown starfish ProximityPrompts
     pcall(GameManager.WireStarfish)
 
@@ -222,7 +225,10 @@ function GameManager.SpawnAtLayer(player: Player, character: Model)
     -- Give everyone a visible HALO on spawn
     GameManager.AttachHalo(character, data)
 
-    -- Give starter wing particles (trail behind player)
+    -- Give REAL WINGS on their back
+    GameManager.AttachWings(character, data)
+
+    -- Give wing trail particles behind player
     GameManager.AttachWingTrail(character)
 end
 
@@ -304,6 +310,181 @@ function GameManager.AttachWingTrail(character: Model)
         NumberSequenceKeypoint.new(1, 0),
     })
     trail.Parent = hrp
+end
+
+-- Give everyone REAL visible wings on their back from the start
+function GameManager.AttachWings(character: Model, data: { [string]: any })
+    if character:FindFirstChild("AngelWings") then return end
+
+    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+    if not torso then return end
+
+    local levelIndex = 1
+    local wingLevel = 1
+    if data then
+        local currentLevel = data.angelLevel or "Newborn"
+        levelIndex = Layers.GetLevelIndex(currentLevel)
+        wingLevel = data.wingLevel or 1
+    end
+
+    -- Wing size scales with BOTH angel level AND wing forge level
+    local wingScale = 1 + (levelIndex - 1) * 0.4 + (wingLevel - 1) * 0.25
+    local wingColor = Color3.fromRGB(0, 212, 255)
+
+    -- Color by level
+    local WING_COLORS = {
+        Color3.fromRGB(150, 200, 255),   -- Newborn: soft blue
+        Color3.fromRGB(0, 212, 255),     -- Young Angel: cyan
+        Color3.fromRGB(0, 255, 200),     -- Growing: teal
+        Color3.fromRGB(180, 100, 255),   -- Helping: purple
+        Color3.fromRGB(100, 200, 255),   -- Guardian: bright blue
+        Color3.fromRGB(255, 255, 255),   -- Archangel: white
+    }
+    wingColor = WING_COLORS[levelIndex] or wingColor
+
+    -- LEFT wing
+    local leftWing = Instance.new("Part")
+    leftWing.Name = "AngelWings"
+    leftWing.Size = Vector3.new(0.3, 3 * wingScale, 2 * wingScale)
+    leftWing.Material = Enum.Material.ForceField
+    leftWing.Color = wingColor
+    leftWing.Transparency = 0.25
+    leftWing.CanCollide = false
+    leftWing.Massless = true
+
+    local leftWeld = Instance.new("WeldConstraint")
+    leftWeld.Part0 = torso
+    leftWeld.Part1 = leftWing
+    leftWeld.Parent = leftWing
+
+    leftWing.CFrame = torso.CFrame * CFrame.new(-1.5 * wingScale, 0.5, 0.8) * CFrame.Angles(0, 0, math.rad(-25))
+    leftWing.Parent = character
+
+    -- RIGHT wing
+    local rightWing = Instance.new("Part")
+    rightWing.Name = "AngelWingR"
+    rightWing.Size = Vector3.new(0.3, 3 * wingScale, 2 * wingScale)
+    rightWing.Material = Enum.Material.ForceField
+    rightWing.Color = wingColor
+    rightWing.Transparency = 0.25
+    rightWing.CanCollide = false
+    rightWing.Massless = true
+
+    local rightWeld = Instance.new("WeldConstraint")
+    rightWeld.Part0 = torso
+    rightWeld.Part1 = rightWing
+    rightWeld.Parent = rightWing
+
+    rightWing.CFrame = torso.CFrame * CFrame.new(1.5 * wingScale, 0.5, 0.8) * CFrame.Angles(0, 0, math.rad(25))
+    rightWing.Parent = character
+
+    -- Wing glow (brighter with forge upgrades)
+    local wingLight = Instance.new("PointLight")
+    wingLight.Color = wingColor
+    wingLight.Brightness = 1 + levelIndex * 0.5 + wingLevel * 0.3
+    wingLight.Range = 8 + levelIndex * 3 + wingLevel * 2
+    wingLight.Parent = leftWing
+end
+
+-- WING FORGE — spend motes to upgrade your wings
+local WING_FORGE_COST = 5  -- motes per upgrade
+local WING_MAX_LEVEL = 10
+
+function GameManager.WireWingForge()
+    local nurseryFolder = workspace:FindFirstChild("Layer1_Nursery")
+    if not nurseryFolder then return end
+
+    local anvil = nurseryFolder:FindFirstChild("WingForgeAnvil")
+    if not anvil then return end
+
+    local prompt = anvil:FindFirstChildWhichIsA("ProximityPrompt")
+    if not prompt then return end
+
+    prompt.Triggered:Connect(function(player)
+        GameManager.HandleWingForge(player)
+    end)
+
+    print("[GameManager] Wing Forge wired and ready")
+end
+
+function GameManager.HandleWingForge(player: Player)
+    local data = DataManager.GetData(player)
+    if not data then return end
+
+    local wingLevel = data.wingLevel or 1
+
+    if wingLevel >= WING_MAX_LEVEL then
+        ServerMessage:FireClient(player, {
+            type = "info",
+            message = "Your wings are at maximum power! You are a force of light.",
+        })
+        return
+    end
+
+    -- Check cost (scales with level)
+    local cost = WING_FORGE_COST + (wingLevel - 1) * 2
+    if not MoteSystem.CanAfford(player, cost) then
+        ServerMessage:FireClient(player, {
+            type = "info",
+            message = "You need " .. cost .. " Motes to forge your wings. Keep collecting!",
+        })
+        return
+    end
+
+    -- Spend motes and upgrade
+    MoteSystem.AwardMotes(player, -cost, "wing_forge")
+    data.wingLevel = wingLevel + 1
+
+    -- Rebuild wings on the character with new level
+    local character = player.Character
+    if character then
+        -- Remove old wings
+        local oldLeft = character:FindFirstChild("AngelWings")
+        if oldLeft then oldLeft:Destroy() end
+        local oldRight = character:FindFirstChild("AngelWingR")
+        if oldRight then oldRight:Destroy() end
+
+        -- Attach upgraded wings
+        GameManager.AttachWings(character, data)
+    end
+
+    -- Flash the forge fire
+    local nurseryFolder = workspace:FindFirstChild("Layer1_Nursery")
+    if nurseryFolder then
+        local fire = nurseryFolder:FindFirstChild("ForgeFire")
+        if fire then
+            local origColor = fire.Color
+            fire.Color = Color3.fromRGB(255, 255, 255)
+            fire.Size = Vector3.new(5, 7, 5)
+            task.delay(0.5, function()
+                if fire and fire.Parent then
+                    fire.Color = origColor
+                    fire.Size = Vector3.new(3, 4, 3)
+                end
+            end)
+        end
+    end
+
+    -- Update the prompt text with new cost
+    local nextCost = WING_FORGE_COST + (data.wingLevel - 1) * 2
+    local anvil = nurseryFolder and nurseryFolder:FindFirstChild("WingForgeAnvil")
+    if anvil then
+        local prompt = anvil:FindFirstChildWhichIsA("ProximityPrompt")
+        if prompt then
+            if data.wingLevel >= WING_MAX_LEVEL then
+                prompt.ActionText = "Wings Maxed!"
+            else
+                prompt.ActionText = "Forge Wings (" .. nextCost .. " Motes)"
+            end
+        end
+    end
+
+    ServerMessage:FireClient(player, {
+        type = "info",
+        message = "WINGS FORGED! Level " .. data.wingLevel .. "/" .. WING_MAX_LEVEL .. " — Your wings grow stronger! (-" .. cost .. " Motes)",
+    })
+
+    print("[GameManager] " .. player.Name .. " forged wings to level " .. data.wingLevel)
 end
 
 function GameManager.SyncProgress(player: Player)
