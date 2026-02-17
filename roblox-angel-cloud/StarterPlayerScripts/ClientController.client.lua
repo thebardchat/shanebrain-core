@@ -22,17 +22,17 @@ local camera = workspace.CurrentCamera
 -- State
 local isGliding = false
 local isFlying = false
-local canGlide = false   -- unlocked at Layer 2
+local canGlide = true    -- UNLOCKED FROM THE START — everyone can glide!
 local canFly = false      -- unlocked at Layer 5
 local currentLayer = 1
 local currentLevel = "Newborn"
 local stamina = 100
 local maxStamina = 100
 
--- Glide physics
-local GLIDE_FALL_SPEED = -8    -- slow descent
-local GLIDE_HORIZONTAL_BOOST = 1.3
-local NORMAL_JUMP_POWER = 50
+-- Glide physics — fast and fun, not floaty and boring
+local GLIDE_FALL_SPEED = -4    -- very slow descent (hang time!)
+local GLIDE_HORIZONTAL_BOOST = 2.5  -- zip across the sky
+local NORMAL_JUMP_POWER = 70
 
 -- Dynamic FOV (inspired by Gemini's FlightEngine — smooth camera zoom at speed)
 local BASE_FOV = 70
@@ -392,8 +392,8 @@ function ClientController.OnLevelUp(data: { [string]: any })
     currentLayer = data.layerIndex
 
     -- Update capabilities
-    canGlide = currentLayer >= 2
-    canFly = currentLayer >= 5
+    canGlide = true  -- always on
+    canFly = currentLayer >= 3  -- flight unlocked at Layer 3
 
     -- Trigger cinematic
     local LevelUpCinematic = require(script.Parent.LevelUpCinematic)
@@ -405,8 +405,8 @@ function ClientController.OnServerMessage(data: { [string]: any })
         currentLevel = data.angelLevel
         local levelIndex = Layers.GetLevelIndex(currentLevel)
         currentLayer = levelIndex
-        canGlide = levelIndex >= 2
-        canFly = levelIndex >= 5
+        canGlide = true  -- always on
+        canFly = levelIndex >= 3
     end
 
     local UIManager = require(script.Parent.UIManager)

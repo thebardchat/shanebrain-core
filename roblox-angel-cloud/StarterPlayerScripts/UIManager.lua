@@ -307,12 +307,12 @@ function UIManager.ShowTutorial()
 
     -- Instructions
     local instructions = {
-        { icon = ">>",  text = "WALK toward the golden markers ahead" },
-        { icon = "**",  text = "COLLECT glowing cyan Light Motes" },
-        { icon = "??",  text = "TALK to The Keeper (the glowing figure nearby)" },
-        { icon = "~~",  text = "VISIT the Reflection Pool to restore energy" },
-        { icon = "CC",  text = "Press C to open Lore Codex" },
-        { icon = "BB",  text = "Press B to open Shop" },
+        { icon = ">>",  text = "COLLECT glowing Light Motes everywhere" },
+        { icon = "^^",  text = "JUMP off edges + hold SPACE to GLIDE with wings!" },
+        { icon = "ZZ",  text = "Hit GREEN PADS for SPEED BOOSTS" },
+        { icon = "??",  text = "TALK to The Keeper (glowing figure with halo)" },
+        { icon = "CC",  text = "Press C for Lore Codex | B for Shop" },
+        { icon = "10",  text = "Get 10 Motes to unlock THE MEADOW (Layer 2)" },
     }
 
     for i, instr in ipairs(instructions) do

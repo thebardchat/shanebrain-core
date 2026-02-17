@@ -21,21 +21,21 @@ local FORCE_FIELD = Enum.Material.ForceField
 
 -- Layer-specific color palettes
 local PALETTES = {
-    -- Layer 1: The Nursery — warm whites, soft gold
+    -- Layer 1: The Nursery — dark purple-blue clouds, golden neon accents
     {
-        primary = Color3.fromRGB(245, 240, 225),
-        secondary = Color3.fromRGB(255, 248, 200),
-        accent = Color3.fromRGB(255, 215, 100),
-        glow = Color3.fromRGB(255, 230, 150),
-        detail = Color3.fromRGB(230, 220, 200),
+        primary = Color3.fromRGB(35, 25, 55),
+        secondary = Color3.fromRGB(45, 35, 65),
+        accent = Color3.fromRGB(255, 200, 50),
+        glow = Color3.fromRGB(255, 180, 0),
+        detail = Color3.fromRGB(50, 40, 70),
     },
-    -- Layer 2: The Meadow — cyan, green, floating grass
+    -- Layer 2: The Meadow — deep teal clouds, bright cyan neon
     {
-        primary = Color3.fromRGB(200, 235, 220),
-        secondary = Color3.fromRGB(150, 220, 200),
+        primary = Color3.fromRGB(20, 45, 50),
+        secondary = Color3.fromRGB(25, 55, 60),
         accent = Color3.fromRGB(0, 212, 255),
-        glow = Color3.fromRGB(0, 180, 230),
-        detail = Color3.fromRGB(100, 200, 150),
+        glow = Color3.fromRGB(0, 255, 255),
+        detail = Color3.fromRGB(15, 50, 55),
     },
     -- Layer 3: The Canopy — deep greens, bioluminescent
     {

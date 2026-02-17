@@ -15,35 +15,35 @@ local AtmosphereSystem = {}
 
 -- Per-layer atmosphere presets
 local PRESETS = {
-    -- Layer 1: The Nursery — warm, golden, safe
+    -- Layer 1: The Nursery — twilight, mystical, inviting (NOT bright white)
     {
-        clockTime = 10,
-        ambient = Color3.fromRGB(40, 35, 25),
-        outdoorAmbient = Color3.fromRGB(120, 110, 80),
-        fogEnd = 800,
-        fogColor = Color3.fromRGB(255, 245, 220),
-        atmosphereDensity = 0.25,
-        atmosphereOffset = 0.2,
-        atmosphereColor = Color3.fromRGB(255, 240, 200),
-        atmosphereDecay = Color3.fromRGB(240, 220, 180),
-        bloomIntensity = 0.5,
-        bloomSize = 24,
-        skyColor = Color3.fromRGB(180, 200, 255),
+        clockTime = 6.5,
+        ambient = Color3.fromRGB(15, 12, 25),
+        outdoorAmbient = Color3.fromRGB(50, 40, 70),
+        fogEnd = 600,
+        fogColor = Color3.fromRGB(30, 20, 50),
+        atmosphereDensity = 0.35,
+        atmosphereOffset = 0.15,
+        atmosphereColor = Color3.fromRGB(40, 30, 60),
+        atmosphereDecay = Color3.fromRGB(20, 15, 35),
+        bloomIntensity = 0.8,
+        bloomSize = 35,
+        skyColor = Color3.fromRGB(15, 10, 30),
     },
-    -- Layer 2: The Meadow — bright cyan, airy
+    -- Layer 2: The Meadow — deep cyan night, neon glow
     {
-        clockTime = 12,
-        ambient = Color3.fromRGB(20, 30, 35),
-        outdoorAmbient = Color3.fromRGB(100, 130, 150),
-        fogEnd = 1000,
-        fogColor = Color3.fromRGB(200, 235, 255),
-        atmosphereDensity = 0.3,
-        atmosphereOffset = 0.25,
-        atmosphereColor = Color3.fromRGB(200, 230, 255),
-        atmosphereDecay = Color3.fromRGB(180, 210, 240),
-        bloomIntensity = 0.6,
-        bloomSize = 28,
-        skyColor = Color3.fromRGB(135, 200, 255),
+        clockTime = 21,
+        ambient = Color3.fromRGB(8, 15, 25),
+        outdoorAmbient = Color3.fromRGB(30, 60, 80),
+        fogEnd = 700,
+        fogColor = Color3.fromRGB(10, 30, 50),
+        atmosphereDensity = 0.4,
+        atmosphereOffset = 0.2,
+        atmosphereColor = Color3.fromRGB(15, 40, 60),
+        atmosphereDecay = Color3.fromRGB(10, 25, 40),
+        bloomIntensity = 0.9,
+        bloomSize = 32,
+        skyColor = Color3.fromRGB(5, 15, 35),
     },
     -- Layer 3: The Canopy — bioluminescent fog, dim
     {
@@ -117,6 +117,24 @@ function AtmosphereSystem.Init()
     AtmosphereUpdate = Instance.new("RemoteEvent")
     AtmosphereUpdate.Name = "AtmosphereUpdate"
     AtmosphereUpdate.Parent = ReplicatedStorage
+
+    -- Create atmosphere + bloom if they don't exist
+    if not Lighting:FindFirstChildWhichIsA("Atmosphere") then
+        local atmo = Instance.new("Atmosphere")
+        atmo.Parent = Lighting
+    end
+    if not Lighting:FindFirstChildWhichIsA("BloomEffect") then
+        local bloom = Instance.new("BloomEffect")
+        bloom.Parent = Lighting
+    end
+    -- Darker sky
+    if not Lighting:FindFirstChildWhichIsA("Sky") then
+        local sky = Instance.new("Sky")
+        sky.StarCount = 5000
+        sky.Parent = Lighting
+    end
+    Lighting.GlobalShadows = true
+    Lighting.Brightness = 1
 
     -- Apply default atmosphere (Layer 1)
     AtmosphereSystem.ApplyPreset(1)

@@ -110,7 +110,7 @@ function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef
         local mote = Instance.new("Part")
         mote.Name = "LightMote_" .. i
         mote.Shape = Enum.PartType.Ball
-        mote.Size = Vector3.new(2, 2, 2)
+        mote.Size = Vector3.new(3, 3, 3)  -- bigger, easier to see
         mote.Position = Vector3.new(
             math.random(-spread, spread),
             math.random(heightMin + 10, heightMax - 10),
@@ -120,15 +120,32 @@ function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef
         mote.CanCollide = false
         mote.Material = Enum.Material.Neon
         mote.Color = Color3.fromRGB(0, 212, 255)  -- Angel Cloud cyan
-        mote.Transparency = 0.3
+        mote.Transparency = 0.1
+
+        -- Bright glow so you can see them from far away
+        local light = Instance.new("PointLight")
+        light.Color = Color3.fromRGB(0, 212, 255)
+        light.Brightness = 2
+        light.Range = 20
+        light.Parent = mote
 
         local value = Instance.new("IntValue")
         value.Name = "MoteValue"
         value.Value = 1
         value.Parent = mote
 
-        -- Touch detection
-        mote.Touched:Connect(function(hit)
+        -- Touch detection (bigger radius — 8 stud magnet pickup)
+        local touchRegion = Instance.new("Part")
+        touchRegion.Name = "MotePickupZone"
+        touchRegion.Shape = Enum.PartType.Ball
+        touchRegion.Size = Vector3.new(12, 12, 12)
+        touchRegion.Position = mote.Position
+        touchRegion.Anchored = true
+        touchRegion.CanCollide = false
+        touchRegion.Transparency = 1
+        touchRegion.Parent = layerFolder
+
+        touchRegion.Touched:Connect(function(hit)
             local character = hit.Parent
             local player = Players:GetPlayerFromCharacter(character)
             if player and mote.Transparency < 1 then
@@ -136,16 +153,14 @@ function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef
             end
         end)
 
-        -- Gentle bobbing animation
+        -- Bobbing animation
         local originalY = mote.Position.Y
         task.spawn(function()
             local offset = math.random() * math.pi * 2
             while mote and mote.Parent do
-                mote.Position = Vector3.new(
-                    mote.Position.X,
-                    originalY + math.sin(tick() * 2 + offset) * 1.5,
-                    mote.Position.Z
-                )
+                local newY = originalY + math.sin(tick() * 2.5 + offset) * 2
+                mote.Position = Vector3.new(mote.Position.X, newY, mote.Position.Z)
+                touchRegion.Position = mote.Position
                 task.wait(0.05)
             end
         end)

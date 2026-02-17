@@ -208,8 +208,102 @@ function GameManager.SpawnAtLayer(player: Player, character: Model)
 
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
     if humanoidRootPart then
-        humanoidRootPart.CFrame = CFrame.new(layerDef.spawnPosition)
+        humanoidRootPart.CFrame = CFrame.new(layerDef.spawnPosition + Vector3.new(0, 5, 0))
     end
+
+    -- FASTER movement — make the game feel snappy
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = 28        -- default 16, now zippy
+        humanoid.JumpPower = 70        -- default 50, bigger jumps
+        humanoid.JumpHeight = 12       -- higher jumps
+    end
+
+    -- Give everyone a visible HALO on spawn
+    GameManager.AttachHalo(character, data)
+
+    -- Give starter wing particles (trail behind player)
+    GameManager.AttachWingTrail(character)
+end
+
+function GameManager.AttachHalo(character: Model, data: { [string]: any })
+    if character:FindFirstChild("PlayerHalo") then return end
+
+    local head = character:WaitForChild("Head", 3)
+    if not head then return end
+
+    local halo = Instance.new("Part")
+    halo.Name = "PlayerHalo"
+    halo.Shape = Enum.PartType.Cylinder
+    halo.Size = Vector3.new(0.2, 3, 3)
+    halo.Material = Enum.Material.Neon
+    halo.CanCollide = false
+    halo.Massless = true
+    halo.Anchored = false
+
+    -- Founder halo = gold, regular = cyan
+    if data.founderHalo or (data.ownedCosmetics and data.ownedCosmetics["founders_halo"]) then
+        halo.Color = Color3.fromRGB(255, 215, 0)
+        local light = Instance.new("PointLight")
+        light.Color = Color3.fromRGB(255, 215, 0)
+        light.Brightness = 1.5
+        light.Range = 12
+        light.Parent = halo
+    else
+        halo.Color = Color3.fromRGB(0, 212, 255)
+        local light = Instance.new("PointLight")
+        light.Color = Color3.fromRGB(0, 212, 255)
+        light.Brightness = 1
+        light.Range = 8
+        light.Parent = halo
+    end
+    halo.Transparency = 0.2
+
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = head
+    weld.Part1 = halo
+    weld.Parent = halo
+
+    halo.CFrame = head.CFrame * CFrame.new(0, 1.8, 0) * CFrame.Angles(0, 0, math.rad(90))
+    halo.Parent = character
+end
+
+function GameManager.AttachWingTrail(character: Model)
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp or hrp:FindFirstChild("WingTrail") then return end
+
+    -- Create two attachment points for the trail
+    local att0 = Instance.new("Attachment")
+    att0.Name = "TrailAtt0"
+    att0.Position = Vector3.new(0, 1, -0.5)
+    att0.Parent = hrp
+
+    local att1 = Instance.new("Attachment")
+    att1.Name = "TrailAtt1"
+    att1.Position = Vector3.new(0, -1, -0.5)
+    att1.Parent = hrp
+
+    local trail = Instance.new("Trail")
+    trail.Name = "WingTrail"
+    trail.Attachment0 = att0
+    trail.Attachment1 = att1
+    trail.Lifetime = 0.5
+    trail.MinLength = 0.1
+    trail.FaceCamera = true
+    trail.LightEmission = 1
+    trail.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.3),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    trail.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 212, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 180)),
+    })
+    trail.WidthScale = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    trail.Parent = hrp
 end
 
 function GameManager.SyncProgress(player: Player)
@@ -240,9 +334,12 @@ function GameManager.PopulateLayers()
             continue
         end
 
-        -- Spawn collectible motes
-        local moteCount = i == 1 and 15 or 20
+        -- Spawn LOTS of collectible motes — the world should feel alive with them
+        local moteCount = i == 1 and 50 or 60
         MoteSystem.SpawnWorldMotes(layerFolder, moteCount, layerDef)
+
+        -- Spawn speed boost pads
+        GameManager.SpawnSpeedPads(layerFolder, layerDef, 6)
 
         -- Spawn lore fragment collection points
         LoreSystem.SpawnFragmentPoints(layerFolder, i)
@@ -469,6 +566,83 @@ function GameManager.OnStarfishFound(player: Player, starfishId: string, totalIn
             data.ownedCosmetics["starfish_hunter"] = true
             MoteSystem.AwardMotes(player, 10, "starfish_complete")
         end
+    end
+end
+
+-- Speed boost pads scattered across layers — step on them to ZOOM
+function GameManager.SpawnSpeedPads(layerFolder: Folder, layerDef: any, count: number)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
+
+    for i = 1, count do
+        local pad = Instance.new("Part")
+        pad.Name = "SpeedPad_" .. i
+        pad.Size = Vector3.new(8, 0.5, 8)
+        pad.Position = Vector3.new(
+            math.random(-150, 150),
+            math.random(heightMin + 10, heightMax - 30),
+            math.random(-150, 150)
+        )
+        pad.Anchored = true
+        pad.Material = Enum.Material.Neon
+        pad.Color = Color3.fromRGB(0, 255, 150)
+        pad.Transparency = 0.2
+        pad.Parent = layerFolder
+
+        local corner = Instance.new("UICorner")
+
+        -- Arrow decal to show it's a boost
+        local gui = Instance.new("SurfaceGui")
+        gui.Face = Enum.NormalId.Top
+        gui.Parent = pad
+        local arrow = Instance.new("TextLabel")
+        arrow.Size = UDim2.new(1, 0, 1, 0)
+        arrow.BackgroundTransparency = 1
+        arrow.Text = ">>"
+        arrow.TextColor3 = Color3.fromRGB(255, 255, 255)
+        arrow.TextScaled = true
+        arrow.Font = Enum.Font.GothamBold
+        arrow.Parent = gui
+
+        local light = Instance.new("PointLight")
+        light.Color = Color3.fromRGB(0, 255, 150)
+        light.Brightness = 2
+        light.Range = 15
+        light.Parent = pad
+
+        pad.Touched:Connect(function(hit)
+            local character = hit.Parent
+            local hitPlayer = Players:GetPlayerFromCharacter(character)
+            if hitPlayer then
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                local humanoid = character:FindFirstChild("Humanoid")
+                if hrp and humanoid then
+                    -- BOOST! Launch forward + up
+                    local lookDir = hrp.CFrame.LookVector
+                    hrp.AssemblyLinearVelocity = lookDir * 120 + Vector3.new(0, 50, 0)
+
+                    -- Temporary speed increase
+                    local originalSpeed = humanoid.WalkSpeed
+                    humanoid.WalkSpeed = 50
+                    task.delay(3, function()
+                        if humanoid and humanoid.Parent then
+                            humanoid.WalkSpeed = 28
+                        end
+                    end)
+
+                    -- Flash the pad
+                    pad.Color = Color3.fromRGB(255, 255, 255)
+                    task.delay(0.3, function()
+                        pad.Color = Color3.fromRGB(0, 255, 150)
+                    end)
+
+                    ServerMessage:FireClient(hitPlayer, {
+                        type = "info",
+                        message = "SPEED BOOST!",
+                    })
+                end
+            end
+        end)
     end
 end
 
