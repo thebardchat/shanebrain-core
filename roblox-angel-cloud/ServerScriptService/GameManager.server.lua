@@ -341,6 +341,12 @@ function GameManager.PopulateLayers()
         -- Spawn speed boost pads
         GameManager.SpawnSpeedPads(layerFolder, layerDef, 6)
 
+        -- Spawn UPDRAFT columns (glowing wind pillars that launch you UP)
+        GameManager.SpawnUpdrafts(layerFolder, layerDef, 8)
+
+        -- Spawn bounce pads (trampolines that send you flying)
+        GameManager.SpawnBouncePads(layerFolder, layerDef, 10)
+
         -- Spawn lore fragment collection points
         LoreSystem.SpawnFragmentPoints(layerFolder, i)
 
@@ -566,6 +572,130 @@ function GameManager.OnStarfishFound(player: Player, starfishId: string, totalIn
             data.ownedCosmetics["starfish_hunter"] = true
             MoteSystem.AwardMotes(player, 10, "starfish_complete")
         end
+    end
+end
+
+-- UPDRAFT columns — glowing wind pillars that launch you UP
+function GameManager.SpawnUpdrafts(layerFolder: Folder, layerDef: any, count: number)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
+
+    for i = 1, count do
+        local x = math.random(-150, 150)
+        local z = math.random(-150, 150)
+        local baseY = math.random(heightMin + 5, heightMin + 40)
+        local height = math.random(40, 100)
+
+        -- Visible wind column
+        local column = Instance.new("Part")
+        column.Name = "Updraft_" .. i
+        column.Shape = Enum.PartType.Cylinder
+        column.Size = Vector3.new(height, 10, 10)
+        column.Position = Vector3.new(x, baseY + height / 2, z)
+        column.Orientation = Vector3.new(0, 0, 0)  -- vertical cylinder
+        column.Anchored = true
+        column.CanCollide = false
+        column.Material = Enum.Material.ForceField
+        column.Color = Color3.fromRGB(0, 212, 255)
+        column.Transparency = 0.7
+        column.Parent = layerFolder
+
+        -- Glow at base
+        local baseGlow = Instance.new("Part")
+        baseGlow.Name = "UpdraftBase"
+        baseGlow.Shape = Enum.PartType.Cylinder
+        baseGlow.Size = Vector3.new(2, 14, 14)
+        baseGlow.Position = Vector3.new(x, baseY, z)
+        baseGlow.Orientation = Vector3.new(0, 0, 90)
+        baseGlow.Anchored = true
+        baseGlow.CanCollide = false
+        baseGlow.Material = Enum.Material.Neon
+        baseGlow.Color = Color3.fromRGB(0, 212, 255)
+        baseGlow.Transparency = 0.3
+        baseGlow.Parent = layerFolder
+
+        local light = Instance.new("PointLight")
+        light.Color = Color3.fromRGB(0, 212, 255)
+        light.Brightness = 2
+        light.Range = 20
+        light.Parent = baseGlow
+
+        -- Touch = launch up
+        column.Touched:Connect(function(hit)
+            local character = hit.Parent
+            local hitPlayer = Players:GetPlayerFromCharacter(character)
+            if hitPlayer then
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    -- LAUNCH UP!
+                    hrp.AssemblyLinearVelocity = Vector3.new(
+                        hrp.AssemblyLinearVelocity.X * 0.3,
+                        80 + math.random(20),
+                        hrp.AssemblyLinearVelocity.Z * 0.3
+                    )
+                end
+            end
+        end)
+    end
+end
+
+-- BOUNCE PADS — trampolines that send you flying
+function GameManager.SpawnBouncePads(layerFolder: Folder, layerDef: any, count: number)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
+
+    for i = 1, count do
+        local pad = Instance.new("Part")
+        pad.Name = "BouncePad_" .. i
+        pad.Shape = Enum.PartType.Cylinder
+        pad.Size = Vector3.new(1, 8, 8)
+        pad.Position = Vector3.new(
+            math.random(-160, 160),
+            math.random(heightMin + 5, heightMax - 40),
+            math.random(-160, 160)
+        )
+        pad.Orientation = Vector3.new(0, 0, 90)
+        pad.Anchored = true
+        pad.Material = Enum.Material.Neon
+        pad.Color = Color3.fromRGB(255, 100, 255)  -- pink/purple
+        pad.Transparency = 0.1
+        pad.Parent = layerFolder
+
+        local light = Instance.new("PointLight")
+        light.Color = Color3.fromRGB(255, 100, 255)
+        light.Brightness = 1.5
+        light.Range = 12
+        light.Parent = pad
+
+        local debounce = {}
+        pad.Touched:Connect(function(hit)
+            local character = hit.Parent
+            local hitPlayer = Players:GetPlayerFromCharacter(character)
+            if hitPlayer and not debounce[hitPlayer.UserId] then
+                debounce[hitPlayer.UserId] = true
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    -- BOING! Big vertical launch
+                    hrp.AssemblyLinearVelocity = Vector3.new(
+                        hrp.AssemblyLinearVelocity.X,
+                        100 + math.random(30),
+                        hrp.AssemblyLinearVelocity.Z
+                    )
+
+                    -- Bounce animation on pad
+                    local origSize = pad.Size
+                    pad.Size = Vector3.new(0.5, 9, 9)
+                    pad.Color = Color3.fromRGB(255, 255, 255)
+                    task.delay(0.15, function()
+                        pad.Size = origSize
+                        pad.Color = Color3.fromRGB(255, 100, 255)
+                    end)
+                end
+                task.delay(0.5, function()
+                    debounce[hitPlayer.UserId] = nil
+                end)
+            end
+        end)
     end
 end
 

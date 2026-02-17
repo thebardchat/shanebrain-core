@@ -52,6 +52,9 @@ function ProgressionSystem.CheckLevelUp(player: Player): string?
         data.angelLevel = newLevel
         data.layerIndex = newIndex
 
+        -- TRANSFORM the character — bigger wings, more glow!
+        ProgressionSystem.TransformCharacter(player, newIndex)
+
         -- Fire ascension cinematic for the player
         local layerDef = Layers.GetLayerByIndex(newIndex)
         LevelUp:FireClient(player, {
@@ -150,6 +153,112 @@ function ProgressionSystem.HandleGateTouch(player: Player, targetLayerIndex: num
         end
     end
     return false
+end
+
+-- VISUAL TRANSFORMATION — character gets more epic with each level
+local LEVEL_VISUALS = {
+    -- Level 1: Newborn — small wings, faint glow
+    { wingSize = 4, wingColor = Color3.fromRGB(150, 200, 255), glowBrightness = 1, haloSize = 3, trailWidth = 1, auraSize = 0 },
+    -- Level 2: Young Angel — medium wings, brighter
+    { wingSize = 5.5, wingColor = Color3.fromRGB(0, 212, 255), glowBrightness = 2, haloSize = 3.5, trailWidth = 1.5, auraSize = 4 },
+    -- Level 3: Growing Angel — big wings, visible aura
+    { wingSize = 7, wingColor = Color3.fromRGB(0, 255, 200), glowBrightness = 3, haloSize = 4, trailWidth = 2, auraSize = 6 },
+    -- Level 4: Helping Angel — large wings, strong glow
+    { wingSize = 9, wingColor = Color3.fromRGB(180, 100, 255), glowBrightness = 4, haloSize = 4.5, trailWidth = 2.5, auraSize = 8 },
+    -- Level 5: Guardian Angel — massive wings, intense aura
+    { wingSize = 11, wingColor = Color3.fromRGB(100, 200, 255), glowBrightness = 5, haloSize = 5, trailWidth = 3, auraSize = 10 },
+    -- Level 6: ARCHANGEL — ENORMOUS wings, blinding power
+    { wingSize = 14, wingColor = Color3.fromRGB(255, 255, 255), glowBrightness = 8, haloSize = 6, trailWidth = 4, auraSize = 14 },
+}
+
+function ProgressionSystem.TransformCharacter(player: Player, levelIndex: number)
+    local character = player.Character
+    if not character then return end
+
+    local visuals = LEVEL_VISUALS[levelIndex]
+    if not visuals then return end
+
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local head = character:FindFirstChild("Head")
+    if not hrp then return end
+
+    -- Update halo size
+    local halo = character:FindFirstChild("PlayerHalo")
+    if halo then
+        halo.Size = Vector3.new(0.3, visuals.haloSize, visuals.haloSize)
+        halo.Color = visuals.wingColor
+        local haloLight = halo:FindFirstChildWhichIsA("PointLight")
+        if haloLight then
+            haloLight.Brightness = visuals.glowBrightness
+            haloLight.Range = visuals.haloSize * 4
+            haloLight.Color = visuals.wingColor
+        end
+    end
+
+    -- Update or create wing trail
+    local trail = hrp:FindFirstChild("WingTrail")
+    if trail then
+        trail.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, visuals.wingColor),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 50, 100)),
+        })
+        trail.Lifetime = 0.5 + levelIndex * 0.15
+    end
+
+    -- Add/update AURA (growing glow sphere around character)
+    local aura = character:FindFirstChild("AngelAura")
+    if visuals.auraSize > 0 then
+        if not aura then
+            aura = Instance.new("Part")
+            aura.Name = "AngelAura"
+            aura.Shape = Enum.PartType.Ball
+            aura.Anchored = false
+            aura.CanCollide = false
+            aura.Massless = true
+            aura.Material = Enum.Material.ForceField
+            aura.Transparency = 0.8
+
+            local weld = Instance.new("WeldConstraint")
+            weld.Part0 = hrp
+            weld.Part1 = aura
+            weld.Parent = aura
+
+            aura.CFrame = hrp.CFrame
+            aura.Parent = character
+        end
+        aura.Size = Vector3.new(visuals.auraSize, visuals.auraSize, visuals.auraSize)
+        aura.Color = visuals.wingColor
+
+        local auraLight = aura:FindFirstChildWhichIsA("PointLight")
+        if not auraLight then
+            auraLight = Instance.new("PointLight")
+            auraLight.Parent = aura
+        end
+        auraLight.Color = visuals.wingColor
+        auraLight.Brightness = visuals.glowBrightness * 0.5
+        auraLight.Range = visuals.auraSize * 3
+    end
+
+    -- Boost movement with each level
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = 28 + levelIndex * 4  -- gets faster each level
+        humanoid.JumpPower = 70 + levelIndex * 8  -- jumps higher each level
+    end
+
+    -- ARCHANGEL special: permanent flight unlocked
+    if levelIndex >= 6 then
+        local ServerMessage = ReplicatedStorage:FindFirstChild("ServerMessage")
+        if ServerMessage then
+            ServerMessage:FireClient(player, {
+                type = "info",
+                message = "YOU ARE AN ARCHANGEL. Unlimited flight unlocked. The Cloud answers to you.",
+            })
+        end
+    end
+
+    print("[Progression] " .. player.Name .. " transformed to level " .. levelIndex .. " — "
+        .. Layers.ANGEL_LEVELS[levelIndex])
 end
 
 return ProgressionSystem

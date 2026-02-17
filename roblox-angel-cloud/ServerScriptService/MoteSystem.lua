@@ -56,8 +56,10 @@ function MoteSystem.AwardMotes(player: Player, amount: number, source: string): 
         totalMotes = data.motes,
     })
 
-    -- Track community stat
+    -- CHECK FOR LEVEL UP after every mote gain
     if amount > 0 then
+        local ProgressionSystem = require(script.Parent.ProgressionSystem)
+        ProgressionSystem.OnMotesChanged(player)
         DataManager.IncrementCommunityStat("total_motes_earned", amount)
     end
 
