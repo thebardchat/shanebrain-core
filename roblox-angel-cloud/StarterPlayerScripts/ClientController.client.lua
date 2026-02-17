@@ -50,6 +50,10 @@ local FOV_LERP_SPEED = 0.1  -- smooth interpolation factor
 local lastSpacePress = 0
 local DOUBLE_TAP_WINDOW = 0.35
 
+-- Flight time tracking for quests
+local flightTimeAccum = 0
+local FLIGHT_REPORT_INTERVAL = 5  -- report every 5 seconds of flight
+
 -- RemoteEvents (populated after they exist)
 local StaminaUpdate
 local PlayerReady
@@ -111,6 +115,9 @@ function ClientController.Init()
 
     local RotaryDialUI = require(script.Parent.RotaryDialUI)
     RotaryDialUI.Init()
+
+    local QuestUI = require(script.Parent.QuestUI)
+    QuestUI.Init()
 
     print("[ClientController] Angel Cloud client initialized")
 end
@@ -364,6 +371,20 @@ function ClientController.Update(dt: number)
                 moveDirection.Z * 30 * GLIDE_HORIZONTAL_BOOST
             )
         end
+    end
+
+    -- Track flight time for quests
+    if isFlying then
+        flightTimeAccum = flightTimeAccum + dt
+        if flightTimeAccum >= FLIGHT_REPORT_INTERVAL then
+            local FlightTime = ReplicatedStorage:FindFirstChild("FlightTime")
+            if FlightTime then
+                FlightTime:FireServer(math.floor(flightTimeAccum))
+            end
+            flightTimeAccum = 0
+        end
+    else
+        flightTimeAccum = 0
     end
 
     -- Dynamic FOV: widens during flight/glide based on speed

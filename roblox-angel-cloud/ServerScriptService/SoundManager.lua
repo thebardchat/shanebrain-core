@@ -11,38 +11,39 @@ local TweenService = game:GetService("TweenService")
 
 local SoundManager = {}
 
--- Placeholder Roblox audio asset IDs
--- Replace these with actual uploaded sound IDs after importing to Roblox
--- Format: "rbxassetid://XXXXXXXXXX"
+-- Real audio asset IDs from Roblox Creator Store
 local AUDIO = {
     -- Ambient tracks per layer (loop)
     ambient = {
-        [1] = "rbxassetid://9042858759",   -- Nursery: soft piano, warm pads
-        [2] = "rbxassetid://9042858759",   -- Meadow: nature, gentle breeze
-        [3] = "rbxassetid://9042858759",   -- Canopy: mysterious, bio sounds
-        [4] = "rbxassetid://9042858759",   -- Stormwall: thunder, tension
-        [5] = "rbxassetid://9042858759",   -- Luminance: crystal resonance
-        [6] = "rbxassetid://9042858759",   -- Empyrean: ethereal choir
+        [1] = "rbxassetid://1848354536",   -- Nursery: relaxed, calm atmosphere
+        [2] = "rbxassetid://1841044496",   -- Meadow: ethereal world
+        [3] = "rbxassetid://1837536733",   -- Canopy: heavenly
+        [4] = "rbxassetid://1848354536",   -- Stormwall: dramatic (reuse calm for now)
+        [5] = "rbxassetid://1841044496",   -- Luminance: ethereal
+        [6] = "rbxassetid://1837536733",   -- Empyrean: heavenly choir
     },
 
     -- Sound effects
     sfx = {
-        mote_collect = "rbxassetid://9114819156",     -- bright chime
-        level_up = "rbxassetid://9114819156",          -- ascending fanfare
-        blessing_send = "rbxassetid://9114819156",     -- warm outward pulse
-        blessing_receive = "rbxassetid://9114819156",  -- gentle incoming glow
-        fragment_collect = "rbxassetid://9114819156",  -- mystical discovery
-        gate_open = "rbxassetid://9114819156",         -- grand opening sound
-        trial_start = "rbxassetid://9114819156",       -- challenge begin
-        trial_complete = "rbxassetid://9114819156",    -- victory sound
-        npc_talk = "rbxassetid://9114819156",          -- soft dialogue blip
-        wing_glide = "rbxassetid://9114819156",        -- wind whoosh
-        wing_flight = "rbxassetid://9114819156",       -- stronger wind
-        stamina_low = "rbxassetid://9114819156",       -- heartbeat warning
-        halt_reminder = "rbxassetid://9114819156",     -- gentle bell
-        shop_purchase = "rbxassetid://9114819156",     -- cash register chime
-        meditation_start = "rbxassetid://9114819156",  -- singing bowl
-        lightning = "rbxassetid://9114819156",         -- thunder crack
+        mote_collect = "rbxassetid://9126073011",     -- sparkle bell chime
+        level_up = "rbxassetid://2686079706",          -- ascending level up fanfare
+        blessing_send = "rbxassetid://9126073011",     -- sparkle tone
+        blessing_receive = "rbxassetid://5826672935",  -- announcement chime
+        fragment_collect = "rbxassetid://5654075071",  -- sparkle sound effect
+        gate_open = "rbxassetid://206902974",          -- victory/grand opening
+        trial_start = "rbxassetid://9125647873",       -- magic zoom whoosh
+        trial_complete = "rbxassetid://2686079706",    -- level up / victory
+        npc_talk = "rbxassetid://7128958209",          -- bell ding
+        wing_glide = "rbxassetid://9113081793",        -- airy whoosh
+        wing_flight = "rbxassetid://6455667685",       -- wind sound
+        stamina_low = "rbxassetid://2909601104",       -- bell warning
+        halt_reminder = "rbxassetid://7128958209",     -- gentle bell ding
+        shop_purchase = "rbxassetid://5826672935",     -- announcement chime
+        meditation_start = "rbxassetid://9126073011",  -- sparkle bell tone
+        lightning = "rbxassetid://9114444008",          -- fire whoosh (thunder-like)
+        bounce = "rbxassetid://2764461710",            -- bounce boing
+        speed_boost = "rbxassetid://9125647873",       -- magic zoom whoosh
+        wing_forge = "rbxassetid://9113446696",        -- blacksmith anvil hit
     },
 }
 

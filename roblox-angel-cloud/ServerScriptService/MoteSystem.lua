@@ -61,6 +61,12 @@ function MoteSystem.AwardMotes(player: Player, amount: number, source: string): 
         local ProgressionSystem = require(script.Parent.ProgressionSystem)
         ProgressionSystem.OnMotesChanged(player)
         DataManager.IncrementCommunityStat("total_motes_earned", amount)
+
+        -- Quest + sound hooks
+        local QuestSystem = require(script.Parent.QuestSystem)
+        pcall(QuestSystem.OnMoteCollected, player, amount)
+        local SoundManager = require(script.Parent.SoundManager)
+        pcall(SoundManager.OnMoteCollected, player)
     end
 
     return data.motes

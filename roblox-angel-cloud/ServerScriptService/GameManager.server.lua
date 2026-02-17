@@ -24,6 +24,7 @@ local NPCSystem = require(script.Parent.NPCSystem)
 local SoundManager = require(script.Parent.SoundManager)
 local ShopHandler = require(script.Parent.ShopHandler)
 local RetroSystem = require(script.Parent.RetroSystem)
+local QuestSystem = require(script.Parent.QuestSystem)
 
 local Layers = require(ReplicatedStorage.Config.Layers)
 
@@ -76,6 +77,7 @@ function GameManager.Init()
         { name = "NPCSystem", init = NPCSystem.Init },
         { name = "AtmosphereSystem", init = AtmosphereSystem.Init },
         { name = "RetroSystem", init = RetroSystem.Init },
+        { name = "QuestSystem", init = QuestSystem.Init },
     }
 
     for _, sys in ipairs(subsystems) do
@@ -126,6 +128,17 @@ function GameManager.Init()
         task.spawn(GameManager.OnPlayerAdded, player)
     end
 
+    -- Flight time tracking for quests
+    local FlightTime = Instance.new("RemoteEvent")
+    FlightTime.Name = "FlightTime"
+    FlightTime.Parent = ReplicatedStorage
+
+    FlightTime.OnServerEvent:Connect(function(player, seconds)
+        if type(seconds) == "number" and seconds > 0 and seconds <= 30 then
+            pcall(QuestSystem.OnFlightTime, player, seconds)
+        end
+    end)
+
     -- Client ready handler
     PlayerReady.OnServerEvent:Connect(function(player)
         GameManager.SyncProgress(player)
@@ -170,6 +183,9 @@ function GameManager.OnPlayerAdded(player: Player)
             GameManager.SpawnAtLayer(player, player.Character)
         end)
     end
+
+    -- Initialize quests for this player
+    pcall(QuestSystem.OnPlayerJoined, player)
 
     -- Check for launch week Founder's Halo + badges
     pcall(BadgeHandler.OnPlayerAdded, player)
@@ -484,6 +500,10 @@ function GameManager.HandleWingForge(player: Player)
         message = "WINGS FORGED! Level " .. data.wingLevel .. "/" .. WING_MAX_LEVEL .. " — Your wings grow stronger! (-" .. cost .. " Motes)",
     })
 
+    -- Quest hook
+    pcall(QuestSystem.OnWingForged, player)
+    pcall(SoundManager.PlaySFXForPlayer, player, "wing_forge", 0.7)
+
     print("[GameManager] " .. player.Name .. " forged wings to level " .. data.wingLevel)
 end
 
@@ -742,6 +762,9 @@ function GameManager.OnStarfishFound(player: Player, starfishId: string, totalIn
         end)
     end
 
+    -- Quest hook
+    pcall(QuestSystem.OnStarfishFound, player)
+
     -- Found ALL starfish — special reward
     if count >= totalInWorld and totalInWorld > 0 then
         ServerMessage:FireClient(player, {
@@ -871,6 +894,9 @@ function GameManager.SpawnBouncePads(layerFolder: Folder, layerDef: any, count: 
                         pad.Size = origSize
                         pad.Color = Color3.fromRGB(255, 100, 255)
                     end)
+
+                    pcall(QuestSystem.OnPadUsed, hitPlayer, "bounce")
+                    pcall(SoundManager.PlaySFXForPlayer, hitPlayer, "bounce", 0.5)
                 end
                 task.delay(0.5, function()
                     debounce[hitPlayer.UserId] = nil
@@ -951,6 +977,8 @@ function GameManager.SpawnSpeedPads(layerFolder: Folder, layerDef: any, count: n
                         type = "info",
                         message = "SPEED BOOST!",
                     })
+                    pcall(QuestSystem.OnPadUsed, hitPlayer, "speed")
+                    pcall(SoundManager.PlaySFXForPlayer, hitPlayer, "speed_boost", 0.5)
                 end
             end
         end)

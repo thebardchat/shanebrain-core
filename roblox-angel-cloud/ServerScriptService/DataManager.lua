@@ -61,6 +61,9 @@ if ProfileStoreAvailable then
             starfishFound = {},
             redeemedDialCodes = {},
             wingLevel = 1,
+            activeQuest = "first_motes",
+            questProgress = 0,
+            completedQuests = {},
             firstJoin = 0,
             lastSeen = 0,
         })
@@ -115,6 +118,9 @@ local DEFAULT_DATA = {
     starfishFound = {},
     redeemedDialCodes = {},
     wingLevel = 1,
+    activeQuest = "first_motes",
+    questProgress = 0,
+    completedQuests = {},
     firstJoin = 0,
     lastSeen = 0,
 }
