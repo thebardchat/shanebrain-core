@@ -12,8 +12,24 @@ local Fragments = require(game.ReplicatedStorage.Config.Fragments)
 
 local DataManager = {}
 
-local PlayerDataStore = DataStoreService:GetDataStore("PlayerDataStore_v1")
-local CommunityStore = DataStoreService:GetOrderedDataStore("CommunityStats_v1")
+-- DataStore access (fails in unpublished Studio places, so wrap in pcall)
+local PlayerDataStore, CommunityStore
+local DataStoreAvailable = false
+
+local ok1, store1 = pcall(function()
+    return DataStoreService:GetDataStore("PlayerDataStore_v1")
+end)
+local ok2, store2 = pcall(function()
+    return DataStoreService:GetOrderedDataStore("CommunityStats_v1")
+end)
+
+if ok1 and ok2 then
+    PlayerDataStore = store1
+    CommunityStore = store2
+    DataStoreAvailable = true
+else
+    warn("[DataManager] DataStore not available (unpublished place) — using in-memory only")
+end
 
 -- In-memory cache of loaded player data
 local PlayerCache = {}
@@ -63,9 +79,12 @@ end
 
 function DataManager.LoadPlayer(player: Player): { [string]: any }
     local key = "player_" .. player.UserId
-    local success, data = pcall(function()
-        return PlayerDataStore:GetAsync(key)
-    end)
+    local success, data = false, nil
+    if DataStoreAvailable then
+        success, data = pcall(function()
+            return PlayerDataStore:GetAsync(key)
+        end)
+    end
 
     if success and data then
         -- Migrate: fill in any missing fields from DEFAULT_DATA
@@ -101,6 +120,10 @@ function DataManager.SavePlayer(player: Player): boolean
     data.totalPlaytime = data.totalPlaytime + (os.time() - data.sessionStart)
     data.sessionStart = os.time()
     data.lastSeen = os.time()
+
+    if not DataStoreAvailable then
+        return true  -- silently succeed in Studio
+    end
 
     local key = "player_" .. player.UserId
     local success, err = pcall(function()
@@ -145,6 +168,7 @@ end
 
 -- Community stats (OrderedDataStore for server-wide communal stats)
 function DataManager.IncrementCommunityStat(statName: string, amount: number)
+    if not DataStoreAvailable then return end
     local success, err = pcall(function()
         CommunityStore:IncrementAsync(statName, amount)
     end)
@@ -156,6 +180,12 @@ end
 function DataManager.GetCommunityStats(): { [string]: number }
     local stats = {}
     local keys = { "total_blessings", "total_trials", "total_motes_earned", "longest_chain" }
+    if not DataStoreAvailable then
+        for _, key in ipairs(keys) do
+            stats[key] = 0
+        end
+        return stats
+    end
     for _, key in ipairs(keys) do
         local success, value = pcall(function()
             return CommunityStore:GetAsync(key)

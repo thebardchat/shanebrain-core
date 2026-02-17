@@ -37,6 +37,20 @@ local ServerMessage    -- Server -> Client: system messages
 function GameManager.Init()
     print("[GameManager] Initializing The Cloud Climb...")
 
+    -- Safety: set a low FallenPartsDestroyHeight so players don't fall forever
+    workspace.FallenPartsDestroyHeight = -100
+
+    -- Create a temporary baseplate so players don't fall during init
+    local tempBase = Instance.new("Part")
+    tempBase.Name = "TempBaseplate"
+    tempBase.Size = Vector3.new(512, 4, 512)
+    tempBase.Position = Vector3.new(0, 96, 0)  -- just below Layer 1 spawn
+    tempBase.Anchored = true
+    tempBase.Material = Enum.Material.SmoothPlastic
+    tempBase.Color = Color3.fromRGB(245, 240, 225)
+    tempBase.Transparency = 0
+    tempBase.Parent = workspace
+
     -- Create general RemoteEvents
     PlayerReady = Instance.new("RemoteEvent")
     PlayerReady.Name = "PlayerReady"
@@ -50,36 +64,55 @@ function GameManager.Init()
     ServerMessage.Name = "ServerMessage"
     ServerMessage.Parent = ReplicatedStorage
 
-    -- Initialize all subsystems
-    MoteSystem.Init()
-    ProgressionSystem.Init()
-    StaminaSystem.Init()
-    BlessingSystem.Init()
-    LoreSystem.Init()
-    TrialManager.Init()
-    CrossPlatformBridge.Init()
-    BadgeHandler.Init()
-    SoundManager.Init()
-    ShopHandler.Init()
-    NPCSystem.Init()
-    AtmosphereSystem.Init()
-    RetroSystem.Init()
+    -- Initialize all subsystems (wrapped in pcall to prevent cascading failures)
+    local subsystems = {
+        { name = "MoteSystem", init = MoteSystem.Init },
+        { name = "ProgressionSystem", init = ProgressionSystem.Init },
+        { name = "StaminaSystem", init = StaminaSystem.Init },
+        { name = "BlessingSystem", init = BlessingSystem.Init },
+        { name = "LoreSystem", init = LoreSystem.Init },
+        { name = "TrialManager", init = TrialManager.Init },
+        { name = "CrossPlatformBridge", init = CrossPlatformBridge.Init },
+        { name = "BadgeHandler", init = BadgeHandler.Init },
+        { name = "SoundManager", init = SoundManager.Init },
+        { name = "ShopHandler", init = ShopHandler.Init },
+        { name = "NPCSystem", init = NPCSystem.Init },
+        { name = "AtmosphereSystem", init = AtmosphereSystem.Init },
+        { name = "RetroSystem", init = RetroSystem.Init },
+    }
+
+    for _, sys in ipairs(subsystems) do
+        local ok, err = pcall(sys.init)
+        if ok then
+            print("[GameManager] " .. sys.name .. " initialized")
+        else
+            warn("[GameManager] FAILED to init " .. sys.name .. ": " .. tostring(err))
+        end
+    end
 
     -- Build the procedural world (replaces old SetupLayers)
-    WorldGenerator.Init()
+    local ok, err = pcall(WorldGenerator.Init)
+    if not ok then
+        warn("[GameManager] WorldGenerator FAILED: " .. tostring(err))
+    end
+
+    -- Remove temp baseplate now that real platforms exist
+    if tempBase and tempBase.Parent then
+        tempBase:Destroy()
+    end
 
     -- Spawn gameplay content into generated world
-    GameManager.PopulateLayers()
+    pcall(GameManager.PopulateLayers)
 
     -- Spawn The Keeper NPC in Layer 1
     local nurseryFolder = workspace:FindFirstChild("Layer1_Nursery")
     if nurseryFolder then
         local nurseryDef = Layers.GetLayerByIndex(1)
-        NPCSystem.SpawnKeeper(nurseryFolder, nurseryDef.spawnPosition)
+        pcall(NPCSystem.SpawnKeeper, nurseryFolder, nurseryDef.spawnPosition)
     end
 
     -- Wire up all brown starfish ProximityPrompts
-    GameManager.WireStarfish()
+    pcall(GameManager.WireStarfish)
 
     -- Start auto-save
     DataManager.StartAutoSave()
@@ -129,8 +162,16 @@ function GameManager.OnPlayerAdded(player: Player)
         GameManager.SpawnAtLayer(player, character)
     end)
 
+    -- Handle character that already exists (Studio testing)
+    if player.Character then
+        task.spawn(function()
+            task.wait(0.5)
+            GameManager.SpawnAtLayer(player, player.Character)
+        end)
+    end
+
     -- Check for launch week Founder's Halo + badges
-    BadgeHandler.OnPlayerAdded(player)
+    pcall(BadgeHandler.OnPlayerAdded, player)
 
     -- Welcome message
     ServerMessage:FireClient(player, {

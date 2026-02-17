@@ -51,11 +51,16 @@ local LevelUp
 local ServerMessage
 
 function ClientController.Init()
-    -- Wait for RemoteEvents
-    StaminaUpdate = ReplicatedStorage:WaitForChild("StaminaUpdate")
-    PlayerReady = ReplicatedStorage:WaitForChild("PlayerReady")
-    LevelUp = ReplicatedStorage:WaitForChild("LevelUp")
-    ServerMessage = ReplicatedStorage:WaitForChild("ServerMessage")
+    -- Wait for RemoteEvents (with timeout to avoid infinite hang)
+    StaminaUpdate = ReplicatedStorage:WaitForChild("StaminaUpdate", 30)
+    PlayerReady = ReplicatedStorage:WaitForChild("PlayerReady", 30)
+    LevelUp = ReplicatedStorage:WaitForChild("LevelUp", 30)
+    ServerMessage = ReplicatedStorage:WaitForChild("ServerMessage", 30)
+
+    if not StaminaUpdate or not PlayerReady or not LevelUp or not ServerMessage then
+        warn("[ClientController] Timed out waiting for RemoteEvents — server may still be loading")
+        return
+    end
 
     -- Input handling
     UserInputService.InputBegan:Connect(ClientController.OnInputBegan)
