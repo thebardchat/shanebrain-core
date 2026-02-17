@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local DataManager = require(script.Parent.DataManager)
+local SoundManager = require(script.Parent.SoundManager)
 local Fragments = require(ReplicatedStorage.Config.Fragments)
 local Layers = require(ReplicatedStorage.Config.Layers)
 
@@ -78,6 +79,9 @@ function LoreSystem.TryCollectFragment(player: Player, fragmentId: string): bool
 
     -- Collect!
     data.collectedFragments[fragmentId] = true
+
+    -- Play fragment discovery sound
+    SoundManager.OnFragmentCollected(player)
 
     -- Notify client with full fragment data
     FragmentCollected:FireClient(player, {
@@ -220,7 +224,18 @@ function LoreSystem.GetCategoryProgress(player: Player): { [string]: { collected
     return progress
 end
 
--- Spawn fragment interaction points in a layer
+-- Category colors used for fragments
+local CATEGORY_COLORS = {
+    Decision = Color3.fromRGB(255, 215, 0),     -- gold
+    Emotion = Color3.fromRGB(0, 212, 255),       -- cyan
+    Relationship = Color3.fromRGB(255, 150, 200),-- pink
+    Strength = Color3.fromRGB(255, 100, 50),     -- orange
+    Suffering = Color3.fromRGB(120, 50, 180),    -- purple
+    Guardian = Color3.fromRGB(100, 255, 100),    -- green
+    Angel = Color3.fromRGB(255, 255, 255),       -- white (special glow)
+}
+
+-- Spawn fragment interaction points in a layer — pulsing, glowing, with particles
 function LoreSystem.SpawnFragmentPoints(layerFolder: Folder, layerIndex: number)
     local layerFragments = Fragments.GetByLayer(layerIndex)
     local spread = 180
@@ -230,10 +245,12 @@ function LoreSystem.SpawnFragmentPoints(layerFolder: Folder, layerIndex: number)
         local heightMin = layerDef.heightRange.min
         local heightMax = layerDef.heightRange.max
 
+        local fragColor = CATEGORY_COLORS[fragment.category] or Color3.fromRGB(200, 200, 200)
+
         local point = Instance.new("Part")
         point.Name = "FragmentPoint_" .. fragment.id
         point.Shape = Enum.PartType.Ball
-        point.Size = Vector3.new(3, 3, 3)
+        point.Size = Vector3.new(2.5, 2.5, 2.5)
         point.Position = Vector3.new(
             math.random(-spread, spread),
             math.random(heightMin + 20, heightMax - 20),
@@ -242,29 +259,93 @@ function LoreSystem.SpawnFragmentPoints(layerFolder: Folder, layerIndex: number)
         point.Anchored = true
         point.CanCollide = false
         point.Material = Enum.Material.ForceField
-        point.Transparency = 0.2
+        point.Transparency = 0.15
+        point.Color = fragColor
 
-        -- Color by category
-        local categoryColors = {
-            Decision = Color3.fromRGB(255, 215, 0),     -- gold
-            Emotion = Color3.fromRGB(0, 212, 255),       -- cyan
-            Relationship = Color3.fromRGB(255, 150, 200),-- pink
-            Strength = Color3.fromRGB(255, 100, 50),     -- orange
-            Suffering = Color3.fromRGB(120, 50, 180),    -- purple
-            Guardian = Color3.fromRGB(100, 255, 100),    -- green
-            Angel = Color3.fromRGB(255, 255, 255),      -- white
-        }
-        point.Color = categoryColors[fragment.category] or Color3.fromRGB(200, 200, 200)
+        -- Inner core (brighter, smaller)
+        local core = Instance.new("Part")
+        core.Name = "FragmentCore"
+        core.Shape = Enum.PartType.Ball
+        core.Size = Vector3.new(1.2, 1.2, 1.2)
+        core.Position = point.Position
+        core.Anchored = true
+        core.CanCollide = false
+        core.Material = Enum.Material.Neon
+        core.Color = fragColor
+        core.Transparency = 0.1
+        core.Parent = layerFolder
+
+        -- Point light (colored, visible from distance)
+        local light = Instance.new("PointLight")
+        light.Color = fragColor
+        light.Brightness = 2
+        light.Range = 20
+        light.Parent = point
+
+        -- Orbiting sparkle particles
+        local sparkle = Instance.new("ParticleEmitter")
+        sparkle.Name = "FragSparkle"
+        sparkle.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, fragColor),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+        })
+        sparkle.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.2),
+            NumberSequenceKeypoint.new(1, 0),
+        })
+        sparkle.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        sparkle.Lifetime = NumberRange.new(1, 2.5)
+        sparkle.Rate = 5
+        sparkle.Speed = NumberRange.new(0.5, 1.5)
+        sparkle.SpreadAngle = Vector2.new(360, 360)
+        sparkle.LightEmission = 1
+        sparkle.Parent = point
+
+        -- Angel fragments get extra intense glow
+        if fragment.category == "Angel" then
+            light.Brightness = 4
+            light.Range = 35
+            sparkle.Rate = 12
+
+            -- Gold halo ring around Angel fragments
+            local angelRing = Instance.new("Part")
+            angelRing.Name = "AngelRing"
+            angelRing.Shape = Enum.PartType.Cylinder
+            angelRing.Size = Vector3.new(0.3, 5, 5)
+            angelRing.Position = point.Position
+            angelRing.Orientation = Vector3.new(0, 0, 90)
+            angelRing.Anchored = true
+            angelRing.CanCollide = false
+            angelRing.Material = Enum.Material.Neon
+            angelRing.Color = Color3.fromRGB(255, 215, 100)
+            angelRing.Transparency = 0.4
+            angelRing.Parent = layerFolder
+        end
 
         local fragIdValue = Instance.new("StringValue")
         fragIdValue.Name = "FragmentId"
         fragIdValue.Value = fragment.id
         fragIdValue.Parent = point
 
-        -- Gentle rotation animation
+        -- Rotation + pulsing animation
         task.spawn(function()
+            local offset = math.random() * math.pi * 2
             while point and point.Parent do
-                point.Orientation = point.Orientation + Vector3.new(0, 1, 0)
+                local t = tick()
+                point.Orientation = point.Orientation + Vector3.new(0, 1.5, 0)
+
+                -- Size pulse (breathe in/out)
+                local pulse = 2.5 + math.sin(t * 2 + offset) * 0.5
+                point.Size = Vector3.new(pulse, pulse, pulse)
+                if core and core.Parent then
+                    core.Position = point.Position
+                    local corePulse = 1.2 + math.sin(t * 3 + offset) * 0.3
+                    core.Size = Vector3.new(corePulse, corePulse, corePulse)
+                end
+
                 task.wait(0.03)
             end
         end)

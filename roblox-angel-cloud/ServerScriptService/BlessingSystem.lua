@@ -11,6 +11,7 @@ local Players = game:GetService("Players")
 local DataManager = require(script.Parent.DataManager)
 local MoteSystem = require(script.Parent.MoteSystem)
 local StaminaSystem = require(script.Parent.StaminaSystem)
+local SoundManager = require(script.Parent.SoundManager)
 local Layers = require(ReplicatedStorage.Config.Layers)
 
 local BlessingSystem = {}
@@ -125,6 +126,10 @@ function BlessingSystem.SendBlessing(sender: Player): boolean
     if recipientData then
         recipientData.blessingsReceived = (recipientData.blessingsReceived or 0) + 1
     end
+
+    -- Play blessing sounds
+    SoundManager.OnBlessingSent(sender)
+    SoundManager.OnBlessingReceived(recipient)
 
     -- Notify recipient
     BlessingReceived:FireClient(recipient, {

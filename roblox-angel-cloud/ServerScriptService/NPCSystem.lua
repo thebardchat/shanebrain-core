@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataManager = require(script.Parent.DataManager)
+local SoundManager = require(script.Parent.SoundManager)
 local Layers = require(ReplicatedStorage.Config.Layers)
 
 local NPCSystem = {}
@@ -188,34 +189,94 @@ function NPCSystem.SpawnKeeper(layerFolder: Folder, spawnPosition: Vector3)
     robe.Transparency = 0.1
     robe.Parent = keeper
 
-    -- Wing-like appendages
+    -- Large majestic wings (visible from far away)
     for side = -1, 1, 2 do
         local wing = Instance.new("Part")
         wing.Name = "KeeperWing"
-        wing.Size = Vector3.new(0.3, 3, 2)
-        wing.Position = torso.Position + Vector3.new(side * 2, 1, -0.5)
-        wing.Rotation = Vector3.new(0, 0, side * -20)
+        wing.Size = Vector3.new(0.5, 6, 4)
+        wing.Position = torso.Position + Vector3.new(side * 2.5, 1.5, -0.8)
+        wing.Rotation = Vector3.new(10, side * 15, side * -25)
         wing.Anchored = true
         wing.CanCollide = false
         wing.Material = Enum.Material.ForceField
         wing.Color = Color3.fromRGB(0, 212, 255)
-        wing.Transparency = 0.3
+        wing.Transparency = 0.25
         wing.Parent = keeper
+
+        -- Wing glow
+        local wingLight = Instance.new("PointLight")
+        wingLight.Color = Color3.fromRGB(0, 212, 255)
+        wingLight.Brightness = 1
+        wingLight.Range = 12
+        wingLight.Parent = wing
     end
 
-    -- Halo
+    -- Staff (held to the right)
+    local staff = Instance.new("Part")
+    staff.Name = "KeeperStaff"
+    staff.Size = Vector3.new(0.4, 8, 0.4)
+    staff.Position = torso.Position + Vector3.new(2.5, 0, 0.5)
+    staff.Anchored = true
+    staff.CanCollide = false
+    staff.Material = Enum.Material.Neon
+    staff.Color = Color3.fromRGB(255, 240, 200)
+    staff.Transparency = 0.1
+    staff.Parent = keeper
+
+    -- Staff orb on top
+    local staffOrb = Instance.new("Part")
+    staffOrb.Name = "StaffOrb"
+    staffOrb.Shape = Enum.PartType.Ball
+    staffOrb.Size = Vector3.new(1.2, 1.2, 1.2)
+    staffOrb.Position = staff.Position + Vector3.new(0, 4.5, 0)
+    staffOrb.Anchored = true
+    staffOrb.CanCollide = false
+    staffOrb.Material = Enum.Material.Neon
+    staffOrb.Color = Color3.fromRGB(255, 215, 100)
+    staffOrb.Transparency = 0.1
+    staffOrb.Parent = keeper
+
+    local staffLight = Instance.new("PointLight")
+    staffLight.Color = Color3.fromRGB(255, 215, 100)
+    staffLight.Brightness = 2
+    staffLight.Range = 20
+    staffLight.Parent = staffOrb
+
+    -- Halo (larger, more prominent)
     local halo = Instance.new("Part")
     halo.Name = "KeeperHalo"
     halo.Shape = Enum.PartType.Cylinder
-    halo.Size = Vector3.new(0.3, 3.5, 3.5)
-    halo.Position = head.Position + Vector3.new(0, 1.8, 0)
+    halo.Size = Vector3.new(0.3, 4.5, 4.5)
+    halo.Position = head.Position + Vector3.new(0, 2, 0)
     halo.Orientation = Vector3.new(0, 0, 90)
     halo.Anchored = true
     halo.CanCollide = false
     halo.Material = Enum.Material.Neon
     halo.Color = Color3.fromRGB(255, 215, 100)
-    halo.Transparency = 0.2
+    halo.Transparency = 0.15
     halo.Parent = keeper
+
+    -- Ambient particles rising from Keeper (ethereal presence)
+    local keeperParticles = Instance.new("ParticleEmitter")
+    keeperParticles.Name = "KeeperAura"
+    keeperParticles.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 212, 255)),
+    })
+    keeperParticles.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.2),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    keeperParticles.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    keeperParticles.Lifetime = NumberRange.new(2, 4)
+    keeperParticles.Rate = 5
+    keeperParticles.Speed = NumberRange.new(0.5, 2)
+    keeperParticles.SpreadAngle = Vector2.new(30, 30)
+    keeperParticles.LightEmission = 1
+    keeperParticles.Parent = torso
 
     -- Name tag
     local billboard = Instance.new("BillboardGui")
@@ -313,6 +374,9 @@ function NPCSystem.HandleKeeperInteraction(player: Player, action: string)
     end
 
     playerDialogueState[player.UserId] = state
+
+    -- Play NPC talk sound
+    SoundManager.OnNPCTalk(player)
 
     -- Send dialogue to client
     NPCDialogue:FireClient(player, {

@@ -150,6 +150,13 @@ function DialogueUI.ShowDialogue(lines: { any }, npcName: string?)
 
     dialogueGui.Enabled = true
 
+    -- Fade in the dialogue box
+    local box = dialogueGui.DialogueBox
+    box.BackgroundTransparency = 1
+    TweenService:Create(box, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+        BackgroundTransparency = 0.05,
+    }):Play()
+
     -- Show first line
     DialogueUI.Advance()
 end
@@ -180,11 +187,12 @@ function DialogueUI.Advance()
         continueLabel.Text = "Click or press E to continue..."
     end
 
-    -- Typewriter effect
+    -- Typewriter effect (track which line we're typing so Advance() can skip it)
+    local lineBeingTyped = currentLineIndex
     task.spawn(function()
         local fullText = line.text or ""
         for i = 1, #fullText do
-            if not isShowing or currentLineIndex ~= currentLineIndex then break end
+            if not isShowing or currentLineIndex ~= lineBeingTyped then break end
             textLabel.Text = fullText:sub(1, i)
             task.wait(0.02)
         end

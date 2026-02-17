@@ -10,97 +10,98 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Layers = require(ReplicatedStorage.Config.Layers)
+local SoundManager = require(script.Parent.SoundManager)
 
 local AtmosphereSystem = {}
 
--- Per-layer atmosphere presets
+-- Per-layer atmosphere presets (bright and heavenly — this is a cloud world!)
 local PRESETS = {
-    -- Layer 1: The Nursery — twilight, mystical, inviting (NOT bright white)
+    -- Layer 1: The Nursery — warm golden morning, welcoming
     {
-        clockTime = 6.5,
-        ambient = Color3.fromRGB(15, 12, 25),
-        outdoorAmbient = Color3.fromRGB(50, 40, 70),
+        clockTime = 10,
+        ambient = Color3.fromRGB(80, 75, 90),
+        outdoorAmbient = Color3.fromRGB(180, 170, 200),
+        fogEnd = 800,
+        fogColor = Color3.fromRGB(200, 190, 220),
+        atmosphereDensity = 0.25,
+        atmosphereOffset = 0.3,
+        atmosphereColor = Color3.fromRGB(210, 200, 235),
+        atmosphereDecay = Color3.fromRGB(190, 180, 215),
+        bloomIntensity = 0.6,
+        bloomSize = 30,
+        skyColor = Color3.fromRGB(140, 160, 220),
+    },
+    -- Layer 2: The Meadow — bright blue sky, cyan-tinted atmosphere
+    {
+        clockTime = 14,
+        ambient = Color3.fromRGB(70, 85, 100),
+        outdoorAmbient = Color3.fromRGB(160, 200, 220),
+        fogEnd = 900,
+        fogColor = Color3.fromRGB(180, 220, 240),
+        atmosphereDensity = 0.2,
+        atmosphereOffset = 0.35,
+        atmosphereColor = Color3.fromRGB(180, 225, 245),
+        atmosphereDecay = Color3.fromRGB(160, 200, 230),
+        bloomIntensity = 0.7,
+        bloomSize = 28,
+        skyColor = Color3.fromRGB(100, 180, 240),
+    },
+    -- Layer 3: The Canopy — lush green-tinted light, bioluminescent glow
+    {
+        clockTime = 11,
+        ambient = Color3.fromRGB(60, 80, 65),
+        outdoorAmbient = Color3.fromRGB(140, 200, 160),
         fogEnd = 600,
-        fogColor = Color3.fromRGB(30, 20, 50),
+        fogColor = Color3.fromRGB(160, 210, 170),
         atmosphereDensity = 0.35,
-        atmosphereOffset = 0.15,
-        atmosphereColor = Color3.fromRGB(40, 30, 60),
-        atmosphereDecay = Color3.fromRGB(20, 15, 35),
-        bloomIntensity = 0.8,
-        bloomSize = 35,
-        skyColor = Color3.fromRGB(15, 10, 30),
-    },
-    -- Layer 2: The Meadow — deep cyan night, neon glow
-    {
-        clockTime = 21,
-        ambient = Color3.fromRGB(8, 15, 25),
-        outdoorAmbient = Color3.fromRGB(30, 60, 80),
-        fogEnd = 700,
-        fogColor = Color3.fromRGB(10, 30, 50),
-        atmosphereDensity = 0.4,
         atmosphereOffset = 0.2,
-        atmosphereColor = Color3.fromRGB(15, 40, 60),
-        atmosphereDecay = Color3.fromRGB(10, 25, 40),
-        bloomIntensity = 0.9,
+        atmosphereColor = Color3.fromRGB(150, 210, 170),
+        atmosphereDecay = Color3.fromRGB(130, 180, 150),
+        bloomIntensity = 0.7,
         bloomSize = 32,
-        skyColor = Color3.fromRGB(5, 15, 35),
+        skyColor = Color3.fromRGB(80, 160, 120),
     },
-    -- Layer 3: The Canopy — bioluminescent fog, dim
-    {
-        clockTime = 7,
-        ambient = Color3.fromRGB(10, 25, 15),
-        outdoorAmbient = Color3.fromRGB(40, 80, 50),
-        fogEnd = 500,
-        fogColor = Color3.fromRGB(30, 80, 50),
-        atmosphereDensity = 0.5,
-        atmosphereOffset = 0.1,
-        atmosphereColor = Color3.fromRGB(50, 120, 80),
-        atmosphereDecay = Color3.fromRGB(30, 60, 40),
-        bloomIntensity = 0.8,
-        bloomSize = 35,
-        skyColor = Color3.fromRGB(20, 60, 40),
-    },
-    -- Layer 4: The Stormwall — dark purple, ominous
+    -- Layer 4: The Stormwall — dramatic purple-grey, moody but visible
     {
         clockTime = 18,
-        ambient = Color3.fromRGB(15, 8, 25),
-        outdoorAmbient = Color3.fromRGB(50, 25, 70),
-        fogEnd = 400,
-        fogColor = Color3.fromRGB(40, 20, 60),
-        atmosphereDensity = 0.6,
-        atmosphereOffset = 0.05,
-        atmosphereColor = Color3.fromRGB(60, 30, 80),
-        atmosphereDecay = Color3.fromRGB(30, 15, 45),
-        bloomIntensity = 0.4,
-        bloomSize = 20,
-        skyColor = Color3.fromRGB(30, 15, 50),
+        ambient = Color3.fromRGB(50, 40, 65),
+        outdoorAmbient = Color3.fromRGB(120, 100, 150),
+        fogEnd = 500,
+        fogColor = Color3.fromRGB(130, 110, 160),
+        atmosphereDensity = 0.45,
+        atmosphereOffset = 0.1,
+        atmosphereColor = Color3.fromRGB(140, 120, 170),
+        atmosphereDecay = Color3.fromRGB(100, 80, 130),
+        bloomIntensity = 0.5,
+        bloomSize = 24,
+        skyColor = Color3.fromRGB(80, 60, 110),
     },
-    -- Layer 5: The Luminance — crystal clear, aurora
+    -- Layer 5: The Luminance — crystal clear aurora sky, ethereal
     {
         clockTime = 22,
-        ambient = Color3.fromRGB(30, 35, 50),
-        outdoorAmbient = Color3.fromRGB(100, 120, 160),
+        ambient = Color3.fromRGB(60, 70, 90),
+        outdoorAmbient = Color3.fromRGB(140, 160, 200),
         fogEnd = 1500,
-        fogColor = Color3.fromRGB(180, 200, 240),
+        fogColor = Color3.fromRGB(200, 215, 245),
         atmosphereDensity = 0.15,
         atmosphereOffset = 0.4,
-        atmosphereColor = Color3.fromRGB(180, 210, 255),
-        atmosphereDecay = Color3.fromRGB(150, 180, 220),
-        bloomIntensity = 0.7,
+        atmosphereColor = Color3.fromRGB(200, 220, 255),
+        atmosphereDecay = Color3.fromRGB(170, 195, 240),
+        bloomIntensity = 0.8,
         bloomSize = 40,
-        skyColor = Color3.fromRGB(10, 15, 40),
+        skyColor = Color3.fromRGB(30, 40, 80),
     },
-    -- Layer 6: The Empyrean — pure white light
+    -- Layer 6: The Empyrean — pure radiant white light
     {
         clockTime = 12,
-        ambient = Color3.fromRGB(60, 60, 65),
-        outdoorAmbient = Color3.fromRGB(200, 200, 210),
+        ambient = Color3.fromRGB(100, 100, 105),
+        outdoorAmbient = Color3.fromRGB(220, 220, 230),
         fogEnd = 2000,
         fogColor = Color3.fromRGB(255, 255, 255),
         atmosphereDensity = 0.1,
         atmosphereOffset = 0.5,
         atmosphereColor = Color3.fromRGB(255, 255, 250),
-        atmosphereDecay = Color3.fromRGB(245, 245, 255),
+        atmosphereDecay = Color3.fromRGB(250, 250, 255),
         bloomIntensity = 1.0,
         bloomSize = 50,
         skyColor = Color3.fromRGB(240, 240, 255),
@@ -134,7 +135,9 @@ function AtmosphereSystem.Init()
         sky.Parent = Lighting
     end
     Lighting.GlobalShadows = true
-    Lighting.Brightness = 1
+    Lighting.Brightness = 2
+    Lighting.EnvironmentDiffuseScale = 1
+    Lighting.EnvironmentSpecularScale = 1
 
     -- Apply default atmosphere (Layer 1)
     AtmosphereSystem.ApplyPreset(1)
@@ -165,6 +168,9 @@ function AtmosphereSystem.Init()
                                 },
                             })
                         end
+                        -- Update ambient music for this player's layer
+                        SoundManager.SetAmbientLayer(newLayer)
+                        SoundManager.OnPlayerLayerChanged(player, newLayer)
                     end
                 end
             end
@@ -228,6 +234,9 @@ function AtmosphereSystem.TriggerLightningFlash()
     end
 
     if not hasStormPlayer then return end
+
+    -- Play thunder sound
+    SoundManager.OnLightning()
 
     -- Create brief flash by spawning a temporary bright part
     local flash = Instance.new("Part")

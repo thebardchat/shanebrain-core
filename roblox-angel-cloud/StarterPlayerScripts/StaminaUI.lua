@@ -15,6 +15,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 local barFrame: Frame
 local barFill: Frame
 local staminaLabel: TextLabel
+local currentPulseTween = nil  -- track pulse so we can stop it
 
 local COLORS = {
     full = Color3.fromRGB(0, 212, 255),     -- cyan
@@ -120,12 +121,20 @@ function StaminaUI.UpdateBar(current: number, max: number, action: string?)
         staminaLabel.Text = "Wing Gauge: " .. math.floor(current) .. "/" .. math.floor(max) .. actionText
     end
 
-    -- Pulse effect when low
+    -- Pulse effect when low (stop pulse when stamina recovers)
     if ratio <= 0.15 and ratio > 0 then
-        local pulse = TweenService:Create(barFill, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-            BackgroundTransparency = 0.6,
-        })
-        pulse:Play()
+        if not currentPulseTween then
+            currentPulseTween = TweenService:Create(barFill, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+                BackgroundTransparency = 0.6,
+            })
+            currentPulseTween:Play()
+        end
+    else
+        if currentPulseTween then
+            currentPulseTween:Cancel()
+            currentPulseTween = nil
+            barFill.BackgroundTransparency = 0.2
+        end
     end
 end
 

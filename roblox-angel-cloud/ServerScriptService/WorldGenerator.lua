@@ -19,55 +19,55 @@ local GLASS_MATERIAL = Enum.Material.Glass
 local ICE_MATERIAL = Enum.Material.Glacier
 local FORCE_FIELD = Enum.Material.ForceField
 
--- Layer-specific color palettes
+-- Layer-specific color palettes (bright, heavenly, visible)
 local PALETTES = {
-    -- Layer 1: The Nursery — dark purple-blue clouds, golden neon accents
+    -- Layer 1: The Nursery — soft white clouds with warm golden glow
     {
-        primary = Color3.fromRGB(35, 25, 55),
-        secondary = Color3.fromRGB(45, 35, 65),
+        primary = Color3.fromRGB(240, 235, 250),
+        secondary = Color3.fromRGB(250, 245, 255),
         accent = Color3.fromRGB(255, 200, 50),
-        glow = Color3.fromRGB(255, 180, 0),
-        detail = Color3.fromRGB(50, 40, 70),
+        glow = Color3.fromRGB(255, 215, 100),
+        detail = Color3.fromRGB(220, 215, 235),
     },
-    -- Layer 2: The Meadow — deep teal clouds, bright cyan neon
+    -- Layer 2: The Meadow — pastel teal-white clouds, cyan accents
     {
-        primary = Color3.fromRGB(20, 45, 50),
-        secondary = Color3.fromRGB(25, 55, 60),
+        primary = Color3.fromRGB(220, 245, 250),
+        secondary = Color3.fromRGB(235, 250, 255),
         accent = Color3.fromRGB(0, 212, 255),
-        glow = Color3.fromRGB(0, 255, 255),
-        detail = Color3.fromRGB(15, 50, 55),
+        glow = Color3.fromRGB(80, 230, 255),
+        detail = Color3.fromRGB(200, 235, 245),
     },
-    -- Layer 3: The Canopy — deep greens, bioluminescent
+    -- Layer 3: The Canopy — soft green-white, bioluminescent
     {
-        primary = Color3.fromRGB(60, 120, 80),
-        secondary = Color3.fromRGB(40, 100, 60),
+        primary = Color3.fromRGB(210, 245, 220),
+        secondary = Color3.fromRGB(225, 250, 230),
         accent = Color3.fromRGB(100, 255, 180),
-        glow = Color3.fromRGB(50, 255, 150),
-        detail = Color3.fromRGB(80, 160, 100),
+        glow = Color3.fromRGB(80, 255, 160),
+        detail = Color3.fromRGB(190, 235, 200),
     },
-    -- Layer 4: The Stormwall — dark purple, lightning
+    -- Layer 4: The Stormwall — grey-purple clouds, electric purple
     {
-        primary = Color3.fromRGB(60, 30, 80),
-        secondary = Color3.fromRGB(80, 40, 120),
+        primary = Color3.fromRGB(180, 170, 200),
+        secondary = Color3.fromRGB(200, 190, 220),
         accent = Color3.fromRGB(180, 100, 255),
         glow = Color3.fromRGB(200, 150, 255),
-        detail = Color3.fromRGB(50, 20, 60),
+        detail = Color3.fromRGB(160, 150, 185),
     },
-    -- Layer 5: The Luminance — crystal, aurora
+    -- Layer 5: The Luminance — crystal ice-white, aurora shimmer
     {
-        primary = Color3.fromRGB(200, 220, 255),
-        secondary = Color3.fromRGB(180, 200, 240),
+        primary = Color3.fromRGB(230, 240, 255),
+        secondary = Color3.fromRGB(240, 248, 255),
         accent = Color3.fromRGB(100, 200, 255),
         glow = Color3.fromRGB(150, 220, 255),
-        detail = Color3.fromRGB(220, 230, 255),
+        detail = Color3.fromRGB(220, 235, 255),
     },
-    -- Layer 6: The Empyrean — pure white, abstract
+    -- Layer 6: The Empyrean — pure radiant white
     {
         primary = Color3.fromRGB(255, 255, 255),
-        secondary = Color3.fromRGB(245, 245, 255),
+        secondary = Color3.fromRGB(250, 250, 255),
         accent = Color3.fromRGB(255, 240, 200),
         glow = Color3.fromRGB(255, 255, 240),
-        detail = Color3.fromRGB(240, 240, 250),
+        detail = Color3.fromRGB(245, 245, 255),
     },
 }
 
@@ -185,6 +185,45 @@ function WorldGenerator.CreateSpawnPlatform(folder: Folder, position: Vector3, p
     -- Bobbing animation for marker
     WorldGenerator.AddBobAnimation(marker, 1.5)
 
+    -- Ambient sparkle particles rising from spawn platform
+    local emitter = Instance.new("ParticleEmitter")
+    emitter.Name = "SpawnSparkles"
+    emitter.Color = ColorSequence.new(palette.glow)
+    emitter.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.3),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    emitter.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    emitter.Lifetime = NumberRange.new(3, 6)
+    emitter.Rate = 8
+    emitter.Speed = NumberRange.new(1, 3)
+    emitter.SpreadAngle = Vector2.new(30, 30)
+    emitter.LightEmission = 1
+    emitter.Parent = base
+
+    -- Billowy cloud bumps around spawn edge for organic look
+    for k = 1, 8 do
+        local angle = (k / 8) * math.pi * 2
+        local edgeBump = Instance.new("Part")
+        edgeBump.Name = "SpawnEdge"
+        edgeBump.Shape = Enum.PartType.Ball
+        local bumpSize = platformSize * (0.2 + math.random() * 0.15)
+        edgeBump.Size = Vector3.new(bumpSize, bumpSize * 0.5, bumpSize)
+        edgeBump.Position = position + Vector3.new(
+            math.cos(angle) * platformSize * 0.35,
+            -1,
+            math.sin(angle) * platformSize * 0.35
+        )
+        edgeBump.Anchored = true
+        edgeBump.CanCollide = true
+        edgeBump.Material = CLOUD_MATERIAL
+        edgeBump.Color = palette.secondary
+        edgeBump.Parent = folder
+    end
+
     -- SpawnLocation for Roblox
     local spawn = Instance.new("SpawnLocation")
     spawn.Name = "LayerSpawn"
@@ -228,37 +267,19 @@ function WorldGenerator.CreateCloudPlatforms(folder: Folder, centerY: number, he
     local spread = 150 + layerIndex * 20
 
     for i = 1, platformCount do
-        local sizeX = math.random(8, 30)
-        local sizeZ = math.random(8, 30)
-        local sizeY = math.random(2, 6)
-
-        local platform = Instance.new("Part")
-        platform.Name = "CloudPlatform_" .. i
-        platform.Size = Vector3.new(sizeX, sizeY, sizeZ)
-        platform.Position = Vector3.new(
+        local baseSize = math.random(10, 35)
+        local pos = Vector3.new(
             math.random(-spread, spread),
             math.random(heightMin + 10, heightMax - 20),
             math.random(-spread, spread)
         )
-        platform.Anchored = true
-        platform.Material = CLOUD_MATERIAL
-        -- Vary color slightly for visual interest
-        local colorShift = math.random(-15, 15)
-        platform.Color = Color3.new(
-            math.clamp(palette.primary.R + colorShift/255, 0, 1),
-            math.clamp(palette.primary.G + colorShift/255, 0, 1),
-            math.clamp(palette.primary.B + colorShift/255, 0, 1)
-        )
-        platform.Parent = folder
 
-        -- Some platforms get rounded edges (wedge parts on sides)
-        if math.random() > 0.6 then
-            WorldGenerator.AddCloudEdges(platform, palette, folder)
-        end
+        -- Build organic cloud cluster from overlapping spheres
+        WorldGenerator.CreateCloudCluster(folder, pos, baseSize, palette, "CloudPlatform_" .. i)
 
         -- Some platforms get surface decorations
         if math.random() > 0.7 then
-            WorldGenerator.AddSurfaceDecoration(platform, palette, folder, layerIndex)
+            WorldGenerator.AddSurfaceDecoration(nil, palette, folder, layerIndex, pos + Vector3.new(0, baseSize * 0.15, 0))
         end
     end
 
@@ -266,55 +287,106 @@ function WorldGenerator.CreateCloudPlatforms(folder: Folder, centerY: number, he
     WorldGenerator.CreateSteppingPaths(folder, heightMin, heightMax, palette, 3)
 end
 
-function WorldGenerator.AddCloudEdges(platform: Part, palette: any, folder: Folder)
-    -- Soft rounded bumps on top to make clouds feel organic
-    local bumpCount = math.random(2, 4)
-    for i = 1, bumpCount do
+-- Build an organic cloud from overlapping spheres — looks like actual clouds
+function WorldGenerator.CreateCloudCluster(folder: Folder, center: Vector3, baseSize: number, palette: any, name: string)
+    -- Main walkable core (flat cylinder so players can walk on it)
+    local core = Instance.new("Part")
+    core.Name = name
+    core.Shape = Enum.PartType.Cylinder
+    core.Size = Vector3.new(4, baseSize * 0.8, baseSize * 0.8)
+    core.Position = center
+    core.Orientation = Vector3.new(0, 0, 90)
+    core.Anchored = true
+    core.Material = CLOUD_MATERIAL
+    core.Color = palette.primary
+    core.Parent = folder
+
+    -- Billowy sphere bumps on top and sides (3-6 per cloud)
+    local bumpCount = math.random(3, 6)
+    for j = 1, bumpCount do
         local bump = Instance.new("Part")
-        bump.Name = "CloudBump"
+        bump.Name = name .. "_Bump" .. j
         bump.Shape = Enum.PartType.Ball
+        local bumpScale = 0.4 + math.random() * 0.5
         bump.Size = Vector3.new(
-            platform.Size.X * (0.3 + math.random() * 0.4),
-            platform.Size.Y * 0.8,
-            platform.Size.Z * (0.3 + math.random() * 0.4)
+            baseSize * bumpScale,
+            baseSize * bumpScale * 0.6,
+            baseSize * bumpScale
         )
-        bump.Position = platform.Position + Vector3.new(
-            (math.random() - 0.5) * platform.Size.X * 0.6,
-            platform.Size.Y * 0.3,
-            (math.random() - 0.5) * platform.Size.Z * 0.6
+        bump.Position = center + Vector3.new(
+            (math.random() - 0.5) * baseSize * 0.6,
+            baseSize * 0.1 + math.random() * baseSize * 0.15,
+            (math.random() - 0.5) * baseSize * 0.6
         )
         bump.Anchored = true
+        bump.CanCollide = true
         bump.Material = CLOUD_MATERIAL
-        bump.Color = palette.secondary
+        -- Slight color variation per bump
+        local shift = math.random(-8, 8)
+        bump.Color = Color3.new(
+            math.clamp(palette.secondary.R + shift/255, 0, 1),
+            math.clamp(palette.secondary.G + shift/255, 0, 1),
+            math.clamp(palette.secondary.B + shift/255, 0, 1)
+        )
         bump.Parent = folder
     end
+
+    -- Wispy underside (non-collidable, adds depth)
+    local underBump = Instance.new("Part")
+    underBump.Name = name .. "_Under"
+    underBump.Shape = Enum.PartType.Ball
+    underBump.Size = Vector3.new(baseSize * 0.6, baseSize * 0.3, baseSize * 0.6)
+    underBump.Position = center - Vector3.new(0, baseSize * 0.12, 0)
+    underBump.Anchored = true
+    underBump.CanCollide = false
+    underBump.Material = CLOUD_MATERIAL
+    underBump.Color = palette.detail
+    underBump.Transparency = 0.3
+    underBump.Parent = folder
 end
 
-function WorldGenerator.AddSurfaceDecoration(platform: Part, palette: any, folder: Folder, layerIndex: number)
-    local topPos = platform.Position + Vector3.new(0, platform.Size.Y / 2, 0)
+
+function WorldGenerator.AddSurfaceDecoration(platform: Part?, palette: any, folder: Folder, layerIndex: number, overridePos: Vector3?)
+    local topPos
+    if overridePos then
+        topPos = overridePos
+    elseif platform then
+        topPos = platform.Position + Vector3.new(0, platform.Size.Y / 2, 0)
+    else
+        return
+    end
 
     if layerIndex == 1 then
-        -- Nursery: small glowing orbs
-        local orb = Instance.new("Part")
-        orb.Shape = Enum.PartType.Ball
-        orb.Size = Vector3.new(1.5, 1.5, 1.5)
-        orb.Position = topPos + Vector3.new(math.random(-3, 3), 1, math.random(-3, 3))
-        orb.Anchored = true
-        orb.CanCollide = false
-        orb.Material = NEON_MATERIAL
-        orb.Color = palette.glow
-        orb.Transparency = 0.3
-        orb.Parent = folder
-        WorldGenerator.AddBobAnimation(orb, 1)
+        -- Nursery: glowing golden orbs floating above clouds
+        for j = 1, math.random(2, 4) do
+            local orb = Instance.new("Part")
+            orb.Name = "GoldenOrb"
+            orb.Shape = Enum.PartType.Ball
+            orb.Size = Vector3.new(1.5, 1.5, 1.5)
+            orb.Position = topPos + Vector3.new(math.random(-5, 5), 2 + math.random() * 4, math.random(-5, 5))
+            orb.Anchored = true
+            orb.CanCollide = false
+            orb.Material = NEON_MATERIAL
+            orb.Color = palette.glow
+            orb.Transparency = 0.2
+            orb.Parent = folder
+            WorldGenerator.AddBobAnimation(orb, 1 + math.random() * 2)
+
+            local light = Instance.new("PointLight")
+            light.Color = palette.glow
+            light.Brightness = 0.8
+            light.Range = 12
+            light.Parent = orb
+        end
 
     elseif layerIndex == 2 then
-        -- Meadow: cyan flowers / grass tufts
-        for j = 1, math.random(2, 5) do
+        -- Meadow: glowing cyan flowers / grass tufts
+        for j = 1, math.random(3, 6) do
             local flower = Instance.new("Part")
             flower.Name = "CyanFlower"
             flower.Size = Vector3.new(0.5, math.random(1, 3), 0.5)
             flower.Position = topPos + Vector3.new(
-                math.random(-4, 4), 0.5, math.random(-4, 4)
+                math.random(-5, 5), 0.5, math.random(-5, 5)
             )
             flower.Anchored = true
             flower.CanCollide = false
@@ -322,6 +394,22 @@ function WorldGenerator.AddSurfaceDecoration(platform: Part, palette: any, folde
             flower.Color = palette.accent
             flower.Transparency = 0.2
             flower.Parent = folder
+        end
+
+        -- Meadow: occasional glowing bulb on top of flower
+        if math.random() > 0.5 then
+            local bulb = Instance.new("Part")
+            bulb.Name = "FlowerBulb"
+            bulb.Shape = Enum.PartType.Ball
+            bulb.Size = Vector3.new(1, 1, 1)
+            bulb.Position = topPos + Vector3.new(math.random(-3, 3), 3, math.random(-3, 3))
+            bulb.Anchored = true
+            bulb.CanCollide = false
+            bulb.Material = NEON_MATERIAL
+            bulb.Color = palette.glow
+            bulb.Transparency = 0.3
+            bulb.Parent = folder
+            WorldGenerator.AddBobAnimation(bulb, 0.5)
         end
     end
 end
@@ -335,22 +423,13 @@ function WorldGenerator.CreateSteppingPaths(folder: Folder, heightMin: number, h
         local stepCount = math.random(5, 10)
 
         for i = 1, stepCount do
-            local step = Instance.new("Part")
-            step.Name = "SteppingStone_" .. p .. "_" .. i
-            step.Size = Vector3.new(
-                math.random(4, 8),
-                math.random(2, 3),
-                math.random(4, 8)
-            )
-            step.Position = Vector3.new(
+            local stepPos = Vector3.new(
                 startX + math.cos(angle) * i * 15,
                 startY + i * math.random(3, 8),
                 startZ + math.sin(angle) * i * 15
             )
-            step.Anchored = true
-            step.Material = CLOUD_MATERIAL
-            step.Color = palette.secondary
-            step.Parent = folder
+            -- Small cloud clusters as stepping stones
+            WorldGenerator.CreateCloudCluster(folder, stepPos, math.random(6, 12), palette, "Step_" .. p .. "_" .. i)
         end
     end
 end
@@ -363,59 +442,98 @@ function WorldGenerator.CreateFloatingIslands(folder: Folder, centerY: number, h
     local islandCount = 4 + layerIndex
 
     for i = 1, islandCount do
-        local baseSize = math.random(25, 50)
+        local baseSize = math.random(30, 55)
         local x = math.random(-180, 180)
         local z = math.random(-180, 180)
         local y = math.random(heightMin + 30, heightMax - 40)
+        local pos = Vector3.new(x, y, z)
 
-        -- Main island body
-        local island = Instance.new("Part")
-        island.Name = "FloatingIsland_" .. i
-        island.Size = Vector3.new(baseSize, math.random(6, 12), baseSize * (0.7 + math.random() * 0.6))
-        island.Position = Vector3.new(x, y, z)
-        island.Anchored = true
-        island.Material = CLOUD_MATERIAL
-        island.Color = palette.primary
-        island.Parent = folder
+        -- Build the island as a large cloud cluster (walkable)
+        WorldGenerator.CreateCloudCluster(folder, pos, baseSize, palette, "FloatingIsland_" .. i)
 
-        -- Underside stalactites (inverted wedges for depth)
-        for j = 1, math.random(2, 4) do
-            local stalactite = Instance.new("Part")
-            stalactite.Name = "IslandUnder"
-            stalactite.Size = Vector3.new(
-                math.random(3, 8),
-                math.random(8, 20),
-                math.random(3, 8)
+        -- Hanging wisps underneath (non-solid, atmospheric)
+        for j = 1, math.random(3, 5) do
+            local wisp = Instance.new("Part")
+            wisp.Name = "IslandWisp"
+            wisp.Shape = Enum.PartType.Ball
+            wisp.Size = Vector3.new(
+                math.random(4, 10),
+                math.random(6, 16),
+                math.random(4, 10)
             )
-            stalactite.Position = island.Position + Vector3.new(
+            wisp.Position = pos + Vector3.new(
                 (math.random() - 0.5) * baseSize * 0.5,
-                -(island.Size.Y / 2) - stalactite.Size.Y / 2,
+                -baseSize * 0.15 - wisp.Size.Y / 2,
                 (math.random() - 0.5) * baseSize * 0.5
             )
-            stalactite.Anchored = true
-            stalactite.Material = CLOUD_MATERIAL
-            stalactite.Color = palette.detail
-            stalactite.Parent = folder
+            wisp.Anchored = true
+            wisp.CanCollide = false
+            wisp.Material = CLOUD_MATERIAL
+            wisp.Color = palette.detail
+            wisp.Transparency = 0.4
+            wisp.Parent = folder
         end
 
-        -- Cloud bumps on top
-        WorldGenerator.AddCloudEdges(island, palette, folder)
-
-        -- Some islands get accent features
+        -- Accent glow ring on some islands
         if math.random() > 0.5 then
             local accent = Instance.new("Part")
             accent.Name = "IslandAccent"
             accent.Shape = Enum.PartType.Cylinder
-            accent.Size = Vector3.new(math.random(4, 10), 2, 2)
-            accent.Position = island.Position + Vector3.new(0, island.Size.Y / 2 + 2, 0)
+            accent.Size = Vector3.new(1, baseSize * 0.5, baseSize * 0.5)
+            accent.Position = pos + Vector3.new(0, baseSize * 0.2, 0)
+            accent.Orientation = Vector3.new(0, 0, 90)
             accent.Anchored = true
             accent.CanCollide = false
             accent.Material = NEON_MATERIAL
             accent.Color = palette.accent
-            accent.Transparency = 0.4
-            accent.Orientation = Vector3.new(0, math.random(0, 360), 0)
+            accent.Transparency = 0.6
             accent.Parent = folder
         end
+
+        -- Some islands get a "cloud tree" — stacked spheres
+        if math.random() > 0.6 then
+            WorldGenerator.CreateCloudTree(folder, pos + Vector3.new(
+                (math.random() - 0.5) * baseSize * 0.3,
+                baseSize * 0.15,
+                (math.random() - 0.5) * baseSize * 0.3
+            ), palette)
+        end
+    end
+end
+
+-- Cloud tree — a trunk pillar topped with billowy sphere canopy
+function WorldGenerator.CreateCloudTree(folder: Folder, basePos: Vector3, palette: any)
+    local trunkHeight = math.random(8, 16)
+
+    -- Trunk (thin pillar)
+    local trunk = Instance.new("Part")
+    trunk.Name = "CloudTreeTrunk"
+    trunk.Size = Vector3.new(2, trunkHeight, 2)
+    trunk.Position = basePos + Vector3.new(0, trunkHeight / 2, 0)
+    trunk.Anchored = true
+    trunk.Material = CLOUD_MATERIAL
+    trunk.Color = palette.detail
+    trunk.Parent = folder
+
+    -- Canopy (cluster of glowing spheres)
+    local canopyPos = basePos + Vector3.new(0, trunkHeight, 0)
+    for j = 1, math.random(3, 5) do
+        local leaf = Instance.new("Part")
+        leaf.Name = "CloudTreeCanopy"
+        leaf.Shape = Enum.PartType.Ball
+        local leafSize = math.random(4, 10)
+        leaf.Size = Vector3.new(leafSize, leafSize * 0.7, leafSize)
+        leaf.Position = canopyPos + Vector3.new(
+            (math.random() - 0.5) * 8,
+            math.random() * 5,
+            (math.random() - 0.5) * 8
+        )
+        leaf.Anchored = true
+        leaf.CanCollide = false
+        leaf.Material = NEON_MATERIAL
+        leaf.Color = palette.accent
+        leaf.Transparency = 0.4
+        leaf.Parent = folder
     end
 end
 
@@ -424,31 +542,43 @@ end
 -- =========================================================================
 
 function WorldGenerator.CreateDecorativeClouds(folder: Folder, heightMin: number, heightMax: number, palette: any)
-    local cloudCount = 30
+    local cloudCount = 40
 
     for i = 1, cloudCount do
-        local cloud = Instance.new("Part")
-        cloud.Name = "DecoCloud_" .. i
-        cloud.Shape = Enum.PartType.Ball
-        cloud.Size = Vector3.new(
-            math.random(10, 40),
-            math.random(4, 12),
-            math.random(10, 40)
-        )
-        cloud.Position = Vector3.new(
+        local clusterSize = math.random(2, 4)
+        local basePos = Vector3.new(
             math.random(-250, 250),
             math.random(heightMin, heightMax),
             math.random(-250, 250)
         )
-        cloud.Anchored = true
-        cloud.CanCollide = false
-        cloud.Material = CLOUD_MATERIAL
-        cloud.Color = palette.secondary
-        cloud.Transparency = 0.5 + math.random() * 0.3
-        cloud.Parent = folder
 
-        -- Slow drift animation
-        WorldGenerator.AddDriftAnimation(cloud)
+        -- Each decorative cloud is 2-4 overlapping spheres for volume
+        for j = 1, clusterSize do
+            local cloud = Instance.new("Part")
+            cloud.Name = "DecoCloud_" .. i .. "_" .. j
+            cloud.Shape = Enum.PartType.Ball
+            cloud.Size = Vector3.new(
+                math.random(10, 45),
+                math.random(5, 15),
+                math.random(10, 45)
+            )
+            cloud.Position = basePos + Vector3.new(
+                (math.random() - 0.5) * 20,
+                (math.random() - 0.5) * 5,
+                (math.random() - 0.5) * 20
+            )
+            cloud.Anchored = true
+            cloud.CanCollide = false
+            cloud.Material = CLOUD_MATERIAL
+            cloud.Color = palette.secondary
+            cloud.Transparency = 0.45 + math.random() * 0.3
+            cloud.Parent = folder
+
+            -- Only drift the first sphere of each cluster (others stay relative)
+            if j == 1 then
+                WorldGenerator.AddDriftAnimation(cloud)
+            end
+        end
     end
 end
 
@@ -531,25 +661,28 @@ function WorldGenerator.CreateReflectionPool(folder: Folder, layerDef: any, pale
     rim.Transparency = 0.5
     rim.Parent = folder
 
-    -- Rising particles effect (light motes from pool)
-    for j = 1, 8 do
-        local mote = Instance.new("Part")
-        mote.Name = "PoolMote_" .. j
-        mote.Shape = Enum.PartType.Ball
-        mote.Size = Vector3.new(0.5, 0.5, 0.5)
-        mote.Position = poolPos + Vector3.new(
-            (math.random() - 0.5) * 16,
-            1 + math.random() * 8,
-            (math.random() - 0.5) * 16
-        )
-        mote.Anchored = true
-        mote.CanCollide = false
-        mote.Material = NEON_MATERIAL
-        mote.Color = palette.accent
-        mote.Transparency = 0.3
-        mote.Parent = folder
-        WorldGenerator.AddBobAnimation(mote, 3 + math.random() * 4)
-    end
+    -- Rising particle emitter from pool (real particles, not fake Part motes)
+    local poolEmitter = Instance.new("ParticleEmitter")
+    poolEmitter.Name = "PoolParticles"
+    poolEmitter.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, palette.accent),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+    })
+    poolEmitter.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(0.5, 0.8),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    poolEmitter.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.3),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    poolEmitter.Lifetime = NumberRange.new(3, 7)
+    poolEmitter.Rate = 12
+    poolEmitter.Speed = NumberRange.new(1, 4)
+    poolEmitter.SpreadAngle = Vector2.new(20, 20)
+    poolEmitter.LightEmission = 1
+    poolEmitter.Parent = pool
 
     -- Meditation spot nearby
     local medSpot = Instance.new("Part")

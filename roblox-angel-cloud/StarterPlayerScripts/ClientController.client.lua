@@ -308,6 +308,62 @@ function ClientController.ShowWings(active: boolean)
     if rightWing then
         rightWing.Transparency = active and 0.1 or 0.25
     end
+
+    -- Add/remove glow effects on server-created wings
+    if active and leftWing then
+        -- Add particle sparkles + light if not already present
+        if not leftWing:FindFirstChild("WingSparkle") then
+            local wingColor = leftWing.Color
+
+            -- Point light (wing glow visible to others)
+            local wingLight = Instance.new("PointLight")
+            wingLight.Name = "WingLight"
+            wingLight.Color = wingColor
+            wingLight.Brightness = 1.5 + currentLayer * 0.3
+            wingLight.Range = 12 + currentLayer * 2
+            wingLight.Parent = leftWing
+
+            -- Particle trail (feather sparkles)
+            local sparkle = Instance.new("ParticleEmitter")
+            sparkle.Name = "WingSparkle"
+            sparkle.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, wingColor),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+            })
+            sparkle.Size = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.3),
+                NumberSequenceKeypoint.new(1, 0),
+            })
+            sparkle.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.3),
+                NumberSequenceKeypoint.new(1, 1),
+            })
+            sparkle.Lifetime = NumberRange.new(0.5, 1.5)
+            sparkle.Rate = 8 + currentLayer * 2
+            sparkle.Speed = NumberRange.new(1, 3)
+            sparkle.SpreadAngle = Vector2.new(180, 90)
+            sparkle.LightEmission = 1
+            sparkle.Parent = leftWing
+
+            -- Same for right wing
+            if rightWing then
+                local rLight = wingLight:Clone()
+                rLight.Parent = rightWing
+                local rSparkle = sparkle:Clone()
+                rSparkle.Parent = rightWing
+            end
+        end
+    elseif not active then
+        -- Remove glow effects when landing
+        for _, wing in ipairs({leftWing, rightWing}) do
+            if wing then
+                local light = wing:FindFirstChild("WingLight")
+                if light then light:Destroy() end
+                local sparkle = wing:FindFirstChild("WingSparkle")
+                if sparkle then sparkle:Destroy() end
+            end
+        end
+    end
 end
 
 function ClientController.Update(dt: number)

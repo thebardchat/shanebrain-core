@@ -44,30 +44,53 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
-        "Ambient": [10, 10, 15],
-        "OutdoorAmbient": [80, 100, 120],
+        "Ambient": [80, 75, 90],
+        "OutdoorAmbient": [180, 170, 200],
+        "Brightness": 2,
         "ClockTime": 10,
-        "GeographicLatitude": 35
+        "GeographicLatitude": 35,
+        "GlobalShadows": true,
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1,
+        "FogEnd": 800,
+        "FogColor": [200, 190, 220]
       },
 
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.3,
-          "Offset": 0.25,
-          "Color": [200, 220, 255],
-          "Decay": [180, 200, 230],
+          "Density": 0.25,
+          "Offset": 0.3,
+          "Color": [210, 200, 235],
+          "Decay": [190, 180, 215],
           "Glare": 0,
-          "Haze": 2
+          "Haze": 1.5
         }
       },
 
       "Bloom": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.5,
-          "Size": 24,
-          "Threshold": 0.9
+          "Intensity": 0.6,
+          "Size": 30,
+          "Threshold": 0.85
+        }
+      },
+
+      "Sky": {
+        "$className": "Sky",
+        "$properties": {
+          "StarCount": 3000,
+          "CelestialBodiesShown": true
+        }
+      },
+
+      "ColorCorrection": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.05,
+          "Contrast": 0.1,
+          "Saturation": 0.15
         }
       }
     },

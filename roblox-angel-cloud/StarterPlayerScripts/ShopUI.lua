@@ -296,6 +296,26 @@ function ShopUI.CreateItemCard(parent: ScrollingFrame, item: any, order: number)
     cardCorner.CornerRadius = UDim.new(0, 8)
     cardCorner.Parent = card
 
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = COLORS.accent
+    cardStroke.Thickness = 1
+    cardStroke.Transparency = 0.8
+    cardStroke.Parent = card
+
+    -- Hover effects (brighten + scale feel via stroke)
+    card.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            card.BackgroundColor3 = COLORS.cardHover
+            cardStroke.Transparency = 0.2
+        end
+    end)
+    card.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            card.BackgroundColor3 = COLORS.card
+            cardStroke.Transparency = 0.8
+        end
+    end)
+
     -- Color preview (top area)
     local preview = Instance.new("Frame")
     preview.Name = "Preview"

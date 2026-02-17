@@ -536,13 +536,14 @@ function RetroSystem.SpawnSignalEvent()
     -- The Signal disappears after 30-45 seconds
     task.delay(30 + math.random() * 15, function()
         if signalModel and signalModel.Parent then
-            -- Despawn animation (flicker out)
-            local screen = signalModel:FindFirstChild("TVScreen")
-            if screen then
-                for i = 1, 5 do
-                    screen.Transparency = i * 0.2
-                    task.wait(0.1)
+            -- Despawn animation (flicker all parts out)
+            for flickerPass = 1, 5 do
+                for _, part in ipairs(signalModel:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Transparency = math.min(1, part.Transparency + 0.2)
+                    end
                 end
+                task.wait(0.12)
             end
             signalModel:Destroy()
         end

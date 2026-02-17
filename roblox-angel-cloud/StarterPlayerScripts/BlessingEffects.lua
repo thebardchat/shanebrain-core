@@ -142,29 +142,61 @@ function BlessingEffects.PlayChainEffect(chainLength: number)
 end
 
 function BlessingEffects.PlayMotePickupEffect(position: Vector3)
-    -- Small cyan sparkle at pickup location
-    local sparkle = Instance.new("Part")
-    sparkle.Name = "MoteSparkle"
-    sparkle.Shape = Enum.PartType.Ball
-    sparkle.Size = Vector3.new(1, 1, 1)
-    sparkle.Position = position
-    sparkle.Anchored = true
-    sparkle.CanCollide = false
-    sparkle.Material = Enum.Material.Neon
-    sparkle.Color = COLORS.blessingBeam
-    sparkle.Transparency = 0
+    -- Burst emitter at pickup location (much cleaner than Part spam)
+    local emitterPart = Instance.new("Part")
+    emitterPart.Name = "MotePickupBurst"
+    emitterPart.Size = Vector3.new(1, 1, 1)
+    emitterPart.Position = position
+    emitterPart.Anchored = true
+    emitterPart.CanCollide = false
+    emitterPart.Transparency = 1
+    emitterPart.Parent = workspace
 
-    sparkle.Parent = workspace
+    -- Flash sphere
+    local flash = Instance.new("Part")
+    flash.Shape = Enum.PartType.Ball
+    flash.Size = Vector3.new(3, 3, 3)
+    flash.Position = position
+    flash.Anchored = true
+    flash.CanCollide = false
+    flash.Material = Enum.Material.Neon
+    flash.Color = COLORS.blessingBeam
+    flash.Transparency = 0
+    flash.Parent = workspace
 
-    -- Float up and fade
-    TweenService:Create(sparkle, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = position + Vector3.new(0, 5, 0),
-        Size = Vector3.new(0.2, 0.2, 0.2),
+    -- Flash expands and fades
+    TweenService:Create(flash, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(8, 8, 8),
         Transparency = 1,
     }):Play()
 
-    task.delay(1, function()
-        sparkle:Destroy()
+    -- Particle burst upward
+    local burst = Instance.new("ParticleEmitter")
+    burst.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, COLORS.blessingBeam),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+    })
+    burst.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    burst.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    burst.Lifetime = NumberRange.new(0.3, 0.8)
+    burst.Speed = NumberRange.new(8, 15)
+    burst.SpreadAngle = Vector2.new(360, 360)
+    burst.LightEmission = 1
+    burst.Parent = emitterPart
+
+    -- Emit a burst then disable
+    burst:Emit(20)
+    burst.Enabled = false
+
+    task.delay(1.2, function()
+        emitterPart:Destroy()
+        flash:Destroy()
     end)
 end
 

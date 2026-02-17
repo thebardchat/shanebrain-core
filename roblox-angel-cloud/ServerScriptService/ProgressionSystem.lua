@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 
 local DataManager = require(script.Parent.DataManager)
 local MoteSystem = require(script.Parent.MoteSystem)
+local SoundManager = require(script.Parent.SoundManager)
 local Layers = require(ReplicatedStorage.Config.Layers)
 
 local ProgressionSystem = {}
@@ -54,6 +55,9 @@ function ProgressionSystem.CheckLevelUp(player: Player): string?
 
         -- TRANSFORM the character — bigger wings, more glow!
         ProgressionSystem.TransformCharacter(player, newIndex)
+
+        -- Play level up sound
+        SoundManager.OnLevelUp(player)
 
         -- Fire ascension cinematic for the player
         local layerDef = Layers.GetLayerByIndex(newIndex)

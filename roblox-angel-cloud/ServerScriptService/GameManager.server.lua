@@ -45,8 +45,8 @@ function GameManager.Init()
     tempBase.Position = Vector3.new(0, 96, 0)  -- just below Layer 1 spawn
     tempBase.Anchored = true
     tempBase.Material = Enum.Material.SmoothPlastic
-    tempBase.Color = Color3.fromRGB(245, 240, 225)
-    tempBase.Transparency = 0
+    tempBase.Color = Color3.fromRGB(240, 235, 250)
+    tempBase.Transparency = 0.5
     tempBase.Parent = workspace
 
     -- Create general RemoteEvents
@@ -615,7 +615,12 @@ function GameManager.WireLayerGate(layerFolder: Folder, targetLayerIndex: number
         local character = hit.Parent
         local hitPlayer = Players:GetPlayerFromCharacter(character)
         if hitPlayer then
-            ProgressionSystem.HandleGateTouch(hitPlayer, targetLayerIndex)
+            local success = ProgressionSystem.HandleGateTouch(hitPlayer, targetLayerIndex)
+            if success then
+                -- Update ambient music + play gate sound
+                SoundManager.SetAmbientLayer(targetLayerIndex)
+                SoundManager.OnPlayerLayerChanged(hitPlayer, targetLayerIndex)
+            end
         end
     end)
 
@@ -790,13 +795,13 @@ function GameManager.SpawnUpdrafts(layerFolder: Folder, layerDef: any, count: nu
         local baseY = math.random(heightMin + 5, heightMin + 40)
         local height = math.random(40, 100)
 
-        -- Visible wind column
+        -- Visible wind column (cylinder rotated so it stands vertical)
         local column = Instance.new("Part")
         column.Name = "Updraft_" .. i
         column.Shape = Enum.PartType.Cylinder
         column.Size = Vector3.new(height, 10, 10)
         column.Position = Vector3.new(x, baseY + height / 2, z)
-        column.Orientation = Vector3.new(0, 0, 0)  -- vertical cylinder
+        column.Orientation = Vector3.new(0, 0, 90)  -- rotate to stand vertical
         column.Anchored = true
         column.CanCollide = false
         column.Material = Enum.Material.ForceField

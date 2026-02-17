@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local DataManager = require(script.Parent.DataManager)
+local SoundManager = require(script.Parent.SoundManager)
 local Layers = require(ReplicatedStorage.Config.Layers)
 
 local MoteSystem = {}
@@ -90,14 +91,33 @@ function MoteSystem.HandleWorldMotePickup(player: Player, motePart: BasePart)
     local value = motePart.MoteValue.Value or 1
     local newTotal = MoteSystem.AwardMotes(player, value, "world_mote_pickup")
 
-    -- Disable the mote for this player (respawns after cooldown)
+    -- Hide mote + glow + particles (respawns after cooldown)
     motePart.Transparency = 1
-    motePart.CanCollide = false
+    local sparkle = motePart:FindFirstChild("MoteSparkle")
+    if sparkle then sparkle.Enabled = false end
+    local light = motePart:FindFirstChildWhichIsA("PointLight")
+    if light then light.Enabled = false end
+
+    -- Hide the outer glow ring too
+    local glowPart = motePart.Parent and motePart.Parent:FindFirstChild("MoteGlow")
+    -- Glow shares folder, find nearest by position
+    if motePart.Parent then
+        for _, child in ipairs(motePart.Parent:GetChildren()) do
+            if child.Name == "MoteGlow" and (child.Position - motePart.Position).Magnitude < 6 then
+                child.Transparency = 1
+                task.delay(30, function()
+                    if child and child.Parent then child.Transparency = 0.85 end
+                end)
+                break
+            end
+        end
+    end
 
     task.delay(30, function()
         if motePart and motePart.Parent then
-            motePart.Transparency = 0
-            motePart.CanCollide = false  -- motes are always walk-through
+            motePart.Transparency = 0.1
+            if sparkle then sparkle.Enabled = true end
+            if light then light.Enabled = true end
         end
     end)
 
@@ -106,9 +126,12 @@ function MoteSystem.HandleWorldMotePickup(player: Player, motePart: BasePart)
         value = value,
         totalMotes = newTotal,
     })
+
+    -- Play mote collect sound
+    SoundManager.OnMoteCollected(player)
 end
 
--- Spawn world motes in a layer
+-- Spawn world motes in a layer — magical floating orbs with particles
 function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef: { [string]: any })
     local heightMin = layerDef.heightRange.min
     local heightMax = layerDef.heightRange.max
@@ -118,7 +141,7 @@ function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef
         local mote = Instance.new("Part")
         mote.Name = "LightMote_" .. i
         mote.Shape = Enum.PartType.Ball
-        mote.Size = Vector3.new(3, 3, 3)  -- bigger, easier to see
+        mote.Size = Vector3.new(2.5, 2.5, 2.5)
         mote.Position = Vector3.new(
             math.random(-spread, spread),
             math.random(heightMin + 10, heightMax - 10),
@@ -127,15 +150,50 @@ function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef
         mote.Anchored = true
         mote.CanCollide = false
         mote.Material = Enum.Material.Neon
-        mote.Color = Color3.fromRGB(0, 212, 255)  -- Angel Cloud cyan
+        mote.Color = Color3.fromRGB(0, 212, 255)
         mote.Transparency = 0.1
 
-        -- Bright glow so you can see them from far away
+        -- Bright glow
         local light = Instance.new("PointLight")
         light.Color = Color3.fromRGB(0, 212, 255)
-        light.Brightness = 2
-        light.Range = 20
+        light.Brightness = 2.5
+        light.Range = 25
         light.Parent = mote
+
+        -- Sparkle particle emitter (makes motes feel alive)
+        local sparkle = Instance.new("ParticleEmitter")
+        sparkle.Name = "MoteSparkle"
+        sparkle.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 212, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+        })
+        sparkle.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(1, 0),
+        })
+        sparkle.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        sparkle.Lifetime = NumberRange.new(0.5, 1.5)
+        sparkle.Rate = 6
+        sparkle.Speed = NumberRange.new(0.5, 2)
+        sparkle.SpreadAngle = Vector2.new(360, 360)
+        sparkle.LightEmission = 1
+        sparkle.Parent = mote
+
+        -- Outer glow ring (non-solid, adds visual size)
+        local glow = Instance.new("Part")
+        glow.Name = "MoteGlow"
+        glow.Shape = Enum.PartType.Ball
+        glow.Size = Vector3.new(5, 5, 5)
+        glow.Position = mote.Position
+        glow.Anchored = true
+        glow.CanCollide = false
+        glow.Material = Enum.Material.Neon
+        glow.Color = Color3.fromRGB(0, 212, 255)
+        glow.Transparency = 0.85
+        glow.Parent = layerFolder
 
         local value = Instance.new("IntValue")
         value.Name = "MoteValue"
@@ -161,14 +219,23 @@ function MoteSystem.SpawnWorldMotes(layerFolder: Folder, count: number, layerDef
             end
         end)
 
-        -- Bobbing animation
+        -- Bobbing + pulsing animation
         local originalY = mote.Position.Y
         task.spawn(function()
             local offset = math.random() * math.pi * 2
             while mote and mote.Parent do
-                local newY = originalY + math.sin(tick() * 2.5 + offset) * 2
+                local t = tick()
+                local newY = originalY + math.sin(t * 2.5 + offset) * 2
                 mote.Position = Vector3.new(mote.Position.X, newY, mote.Position.Z)
                 touchRegion.Position = mote.Position
+                glow.Position = mote.Position
+
+                -- Gentle pulse (size oscillation)
+                local pulse = 2.5 + math.sin(t * 3 + offset) * 0.4
+                mote.Size = Vector3.new(pulse, pulse, pulse)
+                local glowPulse = 5 + math.sin(t * 3 + offset) * 0.8
+                glow.Size = Vector3.new(glowPulse, glowPulse, glowPulse)
+
                 task.wait(0.05)
             end
         end)

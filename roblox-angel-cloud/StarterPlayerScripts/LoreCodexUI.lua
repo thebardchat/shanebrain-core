@@ -425,14 +425,37 @@ function LoreCodexUI.ShowFragmentPopup(data: { [string]: any })
     progLabel.ZIndex = 21
     progLabel.Parent = popup
 
-    -- Auto-dismiss
+    -- Fade-in animation
+    popup.BackgroundTransparency = 1
+    stroke.Transparency = 1
+    for _, child in ipairs(popup:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child.TextTransparency = 1
+        end
+    end
+    local fadeInInfo = TweenInfo.new(0.5)
+    TweenService:Create(popup, fadeInInfo, { BackgroundTransparency = 0.05 }):Play()
+    TweenService:Create(stroke, fadeInInfo, { Transparency = 0 }):Play()
+    task.delay(0.2, function()
+        for _, child in ipairs(popup:GetChildren()) do
+            if child:IsA("TextLabel") then
+                TweenService:Create(child, TweenInfo.new(0.4), { TextTransparency = 0 }):Play()
+            end
+        end
+    end)
+
+    -- Auto-dismiss (fade all elements)
     task.delay(8, function()
         if popup and popup.Parent then
-            local fadeOut = TweenService:Create(popup, TweenInfo.new(1), {
-                BackgroundTransparency = 1,
-            })
-            fadeOut:Play()
-            fadeOut.Completed:Connect(function()
+            local fadeInfo = TweenInfo.new(1)
+            TweenService:Create(popup, fadeInfo, { BackgroundTransparency = 1 }):Play()
+            TweenService:Create(stroke, fadeInfo, { Transparency = 1 }):Play()
+            for _, child in ipairs(popup:GetChildren()) do
+                if child:IsA("TextLabel") then
+                    TweenService:Create(child, fadeInfo, { TextTransparency = 1 }):Play()
+                end
+            end
+            task.delay(1.2, function()
                 popup:Destroy()
             end)
         end

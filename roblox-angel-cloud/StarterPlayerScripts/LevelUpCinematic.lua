@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Layers = require(ReplicatedStorage.Config.Layers)
 
@@ -56,18 +57,79 @@ function LevelUpCinematic.Play(data: { [string]: any })
     beam.Transparency = 0.2
     beam.Parent = workspace
 
+    -- Particle burst ring at player's feet (visible to everyone)
+    local burstRing = Instance.new("Part")
+    burstRing.Name = "AscensionBurst"
+    burstRing.Shape = Enum.PartType.Cylinder
+    burstRing.Size = Vector3.new(1, 4, 4)
+    burstRing.Position = position
+    burstRing.Orientation = Vector3.new(0, 0, 90)
+    burstRing.Anchored = true
+    burstRing.CanCollide = false
+    burstRing.Material = Enum.Material.Neon
+    burstRing.Color = COLORS.beam
+    burstRing.Transparency = 0.3
+    burstRing.Parent = workspace
+
+    -- Ring expands outward
+    TweenService:Create(burstRing, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(1, 60, 60),
+        Transparency = 1,
+    }):Play()
+    task.delay(2.5, function()
+        if burstRing and burstRing.Parent then burstRing:Destroy() end
+    end)
+
+    -- Particle emitter on beam (sparkle shower)
+    local beamParticles = Instance.new("ParticleEmitter")
+    beamParticles.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, COLORS.beam),
+        ColorSequenceKeypoint.new(1, COLORS.gold),
+    })
+    beamParticles.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    beamParticles.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.2),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    beamParticles.Lifetime = NumberRange.new(1, 3)
+    beamParticles.Rate = 30
+    beamParticles.Speed = NumberRange.new(2, 8)
+    beamParticles.SpreadAngle = Vector2.new(180, 180)
+    beamParticles.LightEmission = 1
+    beamParticles.Parent = beam
+
     -- Screen flash
     local screenFlash = Instance.new("Frame")
     screenFlash.Name = "AscensionFlash"
     screenFlash.Size = UDim2.new(1, 0, 1, 0)
     screenFlash.BackgroundColor3 = COLORS.beam
-    screenFlash.BackgroundTransparency = 0.7
+    screenFlash.BackgroundTransparency = 0.5
     screenFlash.ZIndex = 50
     screenFlash.Parent = playerGui:FindFirstChild("AngelCloudUI") or playerGui
 
-    TweenService:Create(screenFlash, TweenInfo.new(1.5), {
+    TweenService:Create(screenFlash, TweenInfo.new(2), {
         BackgroundTransparency = 1,
     }):Play()
+
+    -- Camera shake (subtle, 1.5 seconds)
+    local camera = workspace.CurrentCamera
+    task.spawn(function()
+        local shakeEnd = tick() + 1.5
+        local intensity = 0.3
+        while tick() < shakeEnd do
+            local elapsed = shakeEnd - tick()
+            local shakeMag = intensity * (elapsed / 1.5)
+            camera.CFrame = camera.CFrame * CFrame.new(
+                (math.random() - 0.5) * shakeMag,
+                (math.random() - 0.5) * shakeMag,
+                0
+            )
+            RunService.RenderStepped:Wait()
+        end
+    end)
 
     -- Phase 2: Wings upgrade visual (1-3s)
     task.delay(1, function()

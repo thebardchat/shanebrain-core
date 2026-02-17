@@ -49,11 +49,11 @@ function UIManager.Init()
     local PlayerProgress = ReplicatedStorage:WaitForChild("PlayerProgress")
     PlayerProgress.OnClientEvent:Connect(UIManager.OnProgressUpdate)
 
-    -- Mote collection notifications
+    -- Mote collection — floating text instead of notification spam
     local MoteAwarded = ReplicatedStorage:WaitForChild("MoteAwarded")
     MoteAwarded.OnClientEvent:Connect(function(data)
         if data.amount > 0 then
-            UIManager.ShowNotification("+" .. data.amount .. " Light Mote", COLORS.accent, 2)
+            UIManager.ShowFloatingMoteText("+" .. data.amount)
         end
     end)
 
@@ -194,9 +194,25 @@ function UIManager.CreateNotificationArea()
     layout.Parent = notificationFrame
 end
 
+local MAX_NOTIFICATIONS = 5
+
 function UIManager.ShowNotification(text: string, color: Color3?, duration: number?)
     color = color or COLORS.white
     duration = duration or 3
+
+    -- Enforce max notification stack — remove oldest if at limit
+    if notificationFrame then
+        local children = {}
+        for _, child in ipairs(notificationFrame:GetChildren()) do
+            if child:IsA("Frame") then
+                table.insert(children, child)
+            end
+        end
+        while #children >= MAX_NOTIFICATIONS do
+            children[1]:Destroy()
+            table.remove(children, 1)
+        end
+    end
 
     local notif = Instance.new("Frame")
     notif.Size = UDim2.new(1, 0, 0, 35)
@@ -483,6 +499,41 @@ function UIManager.OnProgressUpdate(data: { [string]: any })
     if fragLabel and data.fragmentCount then
         fragLabel.Text = data.fragmentCount .. "/65 Lore"
     end
+end
+
+-- Floating "+X" text that rises from HUD mote label and fades out
+function UIManager.ShowFloatingMoteText(text: string)
+    if not screenGui then return end
+
+    local moteLabel = progressFrame and progressFrame:FindFirstChild("MoteLabel")
+    local startPos = moteLabel and moteLabel.AbsolutePosition or Vector2.new(80, 50)
+
+    local floater = Instance.new("TextLabel")
+    floater.Name = "MoteFloat"
+    floater.Size = UDim2.new(0, 100, 0, 30)
+    floater.Position = UDim2.new(0, startPos.X + 10, 0, startPos.Y)
+    floater.BackgroundTransparency = 1
+    floater.Text = text
+    floater.TextColor3 = COLORS.accent
+    floater.TextSize = 22
+    floater.Font = Enum.Font.GothamBold
+    floater.TextStrokeTransparency = 0.5
+    floater.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    floater.ZIndex = 20
+    floater.Parent = screenGui
+
+    -- Float upward and fade
+    TweenService:Create(floater, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, startPos.X + 10, 0, startPos.Y - 60),
+        TextTransparency = 1,
+        TextStrokeTransparency = 1,
+    }):Play()
+
+    task.delay(1.3, function()
+        if floater and floater.Parent then
+            floater:Destroy()
+        end
+    end)
 end
 
 function UIManager.GetScreenGui(): ScreenGui
