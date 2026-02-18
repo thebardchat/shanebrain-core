@@ -74,17 +74,12 @@ local PALETTES = {
 function WorldGenerator.Init()
     print("[WorldGenerator] Building The Cloud Climb...")
 
-    -- Build MVP layers (1-2 full, 3-6 placeholder)
-    for i = 1, 2 do
+    -- Build all 6 layers
+    for i = 1, 6 do
         WorldGenerator.BuildLayer(i)
     end
 
-    -- Placeholder gates for future layers
-    for i = 3, 6 do
-        WorldGenerator.BuildLayerPlaceholder(i)
-    end
-
-    print("[WorldGenerator] World generation complete")
+    print("[WorldGenerator] World generation complete — all 6 layers built")
 end
 
 function WorldGenerator.BuildLayer(layerIndex: number)
@@ -128,6 +123,14 @@ function WorldGenerator.BuildLayer(layerIndex: number)
         WorldGenerator.BuildWingForge(folder, layerDef, palette)
     elseif layerIndex == 2 then
         WorldGenerator.BuildMeadowFeatures(folder, layerDef, palette)
+    elseif layerIndex == 3 then
+        WorldGenerator.BuildCanopyFeatures(folder, layerDef, palette)
+    elseif layerIndex == 4 then
+        WorldGenerator.BuildStormwallFeatures(folder, layerDef, palette)
+    elseif layerIndex == 5 then
+        WorldGenerator.BuildLuminanceFeatures(folder, layerDef, palette)
+    elseif layerIndex == 6 then
+        WorldGenerator.BuildEmpyreanFeatures(folder, layerDef, palette)
     end
 
     -- 8. Hide brown starfish easter eggs (Claude/Anthropic tribute)
@@ -410,6 +413,87 @@ function WorldGenerator.AddSurfaceDecoration(platform: Part?, palette: any, fold
             bulb.Transparency = 0.3
             bulb.Parent = folder
             WorldGenerator.AddBobAnimation(bulb, 0.5)
+        end
+
+    elseif layerIndex == 3 then
+        -- Canopy: bioluminescent mushroom clusters
+        for j = 1, math.random(2, 4) do
+            local stem = Instance.new("Part")
+            stem.Name = "BioMushStem"
+            stem.Size = Vector3.new(1, math.random(3, 7), 1)
+            stem.Position = topPos + Vector3.new(math.random(-4, 4), stem.Size.Y / 2, math.random(-4, 4))
+            stem.Anchored = true
+            stem.CanCollide = false
+            stem.Material = NEON_MATERIAL
+            stem.Color = palette.detail
+            stem.Transparency = 0.3
+            stem.Parent = folder
+
+            local cap = Instance.new("Part")
+            cap.Name = "BioMushCap"
+            cap.Shape = Enum.PartType.Ball
+            cap.Size = Vector3.new(3, 1.5, 3)
+            cap.Position = stem.Position + Vector3.new(0, stem.Size.Y / 2 + 0.5, 0)
+            cap.Anchored = true
+            cap.CanCollide = false
+            cap.Material = NEON_MATERIAL
+            cap.Color = palette.accent
+            cap.Transparency = 0.2
+            cap.Parent = folder
+            WorldGenerator.AddBobAnimation(cap, 0.3)
+        end
+
+    elseif layerIndex == 4 then
+        -- Stormwall: cracked ruin stones
+        for j = 1, math.random(1, 3) do
+            local ruin = Instance.new("Part")
+            ruin.Name = "RuinStone"
+            ruin.Size = Vector3.new(math.random(3, 6), math.random(4, 8), math.random(3, 6))
+            ruin.Position = topPos + Vector3.new(math.random(-5, 5), ruin.Size.Y / 2, math.random(-5, 5))
+            ruin.Rotation = Vector3.new(math.random(-15, 15), math.random(0, 360), math.random(-15, 15))
+            ruin.Anchored = true
+            ruin.Material = Enum.Material.Slate
+            ruin.Color = Color3.fromRGB(80, 60, 100)
+            ruin.Parent = folder
+        end
+
+    elseif layerIndex == 5 then
+        -- Luminance: crystal shards
+        for j = 1, math.random(2, 5) do
+            local crystal = Instance.new("Part")
+            crystal.Name = "CrystalShard"
+            crystal.Size = Vector3.new(1, math.random(3, 8), 1)
+            crystal.Position = topPos + Vector3.new(math.random(-4, 4), crystal.Size.Y / 2, math.random(-4, 4))
+            crystal.Rotation = Vector3.new(math.random(-20, 20), math.random(0, 360), math.random(-20, 20))
+            crystal.Anchored = true
+            crystal.CanCollide = false
+            crystal.Material = ICE_MATERIAL
+            crystal.Color = palette.accent
+            crystal.Transparency = 0.3
+            crystal.Parent = folder
+
+            local cLight = Instance.new("PointLight")
+            cLight.Color = palette.glow
+            cLight.Brightness = 0.5
+            cLight.Range = 8
+            cLight.Parent = crystal
+        end
+
+    elseif layerIndex == 6 then
+        -- Empyrean: floating geometric fragments
+        for j = 1, math.random(1, 3) do
+            local geo = Instance.new("Part")
+            geo.Name = "EmpyreanGeo"
+            geo.Size = Vector3.new(math.random(2, 5), math.random(2, 5), math.random(2, 5))
+            geo.Position = topPos + Vector3.new(math.random(-4, 4), 3 + math.random() * 5, math.random(-4, 4))
+            geo.Rotation = Vector3.new(math.random(0, 360), math.random(0, 360), math.random(0, 360))
+            geo.Anchored = true
+            geo.CanCollide = false
+            geo.Material = NEON_MATERIAL
+            geo.Color = palette.glow
+            geo.Transparency = 0.4
+            geo.Parent = folder
+            WorldGenerator.AddBobAnimation(geo, 1 + math.random() * 2)
         end
     end
 end
@@ -1044,60 +1128,623 @@ function WorldGenerator.CreateTrialPortal(folder: Folder, layerDef: any, palette
 end
 
 -- =========================================================================
--- PLACEHOLDER LAYERS (3-6, gates visible but not fully built)
+-- LAYER 3: THE CANOPY — Bioluminescent cloud-forest
 -- =========================================================================
 
-function WorldGenerator.BuildLayerPlaceholder(layerIndex: number)
-    local layerDef = Layers.GetLayerByIndex(layerIndex)
-    if not layerDef then return end
+function WorldGenerator.BuildCanopyFeatures(folder: Folder, layerDef: any, palette: any)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
 
-    local palette = PALETTES[layerIndex]
-    local folderName = "Layer" .. layerIndex .. "_" .. layerDef.name:gsub("The ", ""):gsub("%s+", "")
-    local folder = Instance.new("Folder")
-    folder.Name = folderName
-    folder.Parent = workspace
+    -- Giant cloud-trees (enormous trunks with glowing canopies)
+    for i = 1, 8 do
+        local treePos = Vector3.new(
+            math.random(-150, 150),
+            heightMin + 20,
+            math.random(-150, 150)
+        )
+        local trunkHeight = math.random(40, 80)
 
-    -- Just a spawn platform and a "Coming Soon" sign
-    WorldGenerator.CreateSpawnPlatform(folder, layerDef.spawnPosition, palette, layerIndex)
+        -- Massive trunk
+        local trunk = Instance.new("Part")
+        trunk.Name = "GiantTrunk_" .. i
+        trunk.Size = Vector3.new(8, trunkHeight, 8)
+        trunk.Position = treePos + Vector3.new(0, trunkHeight / 2, 0)
+        trunk.Anchored = true
+        trunk.Material = CLOUD_MATERIAL
+        trunk.Color = Color3.fromRGB(180, 210, 190)
+        trunk.Parent = folder
 
-    local sign = Instance.new("Part")
-    sign.Name = "ComingSoonSign"
-    sign.Size = Vector3.new(20, 10, 1)
-    sign.Position = layerDef.spawnPosition + Vector3.new(0, 10, -10)
-    sign.Anchored = true
-    sign.Material = CLOUD_MATERIAL
-    sign.Color = palette.primary
-    sign.Parent = folder
+        -- Walkable branch platforms spiraling up
+        for b = 1, math.random(3, 5) do
+            local branchAngle = (b / 5) * math.pi * 2
+            local branchHeight = treePos.Y + trunkHeight * (b / 6)
+            local branch = Instance.new("Part")
+            branch.Name = "Branch_" .. i .. "_" .. b
+            branch.Size = Vector3.new(math.random(12, 20), 3, math.random(8, 14))
+            branch.Position = Vector3.new(
+                treePos.X + math.cos(branchAngle) * 12,
+                branchHeight,
+                treePos.Z + math.sin(branchAngle) * 12
+            )
+            branch.Rotation = Vector3.new(0, math.deg(branchAngle), math.random(-5, 5))
+            branch.Anchored = true
+            branch.Material = CLOUD_MATERIAL
+            branch.Color = palette.detail
+            branch.Parent = folder
+        end
 
-    local gui = Instance.new("SurfaceGui")
-    gui.Face = Enum.NormalId.Front
-    gui.Parent = sign
+        -- Glowing canopy at top (cluster of bioluminescent spheres)
+        local canopyPos = treePos + Vector3.new(0, trunkHeight, 0)
+        for c = 1, math.random(5, 8) do
+            local leaf = Instance.new("Part")
+            leaf.Name = "BioCanopy_" .. i
+            leaf.Shape = Enum.PartType.Ball
+            local leafSize = math.random(10, 22)
+            leaf.Size = Vector3.new(leafSize, leafSize * 0.6, leafSize)
+            leaf.Position = canopyPos + Vector3.new(
+                (math.random() - 0.5) * 20,
+                math.random() * 12,
+                (math.random() - 0.5) * 20
+            )
+            leaf.Anchored = true
+            leaf.CanCollide = false
+            leaf.Material = NEON_MATERIAL
+            leaf.Color = palette.accent
+            leaf.Transparency = 0.3 + math.random() * 0.2
+            leaf.Parent = folder
+        end
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0.5, 0)
-    label.Position = UDim2.new(0, 0, 0.1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = layerDef.name
-    label.TextColor3 = palette.accent
-    label.TextScaled = true
-    label.Font = Enum.Font.GothamBold
-    label.Parent = gui
+        -- Canopy glow
+        local canopyLight = Instance.new("PointLight")
+        canopyLight.Color = palette.glow
+        canopyLight.Brightness = 3
+        canopyLight.Range = 50
+        canopyLight.Parent = trunk
+    end
 
-    local sublabel = Instance.new("TextLabel")
-    sublabel.Size = UDim2.new(1, 0, 0.3, 0)
-    sublabel.Position = UDim2.new(0, 0, 0.6, 0)
-    sublabel.BackgroundTransparency = 1
-    sublabel.Text = "Coming Soon..."
-    sublabel.TextColor3 = Color3.fromRGB(180, 180, 200)
-    sublabel.TextScaled = true
-    sublabel.Font = Enum.Font.GothamMedium
-    sublabel.Parent = gui
+    -- Rope bridges between trees (walkable neon beams)
+    for i = 1, 5 do
+        local bridge = Instance.new("Part")
+        bridge.Name = "RopeBridge_" .. i
+        bridge.Size = Vector3.new(math.random(30, 60), 2, 5)
+        bridge.Position = Vector3.new(
+            math.random(-100, 100),
+            math.random(heightMin + 40, heightMin + 100),
+            math.random(-100, 100)
+        )
+        bridge.Rotation = Vector3.new(0, math.random(0, 360), 0)
+        bridge.Anchored = true
+        bridge.Material = FORCE_FIELD
+        bridge.Color = palette.accent
+        bridge.Transparency = 0.4
+        bridge.Parent = folder
+    end
 
-    -- A few decorative clouds for atmosphere
-    WorldGenerator.CreateDecorativeClouds(folder, layerDef.heightRange.min, layerDef.heightRange.max, palette)
+    -- Bioluminescent fog (large transparent spheres with particle emitters)
+    for i = 1, 12 do
+        local fog = Instance.new("Part")
+        fog.Name = "BioFog_" .. i
+        fog.Shape = Enum.PartType.Ball
+        fog.Size = Vector3.new(30, 15, 30)
+        fog.Position = Vector3.new(
+            math.random(-200, 200),
+            math.random(heightMin + 10, heightMax - 30),
+            math.random(-200, 200)
+        )
+        fog.Anchored = true
+        fog.CanCollide = false
+        fog.Material = NEON_MATERIAL
+        fog.Color = palette.glow
+        fog.Transparency = 0.85
+        fog.Parent = folder
 
-    -- Even placeholder layers get hidden starfish
-    WorldGenerator.HideStarfish(layerIndex, folder, layerDef)
+        local fogEmitter = Instance.new("ParticleEmitter")
+        fogEmitter.Color = ColorSequence.new(palette.accent)
+        fogEmitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
+        fogEmitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1) })
+        fogEmitter.Lifetime = NumberRange.new(3, 6)
+        fogEmitter.Rate = 3
+        fogEmitter.Speed = NumberRange.new(0.5, 2)
+        fogEmitter.SpreadAngle = Vector2.new(360, 360)
+        fogEmitter.LightEmission = 1
+        fogEmitter.Parent = fog
+    end
+
+    -- Blessing Bluff (every layer 2+ gets one)
+    WorldGenerator.CreateBlessingBluff(folder, layerDef, palette)
+
+    -- Reflection pool
+    WorldGenerator.CreateReflectionPool(folder, layerDef, palette)
+end
+
+-- =========================================================================
+-- LAYER 4: THE STORMWALL — Dark thunderclouds, lightning, ruins
+-- =========================================================================
+
+function WorldGenerator.BuildStormwallFeatures(folder: Folder, layerDef: any, palette: any)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
+
+    -- Lightning tower columns (tall purple neon pillars that "crackle")
+    for i = 1, 6 do
+        local towerPos = Vector3.new(
+            math.random(-140, 140),
+            heightMin,
+            math.random(-140, 140)
+        )
+        local towerHeight = math.random(60, 100)
+
+        local tower = Instance.new("Part")
+        tower.Name = "LightningTower_" .. i
+        tower.Size = Vector3.new(6, towerHeight, 6)
+        tower.Position = towerPos + Vector3.new(0, towerHeight / 2, 0)
+        tower.Anchored = true
+        tower.Material = Enum.Material.Slate
+        tower.Color = Color3.fromRGB(60, 40, 80)
+        tower.Parent = folder
+
+        -- Glowing tip
+        local tip = Instance.new("Part")
+        tip.Name = "TowerTip_" .. i
+        tip.Shape = Enum.PartType.Ball
+        tip.Size = Vector3.new(8, 8, 8)
+        tip.Position = towerPos + Vector3.new(0, towerHeight + 4, 0)
+        tip.Anchored = true
+        tip.CanCollide = false
+        tip.Material = NEON_MATERIAL
+        tip.Color = palette.accent
+        tip.Transparency = 0.2
+        tip.Parent = folder
+
+        local tipLight = Instance.new("PointLight")
+        tipLight.Color = palette.accent
+        tipLight.Brightness = 4
+        tipLight.Range = 40
+        tipLight.Parent = tip
+
+        -- Crackling particle effect
+        local crackle = Instance.new("ParticleEmitter")
+        crackle.Color = ColorSequence.new(palette.accent)
+        crackle.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 0) })
+        crackle.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
+        crackle.Lifetime = NumberRange.new(0.2, 0.5)
+        crackle.Rate = 15
+        crackle.Speed = NumberRange.new(5, 15)
+        crackle.SpreadAngle = Vector2.new(360, 360)
+        crackle.LightEmission = 1
+        crackle.Parent = tip
+
+        -- Walkable platforms around each tower (spiraling up)
+        for p = 1, 4 do
+            local platAngle = (p / 4) * math.pi * 2
+            local platHeight = towerPos.Y + towerHeight * (p / 5)
+            local plat = Instance.new("Part")
+            plat.Name = "TowerPlatform_" .. i .. "_" .. p
+            plat.Size = Vector3.new(15, 3, 12)
+            plat.Position = Vector3.new(
+                towerPos.X + math.cos(platAngle) * 10,
+                platHeight,
+                towerPos.Z + math.sin(platAngle) * 10
+            )
+            plat.Anchored = true
+            plat.Material = Enum.Material.Slate
+            plat.Color = Color3.fromRGB(90, 70, 110)
+            plat.Parent = folder
+        end
+    end
+
+    -- Fallen angel ruins (broken stone arches and pillars)
+    for i = 1, 8 do
+        local ruinPos = Vector3.new(
+            math.random(-160, 160),
+            math.random(heightMin + 20, heightMin + 100),
+            math.random(-160, 160)
+        )
+
+        -- Broken pillar
+        local pillar = Instance.new("Part")
+        pillar.Name = "RuinPillar_" .. i
+        pillar.Size = Vector3.new(4, math.random(10, 25), 4)
+        pillar.Position = ruinPos
+        pillar.Rotation = Vector3.new(math.random(-20, 20), math.random(0, 360), math.random(-20, 20))
+        pillar.Anchored = true
+        pillar.Material = Enum.Material.Slate
+        pillar.Color = Color3.fromRGB(100, 80, 120)
+        pillar.Parent = folder
+
+        -- Some get a broken arch partner
+        if math.random() > 0.5 then
+            local arch = Instance.new("Part")
+            arch.Name = "RuinArch_" .. i
+            arch.Size = Vector3.new(3, 15, 3)
+            arch.Position = ruinPos + Vector3.new(math.random(8, 15), 0, math.random(-3, 3))
+            arch.Rotation = Vector3.new(math.random(-25, 25), math.random(0, 360), math.random(-10, 10))
+            arch.Anchored = true
+            arch.Material = Enum.Material.Slate
+            arch.Color = Color3.fromRGB(90, 70, 110)
+            arch.Parent = folder
+        end
+    end
+
+    -- Wind columns (visible swirling cylinder effects — non-solid, push-like visual)
+    for i = 1, 5 do
+        local windCol = Instance.new("Part")
+        windCol.Name = "WindColumn_" .. i
+        windCol.Shape = Enum.PartType.Cylinder
+        windCol.Size = Vector3.new(80, 12, 12)
+        windCol.Position = Vector3.new(
+            math.random(-120, 120),
+            math.random(heightMin + 40, heightMax - 40),
+            math.random(-120, 120)
+        )
+        windCol.Orientation = Vector3.new(0, 0, 0) -- vertical cylinder
+        windCol.Anchored = true
+        windCol.CanCollide = false
+        windCol.Material = FORCE_FIELD
+        windCol.Color = palette.glow
+        windCol.Transparency = 0.7
+        windCol.Parent = folder
+
+        local windEmitter = Instance.new("ParticleEmitter")
+        windEmitter.Color = ColorSequence.new(palette.glow)
+        windEmitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0) })
+        windEmitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 1) })
+        windEmitter.Lifetime = NumberRange.new(1, 3)
+        windEmitter.Rate = 10
+        windEmitter.Speed = NumberRange.new(10, 25)
+        windEmitter.SpreadAngle = Vector2.new(10, 10)
+        windEmitter.LightEmission = 0.8
+        windEmitter.Parent = windCol
+    end
+
+    -- Blessing Bluff + Reflection Pool
+    WorldGenerator.CreateBlessingBluff(folder, layerDef, palette)
+    WorldGenerator.CreateReflectionPool(folder, layerDef, palette)
+end
+
+-- =========================================================================
+-- LAYER 5: THE LUMINANCE — Crystal realm, aurora skies
+-- =========================================================================
+
+function WorldGenerator.BuildLuminanceFeatures(folder: Folder, layerDef: any, palette: any)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
+
+    -- Massive crystal formations (walkable crystalline platforms)
+    for i = 1, 10 do
+        local crystalPos = Vector3.new(
+            math.random(-160, 160),
+            math.random(heightMin + 20, heightMax - 40),
+            math.random(-160, 160)
+        )
+
+        -- Central crystal column
+        local crystal = Instance.new("Part")
+        crystal.Name = "CrystalFormation_" .. i
+        local crystalHeight = math.random(15, 40)
+        crystal.Size = Vector3.new(math.random(4, 8), crystalHeight, math.random(4, 8))
+        crystal.Position = crystalPos
+        crystal.Rotation = Vector3.new(math.random(-15, 15), math.random(0, 360), math.random(-15, 15))
+        crystal.Anchored = true
+        crystal.Material = ICE_MATERIAL
+        crystal.Color = palette.accent
+        crystal.Transparency = 0.2
+        crystal.Parent = folder
+
+        local crystalLight = Instance.new("PointLight")
+        crystalLight.Color = palette.glow
+        crystalLight.Brightness = 2
+        crystalLight.Range = 30
+        crystalLight.Parent = crystal
+
+        -- Smaller crystal shards around the base
+        for s = 1, math.random(3, 6) do
+            local shard = Instance.new("Part")
+            shard.Name = "CrystalShard_" .. i .. "_" .. s
+            shard.Size = Vector3.new(2, math.random(5, 15), 2)
+            shard.Position = crystalPos + Vector3.new(
+                (math.random() - 0.5) * 12,
+                (math.random() - 0.5) * crystalHeight * 0.5,
+                (math.random() - 0.5) * 12
+            )
+            shard.Rotation = Vector3.new(math.random(-30, 30), math.random(0, 360), math.random(-30, 30))
+            shard.Anchored = true
+            shard.CanCollide = false
+            shard.Material = ICE_MATERIAL
+            shard.Color = palette.glow
+            shard.Transparency = 0.35
+            shard.Parent = folder
+        end
+    end
+
+    -- Aurora pillars (tall shimmering columns of light)
+    for i = 1, 8 do
+        local auroraPos = Vector3.new(
+            math.random(-180, 180),
+            (heightMin + heightMax) / 2,
+            math.random(-180, 180)
+        )
+
+        local aurora = Instance.new("Part")
+        aurora.Name = "AuroraPillar_" .. i
+        aurora.Size = Vector3.new(3, math.random(80, 150), 3)
+        aurora.Position = auroraPos
+        aurora.Anchored = true
+        aurora.CanCollide = false
+        aurora.Material = NEON_MATERIAL
+        aurora.Transparency = 0.5
+        aurora.Parent = folder
+
+        -- Shimmer between colors
+        local colors = { palette.accent, palette.glow, Color3.fromRGB(180, 100, 255), Color3.fromRGB(100, 255, 200) }
+        aurora.Color = colors[math.random(#colors)]
+
+        local auroraLight = Instance.new("PointLight")
+        auroraLight.Color = aurora.Color
+        auroraLight.Brightness = 2
+        auroraLight.Range = 50
+        auroraLight.Parent = aurora
+
+        -- Rising shimmer particles
+        local shimmer = Instance.new("ParticleEmitter")
+        shimmer.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, palette.accent),
+            ColorSequenceKeypoint.new(0.5, palette.glow),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+        })
+        shimmer.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
+        shimmer.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+        shimmer.Lifetime = NumberRange.new(2, 5)
+        shimmer.Rate = 5
+        shimmer.Speed = NumberRange.new(2, 6)
+        shimmer.SpreadAngle = Vector2.new(15, 15)
+        shimmer.LightEmission = 1
+        shimmer.Parent = aurora
+    end
+
+    -- Mentor Ring (special platform where Guardians can descend to help Newborns)
+    local mentorPos = Vector3.new(0, heightMin + 50, -60)
+    local mentorRing = Instance.new("Part")
+    mentorRing.Name = "MentorRing"
+    mentorRing.Shape = Enum.PartType.Cylinder
+    mentorRing.Size = Vector3.new(3, 30, 30)
+    mentorRing.Position = mentorPos
+    mentorRing.Orientation = Vector3.new(0, 0, 90)
+    mentorRing.Anchored = true
+    mentorRing.Material = NEON_MATERIAL
+    mentorRing.Color = Color3.fromRGB(255, 215, 100)
+    mentorRing.Transparency = 0.3
+    mentorRing.Parent = folder
+
+    local mentorLight = Instance.new("PointLight")
+    mentorLight.Color = Color3.fromRGB(255, 215, 100)
+    mentorLight.Brightness = 3
+    mentorLight.Range = 40
+    mentorLight.Parent = mentorRing
+
+    local mentorPrompt = Instance.new("ProximityPrompt")
+    mentorPrompt.ActionText = "Guardian Duty (Descend to Help)"
+    mentorPrompt.ObjectText = "Mentor Ring"
+    mentorPrompt.HoldDuration = 1
+    mentorPrompt.MaxActivationDistance = 15
+    mentorPrompt.Parent = mentorRing
+
+    -- Blessing Bluff + Reflection Pool
+    WorldGenerator.CreateBlessingBluff(folder, layerDef, palette)
+    WorldGenerator.CreateReflectionPool(folder, layerDef, palette)
+end
+
+-- =========================================================================
+-- LAYER 6: THE EMPYREAN — Pure light, abstract geometry, the Cloud Core
+-- =========================================================================
+
+function WorldGenerator.BuildEmpyreanFeatures(folder: Folder, layerDef: any, palette: any)
+    local heightMin = layerDef.heightRange.min
+    local heightMax = layerDef.heightRange.max
+    local centerY = (heightMin + heightMax) / 2
+
+    -- THE CLOUD CORE — central glowing structure, heart of the game
+    local corePos = Vector3.new(0, centerY, 0)
+
+    -- Core platform (walkable ring)
+    local corePlatform = Instance.new("Part")
+    corePlatform.Name = "CloudCorePlatform"
+    corePlatform.Shape = Enum.PartType.Cylinder
+    corePlatform.Size = Vector3.new(4, 50, 50)
+    corePlatform.Position = corePos - Vector3.new(0, 2, 0)
+    corePlatform.Orientation = Vector3.new(0, 0, 90)
+    corePlatform.Anchored = true
+    corePlatform.Material = NEON_MATERIAL
+    corePlatform.Color = Color3.fromRGB(255, 250, 240)
+    corePlatform.Transparency = 0.1
+    corePlatform.Parent = folder
+
+    -- Inner core (pulsing orb of pure light)
+    local coreOrb = Instance.new("Part")
+    coreOrb.Name = "CloudCore"
+    coreOrb.Shape = Enum.PartType.Ball
+    coreOrb.Size = Vector3.new(15, 15, 15)
+    coreOrb.Position = corePos + Vector3.new(0, 12, 0)
+    coreOrb.Anchored = true
+    coreOrb.CanCollide = false
+    coreOrb.Material = NEON_MATERIAL
+    coreOrb.Color = Color3.fromRGB(255, 255, 255)
+    coreOrb.Transparency = 0.1
+    coreOrb.Parent = folder
+
+    local coreLight = Instance.new("PointLight")
+    coreLight.Color = Color3.fromRGB(255, 255, 240)
+    coreLight.Brightness = 8
+    coreLight.Range = 80
+    coreLight.Parent = coreOrb
+
+    -- Core particle burst
+    local coreEmitter = Instance.new("ParticleEmitter")
+    coreEmitter.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 240, 200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 212, 255)),
+    })
+    coreEmitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0) })
+    coreEmitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
+    coreEmitter.Lifetime = NumberRange.new(3, 8)
+    coreEmitter.Rate = 20
+    coreEmitter.Speed = NumberRange.new(3, 10)
+    coreEmitter.SpreadAngle = Vector2.new(360, 360)
+    coreEmitter.LightEmission = 1
+    coreEmitter.Parent = coreOrb
+
+    -- Pulse animation for core
+    task.spawn(function()
+        local baseSize = 15
+        while coreOrb and coreOrb.Parent do
+            local pulse = baseSize + math.sin(tick() * 1.5) * 3
+            coreOrb.Size = Vector3.new(pulse, pulse, pulse)
+            coreOrb.Transparency = 0.1 + math.sin(tick() * 2) * 0.05
+            task.wait(0.05)
+        end
+    end)
+
+    -- Orbiting geometric fragments around the core
+    local orbitParts = {}
+    for i = 1, 8 do
+        local geo = Instance.new("Part")
+        geo.Name = "OrbitFragment_" .. i
+        geo.Size = Vector3.new(math.random(3, 7), math.random(3, 7), math.random(3, 7))
+        geo.Anchored = true
+        geo.CanCollide = false
+        geo.Material = NEON_MATERIAL
+        geo.Color = palette.glow
+        geo.Transparency = 0.3
+        geo.Parent = folder
+        table.insert(orbitParts, { part = geo, angle = (i / 8) * math.pi * 2, radius = 30 + math.random(0, 15), height = math.random(-5, 10) })
+    end
+
+    -- Orbit animation
+    task.spawn(function()
+        while coreOrb and coreOrb.Parent do
+            for _, orbit in ipairs(orbitParts) do
+                if orbit.part and orbit.part.Parent then
+                    orbit.angle = orbit.angle + 0.01
+                    orbit.part.Position = corePos + Vector3.new(
+                        math.cos(orbit.angle) * orbit.radius,
+                        12 + orbit.height + math.sin(tick() * 2) * 2,
+                        math.sin(orbit.angle) * orbit.radius
+                    )
+                    orbit.part.Rotation = orbit.part.Rotation + Vector3.new(0.5, 1, 0.3)
+                end
+            end
+            task.wait(0.05)
+        end
+    end)
+
+    -- Floating abstract platforms (pure white, geometric)
+    for i = 1, 15 do
+        local platPos = Vector3.new(
+            math.random(-150, 150),
+            math.random(heightMin + 30, heightMax - 30),
+            math.random(-150, 150)
+        )
+        local plat = Instance.new("Part")
+        plat.Name = "EmpyreanPlatform_" .. i
+        plat.Size = Vector3.new(math.random(10, 25), 3, math.random(10, 25))
+        plat.Position = platPos
+        plat.Rotation = Vector3.new(0, math.random(0, 360), 0)
+        plat.Anchored = true
+        plat.Material = NEON_MATERIAL
+        plat.Color = Color3.fromRGB(255, 255, 255)
+        plat.Transparency = 0.05
+        plat.Parent = folder
+
+        -- Soft glow
+        local platLight = Instance.new("PointLight")
+        platLight.Color = palette.glow
+        platLight.Brightness = 1
+        platLight.Range = 20
+        platLight.Parent = plat
+    end
+
+    -- Blessing Rain Altar (triggers server-wide bonus)
+    local altarPos = Vector3.new(40, heightMin + 30, -40)
+    local altar = Instance.new("Part")
+    altar.Name = "BlessingRainAltar"
+    altar.Shape = Enum.PartType.Cylinder
+    altar.Size = Vector3.new(2, 12, 12)
+    altar.Position = altarPos
+    altar.Orientation = Vector3.new(0, 0, 90)
+    altar.Anchored = true
+    altar.Material = NEON_MATERIAL
+    altar.Color = Color3.fromRGB(255, 215, 100)
+    altar.Transparency = 0.15
+    altar.Parent = folder
+
+    local altarOrb = Instance.new("Part")
+    altarOrb.Name = "AltarOrb"
+    altarOrb.Shape = Enum.PartType.Ball
+    altarOrb.Size = Vector3.new(4, 4, 4)
+    altarOrb.Position = altarPos + Vector3.new(0, 4, 0)
+    altarOrb.Anchored = true
+    altarOrb.CanCollide = false
+    altarOrb.Material = NEON_MATERIAL
+    altarOrb.Color = Color3.fromRGB(255, 240, 200)
+    altarOrb.Transparency = 0.1
+    altarOrb.Parent = folder
+    WorldGenerator.AddBobAnimation(altarOrb, 1)
+
+    local altarLight = Instance.new("PointLight")
+    altarLight.Color = Color3.fromRGB(255, 215, 100)
+    altarLight.Brightness = 4
+    altarLight.Range = 40
+    altarLight.Parent = altarOrb
+
+    local altarPrompt = Instance.new("ProximityPrompt")
+    altarPrompt.ActionText = "Invoke Blessing Rain (10 Motes)"
+    altarPrompt.ObjectText = "Blessing Rain Altar"
+    altarPrompt.HoldDuration = 2
+    altarPrompt.MaxActivationDistance = 12
+    altarPrompt.Parent = altar
+
+    -- Blessing Bluff + Reflection Pool
+    WorldGenerator.CreateBlessingBluff(folder, layerDef, palette)
+    WorldGenerator.CreateReflectionPool(folder, layerDef, palette)
+end
+
+-- Helper: Create a Blessing Bluff (reused in layers 2+)
+function WorldGenerator.CreateBlessingBluff(folder: Folder, layerDef: any, palette: any)
+    local heightMin = layerDef.heightRange.min
+    local bluffPos = Vector3.new(-50, heightMin + 30, -50)
+
+    local bluff = Instance.new("Part")
+    bluff.Name = "BlessingBluff"
+    bluff.Size = Vector3.new(14, 3, 14)
+    bluff.Position = bluffPos
+    bluff.Anchored = true
+    bluff.Material = NEON_MATERIAL
+    bluff.Color = Color3.fromRGB(255, 215, 0)
+    bluff.Transparency = 0.2
+    bluff.Parent = folder
+
+    local bluffBase = Instance.new("Part")
+    bluffBase.Name = "BlessingBluffBase"
+    bluffBase.Size = Vector3.new(18, 8, 18)
+    bluffBase.Position = bluffPos - Vector3.new(0, 5, 0)
+    bluffBase.Anchored = true
+    bluffBase.Material = CLOUD_MATERIAL
+    bluffBase.Color = palette.primary
+    bluffBase.Parent = folder
+
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.ActionText = "Send Blessing (2 Motes)"
+    prompt.ObjectText = "Blessing Bluff"
+    prompt.HoldDuration = 1
+    prompt.MaxActivationDistance = 15
+    prompt.Parent = bluff
+
+    local bluffLight = Instance.new("PointLight")
+    bluffLight.Color = Color3.fromRGB(255, 215, 0)
+    bluffLight.Brightness = 2
+    bluffLight.Range = 35
+    bluffLight.Parent = bluff
 end
 
 -- =========================================================================

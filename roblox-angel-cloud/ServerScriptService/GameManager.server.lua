@@ -527,8 +527,10 @@ function GameManager.SyncProgress(player: Player)
 end
 
 function GameManager.PopulateLayers()
-    -- Populate the WorldGenerator-created layer folders with gameplay content
-    for i = 1, 2 do
+    -- Populate ALL layer folders with gameplay content
+    local MOTE_COUNTS = { 50, 60, 45, 35, 30, 25 }  -- fewer motes in higher layers (harder to reach)
+
+    for i = 1, 6 do
         local layerDef = Layers.GetLayerByIndex(i)
         local folderName = "Layer" .. i .. "_" .. layerDef.name:gsub("The ", ""):gsub("%s+", "")
         local layerFolder = workspace:FindFirstChild(folderName)
@@ -538,50 +540,51 @@ function GameManager.PopulateLayers()
             continue
         end
 
-        -- Spawn LOTS of collectible motes — the world should feel alive with them
-        local moteCount = i == 1 and 50 or 60
-        MoteSystem.SpawnWorldMotes(layerFolder, moteCount, layerDef)
+        -- Spawn collectible motes
+        MoteSystem.SpawnWorldMotes(layerFolder, MOTE_COUNTS[i] or 30, layerDef)
 
-        -- Spawn speed boost pads
-        GameManager.SpawnSpeedPads(layerFolder, layerDef, 6)
+        -- Spawn speed boost pads (fewer in higher layers)
+        GameManager.SpawnSpeedPads(layerFolder, layerDef, math.max(3, 7 - i))
 
-        -- Spawn UPDRAFT columns (glowing wind pillars that launch you UP)
-        GameManager.SpawnUpdrafts(layerFolder, layerDef, 8)
+        -- Spawn UPDRAFT columns
+        GameManager.SpawnUpdrafts(layerFolder, layerDef, math.max(4, 9 - i))
 
-        -- Spawn bounce pads (trampolines that send you flying)
-        GameManager.SpawnBouncePads(layerFolder, layerDef, 10)
+        -- Spawn bounce pads
+        GameManager.SpawnBouncePads(layerFolder, layerDef, math.max(4, 11 - i))
 
         -- Spawn lore fragment collection points
         LoreSystem.SpawnFragmentPoints(layerFolder, i)
 
-        -- Wire up layer gate (WorldGenerator created the visual, we add gameplay logic)
+        -- Wire up layer gate (if not the final layer)
         if layerDef.gateThreshold then
             GameManager.WireLayerGate(layerFolder, i + 1)
         end
 
-        -- Wire up reflection pool touch detection (WorldGenerator created the pool)
+        -- Wire up reflection pool touch detection
         GameManager.WireReflectionPool(layerFolder)
 
-        -- Wire up blessing bluff (WorldGenerator created it in Meadow)
+        -- Wire up blessing bluff (layers 2+)
         if i >= 2 then
             GameManager.WireBlessingBluff(layerFolder)
         end
 
-        -- Wire up trial portal
-        GameManager.WireTrialPortal(layerFolder)
-
-        -- Wire up cosmetic re-application on character spawn
-        Players.PlayerAdded:Connect(function(player)
-            player.CharacterAdded:Connect(function(character)
-                ShopHandler.OnCharacterAdded(player, character)
-            end)
-        end)
+        -- Wire up trial portal (layers 2+)
+        if i >= 2 then
+            GameManager.WireTrialPortal(layerFolder)
+        end
 
         -- Spawn retro objects (phone booths, boomboxes, arcade cabinets)
         RetroSystem.PopulateLayer(layerFolder, i, layerDef)
 
         print("[GameManager] Layer " .. i .. " (" .. layerDef.name .. ") populated with gameplay")
     end
+
+    -- Wire up cosmetic re-application on character spawn (once, not per layer)
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function(character)
+            ShopHandler.OnCharacterAdded(player, character)
+        end)
+    end)
 end
 
 function GameManager.WireLayerGate(layerFolder: Folder, targetLayerIndex: number)
