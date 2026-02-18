@@ -332,8 +332,11 @@ end
 function GameManager.AttachWings(character: Model, data: { [string]: any })
     if character:FindFirstChild("AngelWings") then return end
 
-    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-    if not torso then return end
+    local torso = character:WaitForChild("UpperTorso", 5) or character:WaitForChild("Torso", 3)
+    if not torso then
+        warn("[GameManager] AttachWings: Could not find torso on " .. character.Name)
+        return
+    end
 
     local levelIndex = 1
     local wingLevel = 1

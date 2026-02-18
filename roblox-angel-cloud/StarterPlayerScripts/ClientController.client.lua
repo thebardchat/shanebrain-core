@@ -1,12 +1,23 @@
 --[[
     ClientController.lua — Main client-side input and movement controller
     Handles: movement, wing glide, full flight, interaction prompts
-    Input: WASD + Space + Action Key (E)
+    Supports: Keyboard + Xbox/Gamepad controller
 
+    KEYBOARD:
     HOLD Space while airborne = glide (slow fall + horizontal speed)
     DOUBLE-TAP Space = toggle FREE FLIGHT (fly anywhere!)
     While flying: WASD to move, Space = go up, Shift = go down
     F key = quick toggle flight on/off
+
+    GAMEPAD (Xbox Controller):
+    A button = jump / hold while airborne = glide
+    Double-tap A = toggle FREE FLIGHT
+    Y button = quick toggle flight on/off
+    Left Thumbstick = move (+ fly direction when flying)
+    Right Trigger (RT) = fly UP while in flight
+    Left Trigger (LT) = fly DOWN while in flight
+    B button = open Lore Codex
+    X button = action (E key equivalent)
 ]]
 
 local Players = game:GetService("Players")
@@ -46,9 +57,14 @@ local GLIDE_FOV = 80
 local FLIGHT_FOV = 95
 local FOV_LERP_SPEED = 0.1  -- smooth interpolation factor
 
--- Double-tap detection for flight
+-- Double-tap detection for flight (keyboard Space or gamepad A)
 local lastSpacePress = 0
 local DOUBLE_TAP_WINDOW = 0.35
+
+-- Gamepad state
+local gamepadFlyUp = false    -- RT held
+local gamepadFlyDown = false  -- LT held
+local gamepadGlideHeld = false -- A held
 
 -- Flight time tracking for quests
 local flightTimeAccum = 0
@@ -127,10 +143,11 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
         return
     end
 
-    if input.KeyCode == Enum.KeyCode.Space then
+    -- Space (keyboard) or A button (gamepad) = jump / glide / double-tap flight
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         local now = tick()
 
-        -- Double-tap space = toggle flight
+        -- Double-tap = toggle flight
         if canFly and (now - lastSpacePress) < DOUBLE_TAP_WINDOW then
             ClientController.ToggleFlight()
             lastSpacePress = 0
@@ -139,13 +156,19 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
             lastSpacePress = now
         end
 
-        -- If already flying, space = go up (handled in Update loop)
+        -- If already flying, A/Space = go up (handled in Update loop)
         if isFlying then
+            if input.KeyCode == Enum.KeyCode.ButtonA then
+                gamepadFlyUp = true
+            end
             return
         end
 
-        -- Hold space while falling = glide
+        -- Hold while falling = glide
         if canGlide and not isFlying then
+            if input.KeyCode == Enum.KeyCode.ButtonA then
+                gamepadGlideHeld = true
+            end
             local character = player.Character
             if character then
                 local humanoid = character:FindFirstChild("Humanoid")
@@ -155,28 +178,50 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
             end
         end
 
-    elseif input.KeyCode == Enum.KeyCode.F then
-        -- F key = quick toggle flight on/off
+    -- F key (keyboard) or Y button (gamepad) = quick toggle flight
+    elseif input.KeyCode == Enum.KeyCode.F or input.KeyCode == Enum.KeyCode.ButtonY then
         if canFly then
             ClientController.ToggleFlight()
         end
 
-    elseif input.KeyCode == Enum.KeyCode.E then
-        -- Action key — handled by proximity prompts mostly
+    -- E key (keyboard) or X button (gamepad) = action
+    elseif input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
         ClientController.HandleAction()
 
-    elseif input.KeyCode == Enum.KeyCode.C then
-        -- Open Lore Codex
+    -- C key (keyboard) or B button (gamepad) = Lore Codex
+    elseif input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.ButtonB then
         local LoreCodexUI = require(script.Parent.LoreCodexUI)
         LoreCodexUI.Toggle()
+    end
+
+    -- Right Trigger = fly up (while in flight)
+    if input.KeyCode == Enum.KeyCode.ButtonR2 then
+        gamepadFlyUp = true
+    end
+
+    -- Left Trigger = fly down (while in flight)
+    if input.KeyCode == Enum.KeyCode.ButtonL2 then
+        gamepadFlyDown = true
     end
 end
 
 function ClientController.OnInputEnded(input: InputObject, gameProcessed: boolean)
-    if input.KeyCode == Enum.KeyCode.Space then
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         if isGliding then
             ClientController.StopGlide()
         end
+        gamepadGlideHeld = false
+        -- Only clear fly-up from A button, not from RT
+        if input.KeyCode == Enum.KeyCode.ButtonA then
+            gamepadFlyUp = false
+        end
+    end
+
+    if input.KeyCode == Enum.KeyCode.ButtonR2 then
+        gamepadFlyUp = false
+    end
+    if input.KeyCode == Enum.KeyCode.ButtonL2 then
+        gamepadFlyDown = false
     end
 end
 
@@ -396,11 +441,11 @@ function ClientController.Update(dt: number)
                 velocity = (flatLook * moveDirection.Z * -1 + flatRight * moveDirection.X) * -FLIGHT_SPEED
             end
 
-            -- Space = go UP, Shift = go DOWN
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            -- Space/RT/A = go UP, Shift/LT = go DOWN (keyboard + gamepad)
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) or gamepadFlyUp then
                 velocity = velocity + Vector3.new(0, FLIGHT_VERTICAL, 0)
             end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or gamepadFlyDown then
                 velocity = velocity + Vector3.new(0, -FLIGHT_VERTICAL, 0)
             end
 
@@ -414,6 +459,13 @@ function ClientController.Update(dt: number)
     if isGliding then
         if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
             ClientController.StopGlide()
+        end
+    end
+
+    -- Gamepad: auto-start glide if A is held and we enter freefall
+    if gamepadGlideHeld and not isGliding and not isFlying and canGlide then
+        if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+            ClientController.StartGlide()
         end
     end
 
