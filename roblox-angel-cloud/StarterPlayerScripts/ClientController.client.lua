@@ -241,11 +241,20 @@ function ClientController.StartGlide()
         return
     end
 
-    -- Create glide BodyVelocity
-    local glideForce = Instance.new("BodyVelocity")
+    -- Create glide using LinearVelocity (modern physics)
+    local att = humanoidRootPart:FindFirstChild("GlideAttachment")
+    if not att then
+        att = Instance.new("Attachment")
+        att.Name = "GlideAttachment"
+        att.Parent = humanoidRootPart
+    end
+
+    local glideForce = Instance.new("LinearVelocity")
     glideForce.Name = "GlideForce"
-    glideForce.MaxForce = Vector3.new(0, math.huge, 0)
-    glideForce.Velocity = Vector3.new(0, GLIDE_FALL_SPEED, 0)
+    glideForce.Attachment0 = att
+    glideForce.MaxForce = 20000
+    glideForce.VectorVelocity = Vector3.new(0, GLIDE_FALL_SPEED, 0)
+    glideForce.RelativeTo = Enum.ActuatorRelativeTo.World
     glideForce.Parent = humanoidRootPart
 
     -- Wing visual effect
@@ -259,9 +268,9 @@ function ClientController.StopGlide()
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
         if humanoidRootPart then
             local glideForce = humanoidRootPart:FindFirstChild("GlideForce")
-            if glideForce then
-                glideForce:Destroy()
-            end
+            if glideForce then glideForce:Destroy() end
+            local glideAtt = humanoidRootPart:FindFirstChild("GlideAttachment")
+            if glideAtt then glideAtt:Destroy() end
         end
     end
     ClientController.ShowWings(false)
@@ -269,25 +278,37 @@ end
 
 function ClientController.ToggleFlight()
     if isFlying then
+        -- STOP flying
         isFlying = false
-        ClientController.StopGlide()
+        local character = player.Character
+        if character then
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local ff = hrp:FindFirstChild("FlightForce")
+                if ff then ff:Destroy() end
+                local ag = hrp:FindFirstChild("FlightAntiGrav")
+                if ag then ag:Destroy() end
+                local fa = hrp:FindFirstChild("FlightAttachment")
+                if fa then fa:Destroy() end
+            end
+        end
+        ClientController.ShowWings(false)
         return
     end
 
-    if stamina <= 0 then
-        return
-    end
-
+    -- START flying
     isFlying = true
     isGliding = false
 
     local character = player.Character
     if not character then
+        isFlying = false
         return
     end
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
     if not humanoidRootPart then
+        isFlying = false
         return
     end
 
@@ -297,20 +318,31 @@ function ClientController.ToggleFlight()
         existingForce:Destroy()
     end
 
-    -- Create flight BodyVelocity (controlled by camera direction)
-    local flightForce = Instance.new("BodyVelocity")
+    -- Create attachment for LinearVelocity
+    local att = Instance.new("Attachment")
+    att.Name = "FlightAttachment"
+    att.Parent = humanoidRootPart
+
+    -- Use LinearVelocity (modern replacement for BodyVelocity)
+    local flightForce = Instance.new("LinearVelocity")
     flightForce.Name = "FlightForce"
-    flightForce.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    flightForce.Velocity = Vector3.zero
+    flightForce.Attachment0 = att
+    flightForce.MaxForce = 50000
+    flightForce.VectorVelocity = Vector3.zero
+    flightForce.RelativeTo = Enum.ActuatorRelativeTo.World
     flightForce.Parent = humanoidRootPart
 
-    -- Counteract gravity
-    local antiGrav = Instance.new("BodyForce")
+    -- Counteract gravity with VectorForce
+    local antiGrav = Instance.new("VectorForce")
     antiGrav.Name = "FlightAntiGrav"
+    antiGrav.Attachment0 = att
     antiGrav.Force = Vector3.new(0, humanoidRootPart.AssemblyMass * workspace.Gravity, 0)
+    antiGrav.RelativeTo = Enum.ActuatorRelativeTo.World
+    antiGrav.ApplyAtCenterOfMass = true
     antiGrav.Parent = humanoidRootPart
 
     ClientController.ShowWings(true)
+    print("[Flight] Flight enabled!")
 end
 
 function ClientController.HandleAction()
@@ -426,7 +458,7 @@ function ClientController.Update(dt: number)
     -- Update flight velocity based on camera direction
     if isFlying then
         local flightForce = humanoidRootPart:FindFirstChild("FlightForce")
-        if flightForce and stamina > 0 then
+        if flightForce then
             local moveDirection = humanoid.MoveDirection
             local cameraLook = camera.CFrame.LookVector
             local cameraRight = camera.CFrame.RightVector
@@ -435,9 +467,10 @@ function ClientController.Update(dt: number)
 
             -- WASD moves you in camera direction (true 3D flight)
             if moveDirection.Magnitude > 0 then
-                -- Project move direction onto camera-relative axes
-                local flatLook = Vector3.new(cameraLook.X, 0, cameraLook.Z).Unit
-                local flatRight = Vector3.new(cameraRight.X, 0, cameraRight.Z).Unit
+                local flatLook = Vector3.new(cameraLook.X, 0, cameraLook.Z)
+                if flatLook.Magnitude > 0 then flatLook = flatLook.Unit end
+                local flatRight = Vector3.new(cameraRight.X, 0, cameraRight.Z)
+                if flatRight.Magnitude > 0 then flatRight = flatRight.Unit end
                 velocity = (flatLook * moveDirection.Z * -1 + flatRight * moveDirection.X) * -FLIGHT_SPEED
             end
 
@@ -449,9 +482,7 @@ function ClientController.Update(dt: number)
                 velocity = velocity + Vector3.new(0, -FLIGHT_VERTICAL, 0)
             end
 
-            flightForce.Velocity = velocity
-        elseif stamina <= 0 then
-            ClientController.ToggleFlight()  -- forced landing
+            flightForce.VectorVelocity = velocity
         end
     end
 
