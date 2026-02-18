@@ -47,11 +47,11 @@ local KEEPER_DIALOGUE = {
         },
         {
             speaker = "The Keeper",
-            text = "Now — your wings. Press F or Y on your controller to take flight. Double-tap Jump to fly as well.",
+            text = "Now — your wings. Press F on keyboard, or Y on your controller to take flight. Press again to land.",
         },
         {
             speaker = "The Keeper",
-            text = "While flying: move with your stick or WASD. Use the triggers or Space and Shift to rise and descend.",
+            text = "While flying: move with your stick or WASD. Right Trigger or Space to rise, Left Trigger or Shift to descend.",
         },
         {
             speaker = "The Keeper",

@@ -3,21 +3,20 @@
     Handles: movement, wing glide, full flight, interaction prompts
     Supports: Keyboard + Xbox/Gamepad controller
 
+    FLIGHT IS THE CORE MECHANIC — make it dead simple to use:
+
     KEYBOARD:
-    HOLD Space while airborne = glide (slow fall + horizontal speed)
-    DOUBLE-TAP Space = toggle FREE FLIGHT (fly anywhere!)
-    While flying: WASD to move, Space = go up, Shift = go down
-    F key = quick toggle flight on/off
+    F key = TOGGLE FLIGHT (one press fly, one press land)
+    HOLD Space while airborne = glide
+    While flying: WASD move, Space = up, Shift = down
 
     GAMEPAD (Xbox Controller):
-    A button = jump / hold while airborne = glide
-    Double-tap A = toggle FREE FLIGHT
-    Y button = quick toggle flight on/off
-    Left Thumbstick = move (+ fly direction when flying)
-    Right Trigger (RT) = fly UP while in flight
-    Left Trigger (LT) = fly DOWN while in flight
+    Y button = TOGGLE FLIGHT (one press fly, one press land)
+    Left Bumper (LB) = TOGGLE FLIGHT (alternate)
+    While flying: Left Stick = move, RT = up, LT = down
+    Hold A while airborne = glide
+    X button = action / interact
     B button = open Lore Codex
-    X button = action (E key equivalent)
 ]]
 
 local Players = game:GetService("Players")
@@ -47,9 +46,9 @@ local GLIDE_FALL_SPEED = -4    -- very slow descent (hang time!)
 local GLIDE_HORIZONTAL_BOOST = 2.5  -- zip across the sky
 local NORMAL_JUMP_POWER = 70
 
--- Flight speed
-local FLIGHT_SPEED = 60       -- base horizontal flight speed
-local FLIGHT_VERTICAL = 40    -- up/down speed while flying
+-- Flight speed — FAST so it feels good
+local FLIGHT_SPEED = 80       -- horizontal flight speed
+local FLIGHT_VERTICAL = 50    -- up/down speed while flying
 
 -- Dynamic FOV (inspired by Gemini's FlightEngine — smooth camera zoom at speed)
 local BASE_FOV = 70
@@ -57,14 +56,10 @@ local GLIDE_FOV = 80
 local FLIGHT_FOV = 95
 local FOV_LERP_SPEED = 0.1  -- smooth interpolation factor
 
--- Double-tap detection for flight (keyboard Space or gamepad A)
-local lastSpacePress = 0
-local DOUBLE_TAP_WINDOW = 0.35
-
 -- Gamepad state
-local gamepadFlyUp = false    -- RT held
+local gamepadFlyUp = false    -- RT or A held while flying
 local gamepadFlyDown = false  -- LT held
-local gamepadGlideHeld = false -- A held
+local gamepadGlideHeld = false -- A held while not flying
 
 -- Flight time tracking for quests
 local flightTimeAccum = 0
@@ -139,24 +134,28 @@ function ClientController.Init()
 end
 
 function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolean)
-    if gameProcessed then
+    -- IMPORTANT: Roblox marks gamepad buttons as "gameProcessed" (ButtonA = jump, etc.)
+    -- We MUST let gamepad buttons through, otherwise controller flight never works.
+    -- Only block keyboard inputs that were consumed by chat/GUI.
+    local isGamepad = input.UserInputType == Enum.UserInputType.Gamepad1
+    if gameProcessed and not isGamepad then
         return
     end
 
-    -- Space (keyboard) or A button (gamepad) = jump / glide / double-tap flight
-    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
-        local now = tick()
-
-        -- Double-tap = toggle flight
-        if canFly and (now - lastSpacePress) < DOUBLE_TAP_WINDOW then
+    -- === FLIGHT TOGGLE (the #1 most important input) ===
+    -- Y button (gamepad) or F key (keyboard) = instant flight toggle
+    if input.KeyCode == Enum.KeyCode.ButtonY
+        or input.KeyCode == Enum.KeyCode.ButtonL1
+        or input.KeyCode == Enum.KeyCode.F then
+        if canFly then
             ClientController.ToggleFlight()
-            lastSpacePress = 0
-            return
-        else
-            lastSpacePress = now
         end
+        return
+    end
 
-        -- If already flying, A/Space = go up (handled in Update loop)
+    -- === A button (gamepad) / Space (keyboard) = glide or fly up ===
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+        -- If already flying, A/Space = go up (handled in Update loop via flag)
         if isFlying then
             if input.KeyCode == Enum.KeyCode.ButtonA then
                 gamepadFlyUp = true
@@ -165,7 +164,7 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
         end
 
         -- Hold while falling = glide
-        if canGlide and not isFlying then
+        if canGlide then
             if input.KeyCode == Enum.KeyCode.ButtonA then
                 gamepadGlideHeld = true
             end
@@ -177,41 +176,42 @@ function ClientController.OnInputBegan(input: InputObject, gameProcessed: boolea
                 end
             end
         end
-
-    -- F key (keyboard) or Y button (gamepad) = quick toggle flight
-    elseif input.KeyCode == Enum.KeyCode.F or input.KeyCode == Enum.KeyCode.ButtonY then
-        if canFly then
-            ClientController.ToggleFlight()
-        end
-
-    -- E key (keyboard) or X button (gamepad) = action
-    elseif input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
-        ClientController.HandleAction()
-
-    -- C key (keyboard) or B button (gamepad) = Lore Codex
-    elseif input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.ButtonB then
-        local LoreCodexUI = require(script.Parent.LoreCodexUI)
-        LoreCodexUI.Toggle()
+        return
     end
 
-    -- Right Trigger = fly up (while in flight)
+    -- === Right Trigger = fly up ===
     if input.KeyCode == Enum.KeyCode.ButtonR2 then
         gamepadFlyUp = true
+        return
     end
 
-    -- Left Trigger = fly down (while in flight)
+    -- === Left Trigger = fly down ===
     if input.KeyCode == Enum.KeyCode.ButtonL2 then
         gamepadFlyDown = true
+        return
+    end
+
+    -- === X button (gamepad) / E key = action ===
+    if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
+        ClientController.HandleAction()
+        return
+    end
+
+    -- === B button (gamepad) / C key = Lore Codex ===
+    if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.ButtonB then
+        local LoreCodexUI = require(script.Parent.LoreCodexUI)
+        LoreCodexUI.Toggle()
+        return
     end
 end
 
 function ClientController.OnInputEnded(input: InputObject, gameProcessed: boolean)
+    -- Let gamepad releases through (same logic as OnInputBegan)
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         if isGliding then
             ClientController.StopGlide()
         end
         gamepadGlideHeld = false
-        -- Only clear fly-up from A button, not from RT
         if input.KeyCode == Enum.KeyCode.ButtonA then
             gamepadFlyUp = false
         end
