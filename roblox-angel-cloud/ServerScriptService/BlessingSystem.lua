@@ -189,6 +189,10 @@ function BlessingSystem.SendBlessing(sender: Player): boolean
     ServerStats.mostBlessingsThisWeek[sender.UserId] = (ServerStats.mostBlessingsThisWeek[sender.UserId] or 0) + 1
     DataManager.IncrementCommunityStat("total_blessings", 1)
 
+    -- Update quest progress
+    local QuestSystem = require(script.Parent.QuestSystem)
+    pcall(QuestSystem.OnBlessingGiven, sender)
+
     -- Check progression after mote changes
     local ProgressionSystem = require(script.Parent.ProgressionSystem)
     ProgressionSystem.OnMotesChanged(sender)

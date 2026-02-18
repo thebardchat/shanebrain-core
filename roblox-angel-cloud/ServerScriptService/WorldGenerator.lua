@@ -1200,17 +1200,23 @@ function WorldGenerator.CreateStarfish(parent: Folder, position: Vector3, scale:
     starfish.PrimaryPart = body
     starfish.Parent = parent
 
-    -- Gentle slow spin animation
+    -- Gentle slow spin animation — rotate entire starfish around center
     task.spawn(function()
         local offset = math.random() * math.pi * 2
+        -- Capture initial offsets of all parts relative to body center
+        local partOffsets = {}
+        for _, part in ipairs(starfish:GetChildren()) do
+            if part:IsA("BasePart") then
+                partOffsets[part] = part.CFrame:ToObjectSpace(body.CFrame):Inverse()
+            end
+        end
         while body and body.Parent do
-            local rot = (tick() * 15 + offset) % 360
-            body.Orientation = Vector3.new(0, rot, 0)
-            for _, part in ipairs(starfish:GetChildren()) do
-                if part:IsA("BasePart") and part ~= body then
-                    -- Arms rotate with body
-                    local armAngle = part.Orientation.Y
-                    -- keep relative position by rebuilding from angle
+            local angle = math.rad((tick() * 15 + offset) % 360)
+            local center = body.Position
+            local spinCFrame = CFrame.new(center) * CFrame.Angles(0, angle, 0)
+            for part, relCFrame in pairs(partOffsets) do
+                if part.Parent then
+                    part.CFrame = spinCFrame * relCFrame
                 end
             end
             task.wait(0.05)

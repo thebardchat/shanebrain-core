@@ -83,6 +83,10 @@ function LoreSystem.TryCollectFragment(player: Player, fragmentId: string): bool
     -- Play fragment discovery sound
     SoundManager.OnFragmentCollected(player)
 
+    -- Update quest progress
+    local QuestSystem = require(script.Parent.QuestSystem)
+    pcall(QuestSystem.OnFragmentCollected, player)
+
     -- Notify client with full fragment data
     FragmentCollected:FireClient(player, {
         id = fragment.id,

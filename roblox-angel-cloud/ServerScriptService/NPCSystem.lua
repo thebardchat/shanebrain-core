@@ -47,6 +47,14 @@ local KEEPER_DIALOGUE = {
         },
         {
             speaker = "The Keeper",
+            text = "Now — your wings. Press F or Y on your controller to take flight. Double-tap Jump to fly as well.",
+        },
+        {
+            speaker = "The Keeper",
+            text = "While flying: move with your stick or WASD. Use the triggers or Space and Shift to rise and descend.",
+        },
+        {
+            speaker = "The Keeper",
             text = "Explore the Nursery. Visit the Reflection Pool to the east — it will restore your energy.",
         },
         {

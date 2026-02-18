@@ -67,6 +67,10 @@ function ProgressionSystem.CheckLevelUp(player: Player): string?
             layerName = layerDef.name,
         })
 
+        -- Update quest progress
+        local QuestSystem = require(script.Parent.QuestSystem)
+        pcall(QuestSystem.OnLayerReached, player, newIndex)
+
         -- Notify all players in server
         local message = player.Name .. " ascends to " .. layerDef.name .. "! Every Angel strengthens the cloud."
         for _, otherPlayer in ipairs(Players:GetPlayers()) do
