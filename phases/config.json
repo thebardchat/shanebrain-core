@@ -1,0 +1,172 @@
+{
+  "training_system": "ShaneBrain Training Phases",
+  "version": "3.0",
+  "updated": "2026-02-19",
+  "environment": {
+    "platform": "windows",
+    "ram_ceiling_gb": 7.4,
+    "max_per_module_gb": 3,
+    "ollama_endpoint": "http://localhost:11434",
+    "weaviate_endpoint": "http://localhost:8080",
+    "python_stdlib_only": true,
+    "cloud_dependencies": false
+  },
+  "phases": [
+    {
+      "phase_id": "phase-1-builders",
+      "title": "Phase 1: BUILDERS — Local AI Foundations",
+      "status": "coming_soon",
+      "module_count": 5,
+      "description": "Python + local AI fundamentals for builders"
+    },
+    {
+      "phase_id": "phase-2-operators",
+      "title": "Phase 2: OPERATORS — Business Automation",
+      "status": "coming_soon",
+      "module_count": 7,
+      "description": "Business automation with local AI for operators"
+    },
+    {
+      "phase_id": "phase-3-everyday",
+      "title": "Phase 3: EVERYDAY USERS — Personal AI Toolkit",
+      "status": "active",
+      "module_count": 7,
+      "total_time_minutes": 115,
+      "description": "Personal AI for everyday Windows users — privacy-first tools for families",
+      "prerequisites": ["phase-1-builders", "phase-2-operators"],
+      "weaviate_classes": ["PersonalDoc", "PersonalDraft", "SecurityLog", "DailyNote", "PrivacyAudit"],
+      "modules": [
+        {
+          "module_id": "3.1",
+          "title": "Your Private Vault",
+          "directory": "phase-3-everyday/module-3.1-your-private-vault",
+          "status": "active",
+          "duration_minutes": 15,
+          "weaviate_class": "PersonalDoc",
+          "security_lesson": "Why personal data belongs on YOUR machine, not the cloud",
+          "prerequisites": [],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        },
+        {
+          "module_id": "3.2",
+          "title": "Ask Your Vault",
+          "directory": "phase-3-everyday/module-3.2-ask-your-vault",
+          "status": "active",
+          "duration_minutes": 15,
+          "weaviate_class": null,
+          "security_lesson": "Cloud AI services read your prompts — local AI doesn't",
+          "prerequisites": ["3.1"],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        },
+        {
+          "module_id": "3.3",
+          "title": "Write It Right",
+          "directory": "phase-3-everyday/module-3.3-write-it-right",
+          "status": "active",
+          "duration_minutes": 15,
+          "weaviate_class": "PersonalDraft",
+          "security_lesson": "AI-generated text and your digital voice — what's real, what's not",
+          "prerequisites": ["3.1", "3.2"],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        },
+        {
+          "module_id": "3.4",
+          "title": "Lock It Down",
+          "directory": "phase-3-everyday/module-3.4-lock-it-down",
+          "status": "active",
+          "duration_minutes": 20,
+          "weaviate_class": "SecurityLog",
+          "security_lesson": "What's running on your machine and who it talks to",
+          "prerequisites": ["3.1"],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        },
+        {
+          "module_id": "3.5",
+          "title": "Daily Briefing",
+          "directory": "phase-3-everyday/module-3.5-daily-briefing",
+          "status": "active",
+          "duration_minutes": 15,
+          "weaviate_class": "DailyNote",
+          "security_lesson": "Data journals contain your life — local storage matters",
+          "prerequisites": ["3.1", "3.2"],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        },
+        {
+          "module_id": "3.6",
+          "title": "Digital Footprint",
+          "directory": "phase-3-everyday/module-3.6-digital-footprint",
+          "status": "active",
+          "duration_minutes": 20,
+          "weaviate_class": "PrivacyAudit",
+          "security_lesson": "Your digital footprint is bigger than you think — here's how to shrink it",
+          "prerequisites": ["3.4", "3.5"],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        },
+        {
+          "module_id": "3.7",
+          "title": "The Family Dashboard",
+          "directory": "phase-3-everyday/module-3.7-family-dashboard",
+          "status": "active",
+          "duration_minutes": 15,
+          "weaviate_class": null,
+          "security_lesson": "Your family's AI runs local — no one else has access",
+          "prerequisites": ["3.1", "3.2", "3.3", "3.4", "3.5", "3.6"],
+          "files": {
+            "lesson": "lesson.md",
+            "exercise": "exercise.bat",
+            "verify": "verify.bat",
+            "hints": "hints.md"
+          }
+        }
+      ]
+    },
+    {
+      "phase_id": "phase-4-agents",
+      "title": "Phase 4: AGENTS — MCP & Autonomous AI",
+      "status": "planned",
+      "module_count": null,
+      "description": "Model Context Protocol (MCP) for building agents and extending ShaneBrain. Teaches users to connect AI tools via MCP servers, build autonomous agents that use ShaneBrain's infrastructure, and create custom tool pipelines. MCP is REQUIRED for all agent and ShaneBrain integrations going forward.",
+      "prerequisites": ["phase-1-builders", "phase-2-operators", "phase-3-everyday"],
+      "planned_topics": [
+        "MCP fundamentals — what Model Context Protocol is and why it matters",
+        "MCP server setup — running and configuring MCP servers locally",
+        "MCP for ShaneBrain — connecting ShaneBrain tools (Weaviate, Ollama, vault) as MCP resources",
+        "Building agents with MCP — autonomous AI agents that use MCP tool pipelines",
+        "Agent-to-agent communication — multiple agents coordinating via MCP",
+        "Custom MCP tools — building your own MCP server for family/business tools",
+        "Security with MCP — permission models, local-only enforcement, audit logging"
+      ],
+      "notes": "MCP must be the standard protocol for all Agent and ShaneBrain integrations. No agent or ShaneBrain extension should bypass MCP."
+    }
+  ]
+}
