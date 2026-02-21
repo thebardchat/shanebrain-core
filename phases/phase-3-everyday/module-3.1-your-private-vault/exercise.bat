@@ -1,265 +1,189 @@
 @echo off
 setlocal enabledelayedexpansion
-title Phase 3.1 // Your Private Vault
-color 0E
+title Module 3.1 Exercise — Your Private Vault
+
+:: ============================================================
+:: MODULE 3.1 EXERCISE: Your Private Vault
+:: Goal: Store personal docs in vault, search them semantically,
+::       list vault categories
+:: Time: ~15 minutes
+:: MCP Tools: vault_add, vault_search, vault_list_categories
+:: ============================================================
+
+set "MCP_CALL=%~dp0..\..\..\shared\utils\mcp-call.py"
+set "TEMP_DIR=%TEMP%\module-3.1"
 
 echo.
-echo  ============================================================
-echo       MODULE 3.1: YOUR PRIVATE VAULT
-echo       Building your personal knowledge base
-echo  ============================================================
+echo  ══════════════════════════════════════════════════════
+echo   MODULE 3.1 EXERCISE: Your Private Vault
+echo  ══════════════════════════════════════════════════════
+echo.
+echo   You're building a personal document vault. Three tasks.
+echo   Fifteen minutes. Your data stays on YOUR machine.
+echo.
+echo  ──────────────────────────────────────────────────────
 echo.
 
-REM ============================================================
-REM PREFLIGHT: Check Weaviate
-REM ============================================================
-echo  [PREFLIGHT] Checking Weaviate connection...
-curl -s http://localhost:8080/v1/.well-known/ready >nul 2>&1
-if errorlevel 1 (
-    echo  ^!ERROR: Weaviate is not running on port 8080.
-    echo  Start Weaviate first, then try again.
+:: --- PRE-FLIGHT: Check MCP server ---
+echo  [PRE-FLIGHT] Checking MCP server...
+echo.
+
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+
+python "%MCP_CALL%" system_health > "%TEMP_DIR%\health.txt" 2>&1
+if %errorlevel% NEQ 0 (
+    echo  [91m   X MCP server not reachable. Is ShaneBrain running?[0m
+    echo       Check: python "%MCP_CALL%" system_health
     pause
     exit /b 1
 )
-echo  [OK] Weaviate is ready.
+echo  [92m   PASS: MCP server responding[0m
+echo.
 
-REM ============================================================
-REM PREFLIGHT: Check Ollama
-REM ============================================================
-echo  [PREFLIGHT] Checking Ollama connection...
-curl -s http://localhost:11434/api/tags >nul 2>&1
-if errorlevel 1 (
-    echo  ^!ERROR: Ollama is not running on port 11434.
-    echo  Start Ollama first, then try again.
-    pause
-    exit /b 1
+:: ============================================================
+:: TASK 1: Add 3 personal documents to the vault
+:: ============================================================
+echo  ──────────────────────────────────────────────────────
+echo.
+echo  [TASK 1/3] Store personal documents in your vault
+echo.
+echo   We'll add three documents — one medical, one work,
+echo   one personal. These are samples. After this module,
+echo   replace them with your real info.
+echo.
+
+:: --- Document 1: Medical ---
+echo   Storing medical document...
+python "%MCP_CALL%" vault_add "{\"content\":\"Annual checkup notes - January 2026. Blood pressure 128/82, slightly elevated. Doctor recommended reducing sodium intake and walking 30 minutes daily. Current medications: none. Allergies: penicillin, bee stings. Next appointment scheduled for July 2026. Weight: 195 lbs, down 5 from last visit. Cholesterol panel normal. Doctor: Dr. Martinez at Valley Health Clinic.\",\"category\":\"medical\",\"title\":\"Annual Checkup - Jan 2026\"}" > "%TEMP_DIR%\add1.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Medical document stored[0m
+) else (
+    echo  [91m   FAIL: Could not store medical document[0m
+    echo          Check MCP server and try again
 )
-echo  [OK] Ollama is ready.
 echo.
 
-REM ============================================================
-REM STEP 1: Create PersonalDoc collection
-REM ============================================================
-echo  [1/3] Creating PersonalDoc collection in Weaviate...
-
-python -c "
-import urllib.request, json
-
-# Check if collection already exists
-try:
-    req = urllib.request.Request('http://localhost:8080/v1/schema/PersonalDoc')
-    resp = urllib.request.urlopen(req)
-    print('  PersonalDoc already exists - skipping creation')
-except urllib.error.HTTPError:
-    # Create the collection
-    schema = {
-        'class': 'PersonalDoc',
-        'description': 'Personal knowledge vault - family records, recipes, health notes, and more',
-        'vectorizer': 'text2vec-ollama',
-        'moduleConfig': {
-            'text2vec-ollama': {
-                'apiEndpoint': 'http://localhost:11434',
-                'model': 'nomic-embed-text'
-            }
-        },
-        'properties': [
-            {
-                'name': 'title',
-                'dataType': ['text'],
-                'description': 'Document title'
-            },
-            {
-                'name': 'content',
-                'dataType': ['text'],
-                'description': 'Document content'
-            },
-            {
-                'name': 'category',
-                'dataType': ['text'],
-                'description': 'Category: family, health, recipes, school, finance, general'
-            },
-            {
-                'name': 'source',
-                'dataType': ['text'],
-                'description': 'Where this info came from'
-            }
-        ]
-    }
-    data = json.dumps(schema).encode('utf-8')
-    req = urllib.request.Request(
-        'http://localhost:8080/v1/schema',
-        data=data,
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    resp = urllib.request.urlopen(req)
-    print('  PersonalDoc collection created successfully!')
-"
-
-if errorlevel 1 (
-    echo  ^!ERROR: Failed to create PersonalDoc collection.
-    echo  Check hints.md for troubleshooting.
-    pause
-    exit /b 1
+:: --- Document 2: Work ---
+echo   Storing work document...
+python "%MCP_CALL%" vault_add "{\"content\":\"Performance review summary - Q4 2025. Rating: Exceeds expectations. Strengths: reliability, problem-solving under pressure, mentoring new hires. Areas for growth: delegation - tends to take on too much personally. Completed safety certification renewal. Led the highway overpass project on time and under budget. Manager notes: strong candidate for crew lead position in 2026. Raise approved: 4 percent effective March 1.\",\"category\":\"work\",\"title\":\"Q4 2025 Performance Review\"}" > "%TEMP_DIR%\add2.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Work document stored[0m
+) else (
+    echo  [91m   FAIL: Could not store work document[0m
 )
-echo  [OK] PersonalDoc collection ready.
 echo.
 
-REM ============================================================
-REM STEP 2: Load sample personal documents
-REM ============================================================
-echo  [2/3] Loading sample personal documents...
-
-python -c "
-import urllib.request, json, time
-
-docs = [
-    {
-        'title': 'Aunt Sarah Birthday',
-        'content': 'Aunt Sarah was born on March 15, 1978. She likes yellow roses and dark chocolate. Her favorite restaurant is Olive Garden. She lives in Nashville, TN.',
-        'category': 'family',
-        'source': 'Mom told me at Christmas 2024'
-    },
-    {
-        'title': 'Uncle Mike Anniversary',
-        'content': 'Uncle Mike and Aunt Linda got married on June 22, 2001. They celebrate every year at the lake house. Their anniversary is always a big family cookout.',
-        'category': 'family',
-        'source': 'Family calendar'
-    },
-    {
-        'title': 'Dad Allergies and Medications',
-        'content': 'Dad is allergic to penicillin and sulfa drugs. He takes blood pressure medication (lisinopril 10mg) every morning. His doctor is Dr. Patterson at Valley Medical.',
-        'category': 'health',
-        'source': 'Dad told me after his checkup'
-    },
-    {
-        'title': 'Kids Allergy Info',
-        'content': 'Tommy has a mild peanut allergy - carry EpiPen. Emma has no known allergies. Both kids are up to date on vaccinations as of January 2026.',
-        'category': 'health',
-        'source': 'Pediatrician visit January 2026'
-    },
-    {
-        'title': 'Grandma Cornbread Recipe',
-        'content': 'Grandma cornbread: 2 cups self-rising cornmeal, 1 egg, 1.5 cups buttermilk, 2 tablespoons melted butter. Mix wet into dry. Pour into greased hot cast iron skillet. Bake 425 degrees for 20-25 minutes until golden brown. The secret is the hot skillet — preheat it in the oven.',
-        'category': 'recipes',
-        'source': 'Grandma showed me Thanksgiving 2023'
-    },
-    {
-        'title': 'Family Chili Recipe',
-        'content': 'Family chili: 2 lbs ground beef, 2 cans kidney beans, 1 can diced tomatoes, 1 can tomato sauce, 1 diced onion, 2 cloves garlic, 2 tbsp chili powder, 1 tsp cumin, salt and pepper. Brown beef with onion and garlic. Add everything else. Simmer 2 hours. Better the next day.',
-        'category': 'recipes',
-        'source': 'Mom recipe box'
-    },
-    {
-        'title': 'School Calendar Spring 2026',
-        'content': 'Spring break: March 16-20, 2026. Last day of school: May 22, 2026. Parent-teacher conferences: April 8-9. Science fair: April 15. Field day: May 15. Graduation ceremony: May 21 at 6pm in the gym.',
-        'category': 'school',
-        'source': 'School website September 2025'
-    },
-    {
-        'title': 'Car Insurance Reminder',
-        'content': 'Car insurance with State Farm renews every June 1. Agent is Bob Collins, phone 256-555-0142. Policy covers both vehicles. Last renewal was $1,847 for 6 months. Check for multi-policy discount.',
-        'category': 'finance',
-        'source': 'Insurance documents'
-    },
-    {
-        'title': 'WiFi and Smart Home Info',
-        'content': 'Home WiFi network name is BrazeltonFamily. Password is written on the sticker inside the kitchen cabinet above the microwave. Ring doorbell account uses the family email. Thermostat brand is Nest, connected to WiFi.',
-        'category': 'general',
-        'source': 'Home setup notes'
-    },
-    {
-        'title': 'Vet Info for Pets',
-        'content': 'Dog (Buddy) sees Dr. Harper at Mountain View Vet, phone 256-555-0198. Annual checkup in September. Buddy takes heartworm pill monthly (Heartgard). Cat (Whiskers) is indoor only, annual checkup in February.',
-        'category': 'general',
-        'source': 'Vet visit records'
-    }
-]
-
-success = 0
-for doc in docs:
-    data = json.dumps(doc).encode('utf-8')
-    req = urllib.request.Request(
-        'http://localhost:8080/v1/objects?class=PersonalDoc',
-        data=data,
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    try:
-        resp = urllib.request.urlopen(req)
-        success += 1
-        print(f'  + {doc[\"title\"]} [{doc[\"category\"]}]')
-    except Exception as e:
-        print(f'  ! Failed: {doc[\"title\"]} - {e}')
-    time.sleep(0.5)
-
-print(f'  Loaded {success}/{len(docs)} documents')
-"
-
-if errorlevel 1 (
-    echo  ^!ERROR: Failed to load sample documents.
-    pause
-    exit /b 1
+:: --- Document 3: Personal/Family ---
+echo   Storing family document...
+python "%MCP_CALL%" vault_add "{\"content\":\"Emergency contacts and family info. Wife: Tiffany, cell 555-0142. Mom: Barbara, cell 555-0198. Brother: Mike, cell 555-0167. Pediatrician: Dr. Chen at Kids First, 555-0200. Vet: Countryside Animal Hospital, 555-0225. Insurance agent: State Farm - Tom, 555-0188, policy number HO-4521. Kids school: Valley Elementary, main office 555-0300. Neighbor with spare key: Johnson family at 412 Oak Street.\",\"category\":\"personal\",\"title\":\"Emergency Contacts and Family Info\"}" > "%TEMP_DIR%\add3.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Family document stored[0m
+) else (
+    echo  [91m   FAIL: Could not store family document[0m
 )
-echo  [OK] Sample documents loaded.
 echo.
 
-REM ============================================================
-REM STEP 3: Verify and show summary
-REM ============================================================
-echo  [3/3] Verifying your Private Vault...
+echo  [92m   Three documents stored in your vault.[0m
+echo.
+echo   Press any key to search your vault...
+pause >nul
+echo.
 
-python -c "
-import urllib.request, json
+:: ============================================================
+:: TASK 2: Search the vault semantically
+:: ============================================================
+echo  ──────────────────────────────────────────────────────
+echo.
+echo  [TASK 2/3] Search your vault by meaning
+echo.
+echo   Watch how semantic search finds documents even when
+echo   you don't use the exact words you stored.
+echo.
 
-# Count total objects
-req = urllib.request.Request(
-    'http://localhost:8080/v1/graphql',
-    data=json.dumps({
-        'query': '{ Aggregate { PersonalDoc { meta { count } } } }'
-    }).encode('utf-8'),
-    headers={'Content-Type': 'application/json'},
-    method='POST'
+:: --- Search 1: Medical query ---
+echo   Search: "What are my allergies?"
+python "%MCP_CALL%" vault_search "{\"query\":\"What are my allergies\"}" > "%TEMP_DIR%\search1.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Search returned results[0m
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\search1.txt')); results=d if isinstance(d,list) else d.get('results',d.get('documents',[])); print('   Found: ' + str(len(results) if isinstance(results,list) else 1) + ' result(s)')" 2>nul
+) else (
+    echo  [91m   FAIL: Search failed[0m
 )
-resp = urllib.request.urlopen(req)
-result = json.loads(resp.read())
-count = result['data']['Aggregate']['PersonalDoc'][0]['meta']['count']
+echo.
 
-# Count by category
-categories = ['family', 'health', 'recipes', 'school', 'finance', 'general']
-print(f'  Total documents in vault: {count}')
-print()
-for cat in categories:
-    req = urllib.request.Request(
-        'http://localhost:8080/v1/graphql',
-        data=json.dumps({
-            'query': '{ Aggregate { PersonalDoc(where: {path: [\"category\"], operator: Equal, valueText: \"' + cat + '\"}) { meta { count } } } }'
-        }).encode('utf-8'),
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    resp = urllib.request.urlopen(req)
-    result = json.loads(resp.read())
-    cat_count = result['data']['Aggregate']['PersonalDoc'][0]['meta']['count']
-    bar = '#' * cat_count
-    print(f'  {cat:10s} {bar} ({cat_count})')
-"
+:: --- Search 2: Work query with different phrasing ---
+echo   Search: "Am I getting a raise?"
+python "%MCP_CALL%" vault_search "{\"query\":\"Am I getting a raise\"}" > "%TEMP_DIR%\search2.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Search returned results[0m
+    echo.
+    echo   Notice: You asked about a "raise" and it found your
+    echo   performance review. The AI understood the connection.
+) else (
+    echo  [91m   FAIL: Search failed[0m
+)
+echo.
 
+:: --- Search 3: Category-filtered search ---
+echo   Search: "doctor" (filtered to medical category)
+python "%MCP_CALL%" vault_search "{\"query\":\"doctor\",\"category\":\"medical\"}" > "%TEMP_DIR%\search3.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Category-filtered search returned results[0m
+) else (
+    echo  [93m   NOTE: Category filter may not be supported yet — that's OK[0m
+)
 echo.
-echo  ============================================================
-echo       YOUR PRIVATE VAULT IS READY!
-echo  ============================================================
+
+echo   Press any key to check vault categories...
+pause >nul
 echo.
-echo   Your personal knowledge base is now running locally.
-echo   10 sample documents across 6 categories.
+
+:: ============================================================
+:: TASK 3: List vault categories
+:: ============================================================
+echo  ──────────────────────────────────────────────────────
 echo.
-echo   SECURITY REMINDER:
-echo   This data lives on YOUR machine. No cloud service
-echo   has access. No company is training AI on your family's
-echo   medical records or recipes. That's the whole point.
+echo  [TASK 3/3] Check your vault categories
 echo.
-echo   Next: Module 3.2 — Ask Your Vault
-echo   (Query your vault in plain English)
+echo   Let's see what's in your filing cabinet.
 echo.
+
+python "%MCP_CALL%" vault_list_categories > "%TEMP_DIR%\categories.txt" 2>&1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Category listing retrieved[0m
+    echo.
+    echo   Your vault categories:
+    echo   ──────────────────────
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\categories.txt')); [print('   ' + str(k) + ': ' + str(v)) for k,v in (d.items() if isinstance(d,dict) else [(str(i),str(x)) for i,x in enumerate(d)])]" 2>nul
+) else (
+    echo  [91m   FAIL: Could not list categories[0m
+)
+echo.
+
+:: ============================================================
+:exercise_done
+echo.
+echo  ══════════════════════════════════════════════════════
+echo   EXERCISE COMPLETE
+echo  ══════════════════════════════════════════════════════
+echo.
+echo   Your private vault has three documents across multiple
+echo   categories. You searched them by meaning and saw how
+echo   the AI connects questions to answers.
+echo.
+echo   Want to make it YOURS? Run exercise.bat again with
+echo   your real documents, or use the MCP tools directly:
+echo.
+echo     python "%MCP_CALL%" vault_add "{\"content\":\"...\",\"category\":\"medical\"}"
+echo.
+echo   Now run verify.bat to confirm everything passed:
+echo.
+echo       verify.bat
+echo.
+
+:: Cleanup temp files
+if exist "%TEMP_DIR%" rd /s /q "%TEMP_DIR%" 2>nul
+
 pause
+endlocal
 exit /b 0

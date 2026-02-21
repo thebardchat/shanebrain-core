@@ -1,67 +1,90 @@
-# Module 3.7: The Family Dashboard
+# Module 3.7 — Family Dashboard (Capstone)
 
-## What You'll Build
-A single launcher that combines ALL Phase 3 tools into one Family Dashboard.
-One menu, all your personal AI tools: vault, Q&A, writing assistant,
-security checks, journal, and privacy audit. Your family's complete
-AI toolkit — running entirely on YOUR machine.
+## WHAT YOU'LL BUILD
 
-## Time: ~15 minutes
-
-## Prerequisites
-- Modules 3.1 through 3.6 ALL complete
-- Ollama running
-- Weaviate running on port 8080
-
-## What You'll Learn
-1. How to combine multiple AI tools into a single interface
-2. How to check the health of your personal AI system
-3. How to view stats across all your personal collections
-4. **Security lesson**: Your family's AI runs local — no one else has access
+A complete view of your personal AI system — services, knowledge, relationships, and a live conversation with your AI about what it knows. This is the capstone for Phase 3. You'll pull together everything you've built across the entire phase into one exercise that proves your AI is not a toy. It's a tool that knows your documents, writes your drafts, tracks your journal, audits itself, and answers questions about your life.
 
 ---
 
-## The Security Lesson: Your Family's AI, Under Your Roof
+## WHO THIS IS FOR
 
-Look at what you've built in Phase 3:
-- A personal knowledge vault (family records, recipes, health info)
-- A Q&A system that answers questions about your family
-- A writing assistant that knows your tone and context
-- A security awareness tool
-- A personal journal with daily briefings
-- A privacy audit with family safety checklist
-
-Now imagine ALL of that on someone else's server. Your family's medical
-records, your writing style, your daily thoughts, your security findings,
-your children's online safety audit — all in a corporation's database.
-
-**With the Family Dashboard, none of that leaves your house.** Every tool,
-every query, every piece of data runs on YOUR machine. No subscription.
-No account. No terms of service. No data mining.
-
-This is what personal AI should be.
+You. The person who built a vault, wrote drafts, journaled daily, and audited your footprint. Now you're going to see it all at once and have a conversation with the AI you built. This is the moment you stop being a user and become someone whose AI actually knows them.
 
 ---
 
-## Dashboard Features
+## KEY TERMS
 
-| Feature | What It Does |
-|---------|-------------|
-| System Health | Checks Ollama + Weaviate are running |
-| Vault Stats | Shows document counts across all collections |
-| Personal Vault | Quick access to Module 3.1 (add/view personal docs) |
-| Ask Your Vault | Quick access to Module 3.2 (personal Q&A) |
-| Write It Right | Quick access to Module 3.3 (writing assistant) |
-| Lock It Down | Quick access to Module 3.4 (security check) |
-| Daily Briefing | Quick access to Module 3.5 (journal + briefing) |
-| Digital Footprint | Quick access to Module 3.6 (privacy audit) |
+- **Dashboard**: A single view that pulls data from multiple sources to give you the full picture. Like the morning meeting at a concrete company — job status, crew assignments, equipment, weather — all in one room, all in five minutes.
+
+- **system_health**: Your infrastructure check. Services running, collections populated, everything green or red. The truck inspection before you leave the yard.
+
+- **search_knowledge**: Searches what the AI knows — built-in wisdom and things you've taught it. This is the AI's memory, and you're checking what's in there.
+
+- **get_top_friends**: Pulls your relationship network — friend profiles ranked by relationship strength. Your AI keeps track of the people in your life.
+
+- **vault_search**: Semantic search across your personal documents. Medical records, work references, family notes — all searchable by meaning.
+
+- **chat_with_shanebrain**: A full RAG conversation with your AI. It searches its knowledge, pulls context, and generates a response through Ollama. This is the real deal — your AI talking to you about your life using everything it knows.
 
 ---
 
-## After the Exercise
+## THE LESSON
 
-You'll have a complete, working Family Dashboard. One script launches
-everything you need. Share it with your family — anyone can use it.
+### The Capstone Idea
 
-**Congratulations — you've completed Phase 3: Everyday Users.**
-You now have a personal AI toolkit that runs entirely local.
+Phase 3 gave you five capabilities:
+
+| Module | Capability | What It Proved |
+|--------|-----------|---------------|
+| 3.1 | Private Vault | You can store and search personal documents |
+| 3.2 | Ask Your Vault | Your AI answers questions from your docs |
+| 3.3 | Write It Right | Draft writing with vault context |
+| 3.4 | Lock It Down | Security and privacy controls |
+| 3.5 | Daily Briefing | Journaling with AI-generated summaries |
+| 3.6 | Digital Footprint | System audit and data visibility |
+
+Each module proved one thing. The capstone proves they all work together.
+
+### Building the Complete View
+
+A family dashboard pulls four perspectives:
+
+**1. System Overview** — Is everything running? Are collections populated? This is the foundation check before you build anything on top of it.
+
+**2. Knowledge Check** — What does your AI know about family? About work? About the things that matter? Search the knowledge base and see what comes back.
+
+**3. Social View** — Who are the people in your AI's world? Friend profiles show your relationship network — names, context, connection strength. Your AI remembers the people you told it about.
+
+**4. Personal AI Conversation** — Talk to your AI. Ask it to summarize what it knows about you and your system. This is the final proof that everything connects — the AI pulls from knowledge, vault, friends, and notes to give you a real answer.
+
+### Why This Matters
+
+Most people use AI like a search engine — type a question, get an answer, forget about it. You built something different. Your AI:
+
+- **Stores** your documents (vault)
+- **Writes** for you (drafts)
+- **Remembers** your day (journal)
+- **Tracks** your people (friends)
+- **Audits** itself (footprint)
+- **Talks** to you about all of it (chat)
+
+That's not a chatbot. That's a personal AI system. And it runs on YOUR hardware, with YOUR data, under YOUR control.
+
+### The Family Connection
+
+The name "Family Dashboard" is deliberate. The best technology serves the people you care about. A personal AI that tracks medical records keeps your family safe. One that journals your days preserves your story. One that knows your people strengthens your relationships.
+
+This isn't about the technology. It's about what the technology protects.
+
+---
+
+## WHAT YOU PROVED
+
+- System health gives you full infrastructure visibility in one call
+- Knowledge search shows what your AI has learned
+- Friend profiles map your relationship network
+- Vault search finds your personal documents by meaning
+- Chat with your AI produces real, contextual responses
+- All Phase 3 capabilities work together as a unified system
+
+**Next:** Run `exercise.bat` to build your Family Dashboard and complete Phase 3.

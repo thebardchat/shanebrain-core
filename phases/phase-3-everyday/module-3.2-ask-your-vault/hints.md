@@ -1,34 +1,57 @@
-# Module 3.2 Hints: Ask Your Vault
+# Module 3.2 Hints — Ask Your Vault
 
-## Common Issues
+## Level 1 — General Direction
 
-### "PersonalDoc not found"
-- You need to complete Module 3.1 first
-- Run `phases/phase-3-everyday/module-3.1-your-private-vault/exercise.bat`
+- Module 3.1 must be completed first — your vault needs documents before you can ask it questions
+- The MCP server, Ollama, and Weaviate all need to be running. MCP talks to both.
+- `vault_search` finds documents. `chat_with_shanebrain` generates answers FROM those documents.
+- If answers seem generic or unrelated, your vault documents may not cover that topic. Add more docs via Module 3.1.
+- The interactive Q&A loop in Task 3 is optional for completion — Tasks 1 and 2 are what verify.bat checks
 
-### Answers are slow
-- Ollama generates answers using your local CPU/GPU
-- On a Pi 5 or older PC, expect 5-15 seconds per answer
-- This is normal — the tradeoff for privacy is speed
-- Try llama3.2:1b for faster (but less detailed) answers
+## Level 2 — Specific Guidance
 
-### Answers don't match the question
-- Semantic search finds SIMILAR content, not exact keyword matches
-- Try rephrasing your question
-- More specific questions get better results
-- "What medication does Dad take?" works better than "Dad meds"
+- **"Vault is empty"**: You need to run Module 3.1 first. That module stores documents in your vault. Without documents, there's nothing to search or answer from.
+- **"chat_with_shanebrain did not respond"**: This usually means Ollama isn't running. The MCP server handles vault search, but Ollama generates the actual answer. Check: `curl http://localhost:11434/api/tags`
+- **"Response was empty or contained an error"**: The model might be loading. Ollama loads models into RAM on first use — give it 30 seconds and try again. On a Pi, the 3B model takes a moment.
+- **Answers seem wrong**: RAG answers come from your vault documents. If you stored sample data from Module 3.1, the answers are based on those samples. Replace with real data for real answers.
+- **"vault_search returned empty results"**: Try a broader query. If "medication" returns nothing, try "health" or "doctor." The semantic search finds related concepts, but it needs some overlap.
 
-### "Ollama returned empty response"
-- The model might not be loaded: `ollama pull llama3.2:3b`
-- Ollama might be out of memory — close other programs
-- Try a smaller model: change `llama3.2:3b` to `llama3.2:1b`
+## Level 3 — The Answer
 
-### Want to add more personal data?
-- Go back to Module 3.1 hints for how to add documents via curl
-- The more data in your vault, the better the answers
+Complete sequence to get everything working:
 
-## Understanding Certainty Scores
-- 90%+ = Very confident match
-- 70-90% = Good match
-- 50-70% = Possible match, might not be relevant
-- Below 50% = Probably not what you're looking for
+**Step 1: Verify Module 3.1 completed**
+```
+cd phases\phase-3-everyday\module-3.1-your-private-vault
+verify.bat
+```
+All checks should pass. If not, run that module's exercise.bat first.
+
+**Step 2: Verify services**
+```
+python shared\utils\mcp-call.py system_health
+```
+Look for Weaviate and Ollama both showing healthy.
+
+**Step 3: Run the exercise**
+```
+cd phases\phase-3-everyday\module-3.2-ask-your-vault
+exercise.bat
+```
+
+**Step 4: Run verification**
+```
+verify.bat
+```
+
+**If chat_with_shanebrain keeps failing**, test Ollama directly:
+```
+curl http://localhost:11434/api/generate -d "{\"model\":\"llama3.2:3b\",\"prompt\":\"Hello\",\"stream\":false}"
+```
+If that fails, Ollama needs attention. If it works, the MCP server might need a restart.
+
+**Manual test:**
+```
+python shared\utils\mcp-call.py vault_search "{\"query\":\"doctor appointment\"}"
+python shared\utils\mcp-call.py chat_with_shanebrain "{\"message\":\"When is my next appointment?\"}"
+```

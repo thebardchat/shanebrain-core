@@ -1,34 +1,62 @@
-# Module 3.6 Hints: Digital Footprint
+# Module 3.6 Hints — Digital Footprint
 
-## Common Issues
+## Level 1 — General Direction
 
-### "The audit seems generic"
-- The cloud accounts audit covers common services most people use
-- Your personal score depends on YOUR honest assessment
-- The value is awareness — now you know what to check
+- This module uses four MCP tools: `system_health`, `vault_list_categories`, `search_knowledge`, and `privacy_audit_search`
+- The exercise maps your system, checks your vault organization, and finds your own knowledge entries
+- You need Module 3.1 completed first — the vault needs to have data in it
+- All tools are read-only in this module. You're auditing, not modifying
+- If a collection shows zero objects, that just means you haven't used that feature yet
 
-### Want to delete cloud data?
-- **Google**: myaccount.google.com/data-and-privacy
-- **Facebook**: Settings > Your Facebook Information > Download Your Information
-- **Amazon**: Account > Manage Content and Devices
-- **Microsoft**: account.microsoft.com/privacy
-- Each service has a "download my data" option — use it to see what they have
+## Level 2 — Specific Guidance
 
-### Privacy score seems low
-- Don't panic — most people score 40-60 on their first audit
-- Focus on HIGH risk items first (passwords, 2FA, phishing)
-- Improvement is the goal, not perfection
+- **"Cannot reach MCP server"**: MCP server must be running on port 8100. Run `shared\utils\mcp-health-check.bat` to check
+- **"system_health shows no collections"**: Weaviate may be starting up. Wait 30 seconds and try again. Collections are created by earlier modules
+- **"vault_list_categories returns empty"**: You need to complete Module 3.1 first. That module adds documents to your vault with categories
+- **"search_knowledge returns nothing"**: Try broader search terms. If you haven't added knowledge entries via `add_knowledge`, there may not be entries with source "mcp". Try searching for "family" or other topics from the built-in knowledge
+- **Verify fails on vault_list_categories**: Make sure Module 3.1's exercise has been completed. The vault needs at least one document stored
 
-## Teaching Kids About Privacy
-Start the conversation early and keep it simple:
-- "Would you want a stranger to know this?" (for young kids)
-- "What would a college admissions officer think?" (for teens)
-- "Your digital footprint is permanent — think before you post"
-- Make it a regular conversation, not a one-time lecture
+## Level 3 — The Answer
 
-## Reducing Your Footprint — Quick Wins
-1. Turn off location sharing on apps that don't need it
-2. Use private browsing for sensitive searches
-3. Unsubscribe from marketing emails (reduces data collection)
-4. Review and remove old accounts you no longer use
-5. Set social media profiles to private
+Complete sequence to pass verification:
+
+**Step 1: Verify prerequisites**
+```
+:: Check Module 3.1 was completed
+cd phases\phase-3-everyday\module-3.1-your-private-vault
+verify.bat
+:: If it fails, run exercise.bat first
+```
+
+**Step 2: Run the exercise**
+```
+cd phases\phase-3-everyday\module-3.6-digital-footprint
+exercise.bat
+```
+
+The exercise will:
+1. Call `system_health` and display all services and collections
+2. Call `vault_list_categories` and show your vault organization
+3. Call `search_knowledge` to find your own entries
+
+**Step 3: If tools return empty results**
+```
+:: Check system health manually
+python shared\utils\mcp-call.py system_health
+
+:: Check vault categories manually
+python shared\utils\mcp-call.py vault_list_categories
+
+:: Search knowledge with a broad query
+python shared\utils\mcp-call.py search_knowledge "{\"query\":\"family\"}"
+
+:: If vault is empty, add a document first
+python shared\utils\mcp-call.py vault_add "{\"content\":\"Test document for audit\",\"category\":\"personal\",\"title\":\"Audit Test\"}"
+```
+
+**Step 4: Verify**
+```
+verify.bat
+```
+
+**If verify fails on search_knowledge**: The search just needs to return any results. Try different queries — "family", "work", "values". The LegacyKnowledge collection has built-in content from the RAG.md and WISDOM-CORE.md files.

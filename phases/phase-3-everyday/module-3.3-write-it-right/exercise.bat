@@ -1,327 +1,196 @@
 @echo off
 setlocal enabledelayedexpansion
-title Phase 3.3 // Write It Right
-color 0E
+title Module 3.3 Exercise — Write It Right
+
+:: ============================================================
+:: MODULE 3.3 EXERCISE: Write It Right
+:: Goal: Create email draft, create message draft, search drafts
+:: Time: ~15 minutes
+:: Prerequisites: Module 3.1 (vault docs for context)
+:: MCP Tools: draft_create, draft_search
+:: ============================================================
+
+set "MCP_CALL=%~dp0..\..\..\shared\utils\mcp-call.py"
+set "TEMP_DIR=%TEMP%\module-3.3"
 
 echo.
-echo  ============================================================
-echo       MODULE 3.3: WRITE IT RIGHT
-echo       Personal writing assistant
-echo  ============================================================
+echo  ══════════════════════════════════════════════════════
+echo   MODULE 3.3 EXERCISE: Write It Right
+echo  ══════════════════════════════════════════════════════
+echo.
+echo   You'll create AI-written drafts that pull details from
+echo   your vault. Three tasks. Fifteen minutes.
+echo.
+echo  ──────────────────────────────────────────────────────
 echo.
 
-REM ============================================================
-REM PREFLIGHT
-REM ============================================================
-echo  [PREFLIGHT] Checking services...
-curl -s http://localhost:8080/v1/.well-known/ready >nul 2>&1
-if errorlevel 1 (
-    echo  ^!ERROR: Weaviate is not running.
+:: --- PRE-FLIGHT: Check MCP server ---
+echo  [PRE-FLIGHT] Checking MCP server...
+echo.
+
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+
+python "%MCP_CALL%" system_health > "%TEMP_DIR%\health.txt" 2>&1
+if %errorlevel% NEQ 0 (
+    echo  [91m   X MCP server not reachable. Is ShaneBrain running?[0m
     pause
     exit /b 1
 )
-curl -s http://localhost:11434/api/tags >nul 2>&1
-if errorlevel 1 (
-    echo  ^!ERROR: Ollama is not running.
-    pause
-    exit /b 1
+echo  [92m   PASS: MCP server responding[0m
+
+:: Check vault has documents (for context)
+python "%MCP_CALL%" vault_list_categories > "%TEMP_DIR%\categories.txt" 2>&1
+python -c "import json; d=json.load(open(r'%TEMP_DIR%\categories.txt')); total=sum(v for v in d.values() if isinstance(v,int)) if isinstance(d,dict) else len(d) if isinstance(d,list) else 0; print(total)" 2>nul > "%TEMP_DIR%\count.txt"
+set /p VAULT_COUNT=<"%TEMP_DIR%\count.txt"
+if not defined VAULT_COUNT set "VAULT_COUNT=0"
+
+if %VAULT_COUNT% GEQ 1 (
+    echo  [92m   PASS: Vault has %VAULT_COUNT% document(s) for context[0m
+) else (
+    echo  [93m   NOTE: Vault is empty. Drafts will work but won't pull personal context.[0m
+    echo          For best results, run Module 3.1 first.
 )
-echo  [OK] Services ready.
 echo.
 
-REM ============================================================
-REM STEP 1: Create PersonalDraft collection
-REM ============================================================
-echo  [1/3] Creating PersonalDraft collection...
+:: ============================================================
+:: TASK 1: Create an email draft
+:: ============================================================
+echo  ──────────────────────────────────────────────────────
+echo.
+echo  [TASK 1/3] Create an email draft with vault context
+echo.
+echo   The AI will search your vault for relevant info and
+echo   weave it into a professional email draft.
+echo.
+echo   Prompt: "Write an email to my doctor's office to
+echo   reschedule my upcoming appointment to next month.
+echo   Be polite and mention any relevant medical details."
+echo.
 
-python -c "
-import urllib.request, json
+echo   Generating email draft...
+echo   (This may take 30-60 seconds — the AI is searching
+echo    your vault and composing the draft)
+echo.
 
-try:
-    req = urllib.request.Request('http://localhost:8080/v1/schema/PersonalDraft')
-    urllib.request.urlopen(req)
-    print('  PersonalDraft already exists - skipping creation')
-except urllib.error.HTTPError:
-    schema = {
-        'class': 'PersonalDraft',
-        'description': 'Personal writing drafts - thank you notes, emails, letters, cards',
-        'vectorizer': 'text2vec-ollama',
-        'moduleConfig': {
-            'text2vec-ollama': {
-                'apiEndpoint': 'http://localhost:11434',
-                'model': 'nomic-embed-text'
-            }
-        },
-        'properties': [
-            {'name': 'title', 'dataType': ['text'], 'description': 'Draft title'},
-            {'name': 'content', 'dataType': ['text'], 'description': 'Draft content'},
-            {'name': 'messageType', 'dataType': ['text'], 'description': 'Type: thankyou, email, letter, card'},
-            {'name': 'tone', 'dataType': ['text'], 'description': 'Tone: warm, formal, casual'}
-        ]
-    }
-    data = json.dumps(schema).encode('utf-8')
-    req = urllib.request.Request(
-        'http://localhost:8080/v1/schema',
-        data=data,
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    urllib.request.urlopen(req)
-    print('  PersonalDraft collection created!')
-"
+python "%MCP_CALL%" draft_create "{\"prompt\":\"Write an email to my doctor's office to reschedule my upcoming appointment to next month. Be polite and mention any relevant medical details from my records.\",\"draft_type\":\"email\",\"use_vault_context\":true}" > "%TEMP_DIR%\draft_email.txt" 2>&1
 
-if errorlevel 1 (
-    echo  ^!ERROR: Failed to create PersonalDraft collection.
-    pause
-    exit /b 1
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Email draft generated[0m
+    echo.
+    echo   ══════════════════════════════════════════════════
+    echo   YOUR EMAIL DRAFT:
+    echo   ══════════════════════════════════════════════════
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\draft_email.txt')); text=d.get('text',d.get('draft',d.get('content',str(d)))); print(text[:800])" 2>nul
+    echo.
+    echo   ══════════════════════════════════════════════════
+    echo.
+    echo   Notice how it pulled details from your vault —
+    echo   doctor names, appointment dates, medical info.
+    echo   That's vault context making the draft personal.
+) else (
+    echo  [91m   FAIL: Could not generate email draft[0m
+    echo          Check that Ollama is running for text generation
 )
-echo  [OK] PersonalDraft ready.
+echo.
+echo   Press any key to create a message draft...
+pause >nul
 echo.
 
-REM ============================================================
-REM STEP 2: Generate demo drafts
-REM ============================================================
-echo  [2/3] Generating sample drafts using your vault context...
+:: ============================================================
+:: TASK 2: Create a message draft
+:: ============================================================
+echo  ──────────────────────────────────────────────────────
+echo.
+echo  [TASK 2/3] Create a message draft (casual, short)
+echo.
+echo   Same tool, different format. Messages are brief
+echo   and conversational — like a text to a coworker.
+echo.
+echo   Prompt: "Write a quick message to my manager about
+echo   the areas I should focus on for improvement based
+echo   on my performance review."
 echo.
 
-python -c "
-import urllib.request, json, time
+echo   Generating message draft...
+echo.
 
-def search_vault(concept, limit=2):
-    query = {
-        'query': '{Get{PersonalDoc(nearText:{concepts:[\"' + concept + '\"]},limit:' + str(limit) + '){title content category}}}'
-    }
-    req = urllib.request.Request(
-        'http://localhost:8080/v1/graphql',
-        data=json.dumps(query).encode('utf-8'),
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    resp = urllib.request.urlopen(req)
-    result = json.loads(resp.read())
-    docs = result.get('data', {}).get('Get', {}).get('PersonalDoc', [])
-    return '\n'.join(f\"{d['title']}: {d['content']}\" for d in docs) if docs else ''
+python "%MCP_CALL%" draft_create "{\"prompt\":\"Write a quick casual message to my manager about the areas I should focus on for improvement this quarter, based on my performance review feedback.\",\"draft_type\":\"message\",\"use_vault_context\":true}" > "%TEMP_DIR%\draft_message.txt" 2>&1
 
-def generate_draft(msg_type, tone, description, context):
-    tone_guide = {
-        'warm': 'Write in a warm, heartfelt, personal tone. Use first person.',
-        'formal': 'Write in a professional, respectful tone. Be proper but not stiff.',
-        'casual': 'Write in a relaxed, conversational tone. Keep it brief and friendly.'
-    }
-    prompt = f'''Write a {msg_type} with a {tone} tone.
-{tone_guide.get(tone, '')}
-Description: {description}
-Personal context (use if relevant): {context}
-Keep it under 150 words. Do not include subject lines unless it is an email.
-Just write the message body.'''
-
-    data = json.dumps({
-        'model': 'llama3.2:3b',
-        'prompt': prompt,
-        'stream': False,
-        'options': {'temperature': 0.7, 'num_predict': 300}
-    }).encode('utf-8')
-    req = urllib.request.Request(
-        'http://localhost:11434/api/generate',
-        data=data,
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    resp = urllib.request.urlopen(req)
-    return json.loads(resp.read())['response'].strip()
-
-def save_draft(title, content, msg_type, tone):
-    data = json.dumps({
-        'title': title,
-        'content': content,
-        'messageType': msg_type,
-        'tone': tone
-    }).encode('utf-8')
-    req = urllib.request.Request(
-        'http://localhost:8080/v1/objects?class=PersonalDraft',
-        data=data,
-        headers={'Content-Type': 'application/json'},
-        method='POST'
-    )
-    urllib.request.urlopen(req)
-
-demos = [
-    {
-        'type': 'thankyou',
-        'tone': 'warm',
-        'desc': 'Thank Aunt Sarah for the birthday gift she sent for the kids',
-        'search': 'Aunt Sarah birthday family'
-    },
-    {
-        'type': 'email',
-        'tone': 'formal',
-        'desc': 'Email to teacher about upcoming parent-teacher conference scheduling',
-        'search': 'school calendar teacher conference'
-    },
-    {
-        'type': 'card',
-        'tone': 'warm',
-        'desc': 'Get-well card for Uncle Mike who had surgery',
-        'search': 'Uncle Mike family'
-    }
-]
-
-for demo in demos:
-    print(f'  Drafting: {demo[\"type\"]} ({demo[\"tone\"]}) - {demo[\"desc\"][:50]}...')
-    context = search_vault(demo['search'])
-    draft = generate_draft(demo['type'], demo['tone'], demo['desc'], context)
-    title = f'{demo[\"type\"].title()} - {demo[\"desc\"][:40]}'
-    save_draft(title, draft, demo['type'], demo['tone'])
-    print(f'  ---')
-    # Show first 3 lines of draft
-    lines = draft.split('\n')[:3]
-    for line in lines:
-        if line.strip():
-            print(f'  | {line.strip()[:70]}')
-    print(f'  | ...')
-    print(f'  Saved as: {title}')
-    print()
-    time.sleep(1)
-
-print(f'  Generated and saved {len(demos)} drafts.')
-"
-
-if errorlevel 1 (
-    echo  ^!WARNING: Some drafts may have failed.
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Message draft generated[0m
+    echo.
+    echo   ══════════════════════════════════════════════════
+    echo   YOUR MESSAGE DRAFT:
+    echo   ══════════════════════════════════════════════════
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\draft_message.txt')); text=d.get('text',d.get('draft',d.get('content',str(d)))); print(text[:500])" 2>nul
+    echo.
+    echo   ══════════════════════════════════════════════════
+    echo.
+    echo   Shorter. More casual. But still pulled from your
+    echo   vault — it used your actual review feedback.
+) else (
+    echo  [91m   FAIL: Could not generate message draft[0m
 )
-echo  [OK] Demo drafts generated.
+echo.
+echo   Press any key to search your saved drafts...
+pause >nul
 echo.
 
-REM ============================================================
-REM STEP 3: Interactive writing mode
-REM ============================================================
-echo  [3/3] Interactive writing assistant
-echo  ============================================================
+:: ============================================================
+:: TASK 3: Search saved drafts
+:: ============================================================
+echo  ──────────────────────────────────────────────────────
+echo.
+echo  [TASK 3/3] Search your saved drafts
+echo.
+echo   Every draft gets saved. Let's find them by topic.
 echo.
 
-:WRITE_MENU
-echo   Message Types:
-echo     1. Thank-you note
-echo     2. Email
-echo     3. Letter
-echo     4. Card
-echo     5. Quit
-echo.
-set "CHOICE="
-set /p "CHOICE=  Pick a type (1-5): "
-if "!CHOICE!"=="5" goto WRITE_DONE
-if "!CHOICE!"=="" goto WRITE_MENU
+echo   Searching drafts for: "doctor appointment"
+python "%MCP_CALL%" draft_search "{\"query\":\"doctor appointment\"}" > "%TEMP_DIR%\draft_found.txt" 2>&1
 
-if "!CHOICE!"=="1" set "MSG_TYPE=thankyou"
-if "!CHOICE!"=="2" set "MSG_TYPE=email"
-if "!CHOICE!"=="3" set "MSG_TYPE=letter"
-if "!CHOICE!"=="4" set "MSG_TYPE=card"
-
-echo.
-echo   Tone:
-echo     1. Warm (friendly, heartfelt)
-echo     2. Formal (professional, respectful)
-echo     3. Casual (relaxed, brief)
-echo.
-set "TONE_CHOICE="
-set /p "TONE_CHOICE=  Pick a tone (1-3): "
-if "!TONE_CHOICE!"=="1" set "TONE=warm"
-if "!TONE_CHOICE!"=="2" set "TONE=formal"
-if "!TONE_CHOICE!"=="3" set "TONE=casual"
-
-echo.
-set "DESC="
-set /p "DESC=  Describe the message: "
-echo.
-echo  Generating draft...
-
-python -c "
-import urllib.request, json
-
-msg_type = '!MSG_TYPE!'
-tone = '!TONE!'
-desc = '''!DESC!'''
-
-# Search vault for context
-query = {
-    'query': '{Get{PersonalDoc(nearText:{concepts:[\"' + desc.replace('\"', '').replace(\"'\", '') + '\"]},limit:2){title content}}}'
-}
-req = urllib.request.Request(
-    'http://localhost:8080/v1/graphql',
-    data=json.dumps(query).encode('utf-8'),
-    headers={'Content-Type': 'application/json'},
-    method='POST'
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Draft search returned results[0m
+    echo.
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\draft_found.txt')); results=d if isinstance(d,list) else d.get('results',d.get('drafts',[d])); count=len(results) if isinstance(results,list) else 1; print('   Found ' + str(count) + ' draft(s) matching your search')" 2>nul
+) else (
+    echo  [91m   FAIL: Draft search failed[0m
 )
-resp = urllib.request.urlopen(req)
-result = json.loads(resp.read())
-docs = result.get('data', {}).get('Get', {}).get('PersonalDoc', [])
-context = '\n'.join(f\"{d['title']}: {d['content']}\" for d in docs) if docs else 'No personal context available.'
+echo.
 
-tone_guide = {
-    'warm': 'warm, heartfelt, personal',
-    'formal': 'professional, respectful, proper',
-    'casual': 'relaxed, conversational, brief'
-}
-prompt = f'''Write a {msg_type} with a {tone_guide.get(tone, tone)} tone.
-Description: {desc}
-Personal context: {context}
-Keep it under 150 words.'''
+echo   Searching drafts for: "work improvement"
+python "%MCP_CALL%" draft_search "{\"query\":\"work improvement\"}" > "%TEMP_DIR%\draft_found2.txt" 2>&1
 
-data = json.dumps({
-    'model': 'llama3.2:3b',
-    'prompt': prompt,
-    'stream': False,
-    'options': {'temperature': 0.7, 'num_predict': 300}
-}).encode('utf-8')
-req = urllib.request.Request(
-    'http://localhost:11434/api/generate',
-    data=data,
-    headers={'Content-Type': 'application/json'},
-    method='POST'
+if %errorlevel% EQU 0 (
+    echo  [92m   PASS: Draft search returned results[0m
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\draft_found2.txt')); results=d if isinstance(d,list) else d.get('results',d.get('drafts',[d])); count=len(results) if isinstance(results,list) else 1; print('   Found ' + str(count) + ' draft(s) matching your search')" 2>nul
+) else (
+    echo  [93m   NOTE: No matching drafts found — that's OK if drafts weren't saved[0m
 )
-resp = urllib.request.urlopen(req)
-draft = json.loads(resp.read())['response'].strip()
+echo.
 
-print()
-print('  ---- DRAFT ----')
-for line in draft.split('\n'):
-    print(f'  {line}')
-print('  ---- END ----')
+:: ============================================================
+:exercise_done
+echo.
+echo  ══════════════════════════════════════════════════════
+echo   EXERCISE COMPLETE
+echo  ══════════════════════════════════════════════════════
+echo.
+echo   You generated two AI drafts powered by your vault data.
+echo   The email pulled medical details. The message pulled
+echo   work feedback. Both came from YOUR documents.
+echo.
+echo   Use this anytime:
+echo     python "%MCP_CALL%" draft_create "{\"prompt\":\"...\",\"draft_type\":\"email\"}"
+echo.
+echo   Now run verify.bat to confirm everything passed:
+echo.
+echo       verify.bat
+echo.
 
-# Save draft
-save_data = json.dumps({
-    'title': f'{msg_type.title()} - {desc[:40]}',
-    'content': draft,
-    'messageType': msg_type,
-    'tone': tone
-}).encode('utf-8')
-req = urllib.request.Request(
-    'http://localhost:8080/v1/objects?class=PersonalDraft',
-    data=save_data,
-    headers={'Content-Type': 'application/json'},
-    method='POST'
-)
-urllib.request.urlopen(req)
-print()
-print('  Draft saved to PersonalDraft vault.')
-"
-echo.
-goto WRITE_MENU
+:: Cleanup temp files
+if exist "%TEMP_DIR%" rd /s /q "%TEMP_DIR%" 2>nul
 
-:WRITE_DONE
-echo.
-echo  ============================================================
-echo       WRITING ASSISTANT COMPLETE
-echo  ============================================================
-echo.
-echo   SECURITY REMINDER:
-echo   Cloud writing tools like Grammarly learn your writing style.
-echo   They build a profile of HOW you communicate. Your local AI
-echo   keeps your digital voice private. No one else has your
-echo   writing fingerprint.
-echo.
-echo   Next: Module 3.4 — Lock It Down
-echo   (Security awareness and digital hygiene)
-echo.
 pause
+endlocal
 exit /b 0

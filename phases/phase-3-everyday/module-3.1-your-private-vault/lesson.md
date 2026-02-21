@@ -1,81 +1,91 @@
-# Module 3.1: Your Private Vault
+# Module 3.1 — Your Private Vault
 
-## What You'll Build
-A personal knowledge base — your own private vault where you store family records,
-recipes, medical notes, school info, and anything else that matters to your family.
-All stored locally. No cloud. No accounts. Just YOUR data on YOUR machine.
+## WHAT YOU'LL BUILD
 
-## Time: ~15 minutes
+A personal document vault powered by AI. By the end of this module, you'll store medical info, work references, and family notes in your AI vault — then search them by meaning, not keywords.
 
-## Prerequisites
-- Phase 1 (Builders) complete
-- Phase 2 (Operators) complete
-- Ollama running with a model loaded
-- Weaviate running on port 8080
-
-## What You'll Learn
-1. How to create a personal knowledge collection in Weaviate
-2. How to store categorized personal documents
-3. How to add family records, recipes, health notes, and more
-4. **Security lesson**: Why personal data belongs on YOUR machine
+Think of it like a safe deposit box, except you can ask it questions. "What was my doctor's recommendation?" pulls up the right document instantly, even if you never used the word "recommendation" when you stored it.
 
 ---
 
-## The Security Lesson: Your Data, Your Machine
+## WHO THIS IS FOR
 
-Every time you type something into ChatGPT, Google Bard, or any cloud AI:
-- That text goes to someone else's server
-- It may be used to train their models
-- You agreed to this in the Terms of Service nobody reads
-- Your family's medical info, your recipes, your kids' school details — all of it
-
-**Local AI is different.** When you run Ollama on your own machine:
-- Your questions never leave your house
-- No company stores your family data
-- No Terms of Service to worry about
-- YOU own it. Period.
-
-This module builds your private vault — a place where your personal knowledge
-lives on YOUR hard drive, searchable by YOUR local AI.
+Anyone with important personal documents scattered across phones, folders, and filing cabinets. Parents tracking medical records. Workers keeping references handy. People who want their private info organized and searchable — without handing it to a cloud company.
 
 ---
 
-## How It Works
+## KEY TERMS
 
-We create a Weaviate collection called `PersonalDoc` with these fields:
-- **title** — What is this document? ("Grandma's Cornbread Recipe")
-- **content** — The actual information
-- **category** — One of: family, health, recipes, school, finance, general
-- **source** — Where did this come from? ("Mom told me", "Doctor's office", etc.)
+- **Personal Vault**: Your private document store inside the AI system. Documents go in as text, get embedded as vectors, and become searchable by meaning. Like a filing cabinet that reads everything you put in it.
 
-The exercise script will:
-1. Create the PersonalDoc collection in Weaviate
-2. Load sample documents across all categories
-3. Show you how to add your own documents
-4. Verify everything is stored and searchable
+- **vault_add**: The MCP tool that stores a document in your vault. You give it content, a category (medical, work, personal, financial, legal), and an optional title. It handles the rest.
+
+- **vault_search**: Searches your vault by meaning. Ask "blood pressure medication" and it finds your doctor's note even if it says "hypertension treatment." That's semantic search doing its job.
+
+- **vault_list_categories**: Shows you what categories exist in your vault and how many documents each one has. Like checking which drawers in your filing cabinet have stuff in them.
+
+- **Category**: A label you put on each document — medical, work, personal, financial, legal. Lets you narrow searches later. "Search my medical docs for allergy info" instead of searching everything.
 
 ---
 
-## Categories Explained
+## THE LESSON
 
-| Category | What Goes Here | Examples |
-|----------|---------------|----------|
-| family | Birthdays, anniversaries, family tree info | "Aunt Sarah's birthday is March 15" |
-| health | Medical notes, allergies, medications | "Dad is allergic to penicillin" |
-| recipes | Family recipes, cooking notes | "Grandma's cornbread — 2 cups cornmeal..." |
-| school | School calendar, teacher contacts, activities | "Spring break starts March 20" |
-| finance | Bills, account reminders (NOT passwords!) | "Car insurance renews in June" |
-| general | Everything else | "WiFi password is on the fridge" |
+### Step 1: Understand what goes in the vault
 
-**IMPORTANT:** Never store actual passwords, SSNs, or financial account numbers.
-Store REMINDERS about where to find them, not the sensitive data itself.
+Your vault stores any text-based personal information. Good candidates:
+
+- **Medical**: Doctor's notes, medication lists, allergy info, insurance details
+- **Work**: Performance reviews, certifications, reference letters, project notes
+- **Personal**: Emergency contacts, family info, important dates, personal goals
+- **Financial**: Account summaries, budget notes, tax info (not passwords or account numbers)
+- **Legal**: Contract summaries, warranty info, legal contacts
+
+**Keep it focused.** One topic per document works best. "Mom's medication list" is better than "everything about mom."
+
+### Step 2: Store documents with vault_add
+
+Each vault entry needs two things:
+- **content**: The actual text of your document
+- **category**: What type it is (medical, work, personal, etc.)
+
+Optional but helpful:
+- **title**: A short name like "Dr. Smith Visit - January 2026"
+- **tags**: Comma-separated labels for extra filtering
+
+The system embeds your document using the same AI model that powers search. Once stored, it's findable by meaning.
+
+### Step 3: Search your vault semantically
+
+This is where it gets useful. With `vault_search`, you type a question or topic in plain English:
+- "What medications am I taking?" finds your medication list
+- "Work performance feedback" finds your review documents
+- "Emergency contacts for the kids" finds your family notes
+
+You can also filter by category — search only medical docs, only work docs, etc.
+
+### Step 4: Check your vault's organization
+
+`vault_list_categories` shows you what's in your vault at a glance. If you stored a medical doc, a work doc, and a personal doc, you'll see three categories with their counts. Helps you know what's covered and what's missing.
 
 ---
 
-## After the Exercise
+## THE PATTERN
 
-Once you run the exercise, you'll have a working personal vault with sample data.
-In Module 3.2, you'll learn to ASK your vault questions in plain English —
-"When is Aunt Sarah's birthday?" and get instant answers.
+```
+YOUR INFO  →  CATEGORIZE  →  STORE  →  SEARCH
+ (text)      (medical/work)  (vault)   (semantic)
+```
 
-Your vault. Your data. Your machine. Nobody else's.
+This is the same embed-and-search pattern from Phase 2, but now it's YOUR personal data instead of business docs. Same engine, different fuel.
+
+---
+
+## WHAT YOU PROVED
+
+- You can store personal documents in a private AI vault
+- Semantic search finds documents by meaning, not just keywords
+- Category tags keep your vault organized
+- Your data stays local — never leaves your machine
+- You built the foundation for asking questions (Module 3.2), generating drafts (Module 3.3), and auditing access (Module 3.4)
+
+**Next:** Run `exercise.bat` to load your private vault.

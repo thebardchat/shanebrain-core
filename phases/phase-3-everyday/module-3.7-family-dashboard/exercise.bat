@@ -1,216 +1,234 @@
 @echo off
 setlocal enabledelayedexpansion
-title Phase 3.7 // The Family Dashboard
-color 0B
+title Module 3.7 Exercise — Family Dashboard (Capstone)
+
+:: ============================================================
+:: MODULE 3.7 EXERCISE: Family Dashboard (Phase 3 Capstone)
+:: Goal: Build a complete view of your personal AI system —
+::       services, knowledge, relationships, and live chat
+:: Time: ~20 minutes
+:: Prerequisites: Modules 3.1, 3.5
+:: ============================================================
+
+set "MCP_CALL=%~dp0..\..\..\shared\utils\mcp-call.py"
+set "TEMP_DIR=%TEMP%\module-3.7"
 
 echo.
-echo  ============================================================
-echo       THE FAMILY DASHBOARD
-echo       Your Personal AI Toolkit
-echo  ============================================================
+echo  ======================================================
+echo   MODULE 3.7 EXERCISE: Family Dashboard
+echo   Phase 3 Capstone
+echo  ======================================================
+echo.
+echo   This is it. Everything you built across Phase 3
+echo   comes together in one exercise. Four tasks. Full
+echo   picture of your personal AI system.
+echo.
+echo  ------------------------------------------------------
 echo.
 
-REM ============================================================
-REM SYSTEM HEALTH CHECK
-REM ============================================================
-echo  [HEALTH CHECK]
+:: --- PRE-FLIGHT: MCP Server ---
+echo  [PRE-FLIGHT] Checking MCP server...
 echo.
 
-set HEALTH_OK=1
+python "%MCP_CALL%" system_health > "%TEMP_DIR%\preflight.json" 2>nul
+if %errorlevel% NEQ 0 (
+    echo  [91m   X MCP server not reachable at localhost:8100[0m
+    echo     Fix: Make sure the MCP server container is running.
+    echo     Run: shared\utils\mcp-health-check.bat
+    pause
+    exit /b 1
+)
+echo  [92m   OK — MCP server responding[0m
+echo.
 
-echo  Checking Weaviate...
-curl -s http://localhost:8080/v1/.well-known/ready >nul 2>&1
-if errorlevel 1 (
-    echo  [DOWN] Weaviate is NOT running
-    set HEALTH_OK=0
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+
+:: ============================================================
+:: TASK 1: System Overview
+:: ============================================================
+echo  ------------------------------------------------------
+echo.
+echo  [TASK 1/4] System Overview — Full Infrastructure Check
+echo.
+echo   Every morning, the foreman checks the yard before the
+echo   crew rolls out. Services running? Equipment ready?
+echo   Materials stocked? This is that check for your AI.
+echo.
+
+python "%MCP_CALL%" system_health > "%TEMP_DIR%\health.json" 2>nul
+
+if %errorlevel% EQU 0 (
+    echo  [92m   OK — System health retrieved[0m
+    echo.
+    echo   +--------------------------------------------------+
+    echo   ^|  SYSTEM STATUS                                    ^|
+    echo   +--------------------------------------------------+
+    echo.
+    echo   SERVICES:
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\health.json')); svcs=d.get('services',{}); [print(f'     {k:15s} {v[\"status\"] if isinstance(v,dict) else v}') for k,v in svcs.items()]" 2>nul
+    echo.
+    echo   COLLECTIONS:
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\health.json')); cols=d.get('collections',{}); [print(f'     {k:20s} {v:>5} objects') for k,v in cols.items()]; print(); print(f'     {\"TOTAL\":20s} {sum(cols.values()):>5} objects')" 2>nul
+    echo.
+    echo   +--------------------------------------------------+
 ) else (
-    echo  [UP]   Weaviate - http://localhost:8080
+    echo  [91m   FAIL — Could not retrieve system health[0m
+    echo     Check hints.md for troubleshooting.
 )
+echo.
 
-echo  Checking Ollama...
-curl -s http://localhost:11434/api/tags >nul 2>&1
-if errorlevel 1 (
-    echo  [DOWN] Ollama is NOT running
-    set HEALTH_OK=0
+:: ============================================================
+:: TASK 2: Knowledge Check
+:: ============================================================
+echo  ------------------------------------------------------
+echo.
+echo  [TASK 2/4] Knowledge Check — What Does Your AI Know?
+echo.
+echo   Search for "family" and see what comes back. This is
+echo   what your AI draws from when you ask it questions
+echo   about the people and things that matter most.
+echo.
+
+python "%MCP_CALL%" search_knowledge "{\"query\":\"family\"}" > "%TEMP_DIR%\knowledge.json" 2>nul
+
+if %errorlevel% EQU 0 (
+    echo  [92m   OK — Knowledge search returned results[0m
+    echo.
+    echo   +--------------------------------------------------+
+    echo   ^|  KNOWLEDGE: "family"                              ^|
+    echo   +--------------------------------------------------+
+    echo.
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\knowledge.json')); results=d.get('results',d.get('knowledge',[])); entries=results if isinstance(results,list) else [results]; [print(f'     [{e.get(\"category\",\"general\")}] {str(e.get(\"content\",e.get(\"text\",\"\")))[:100]}...') for e in entries[:5]]" 2>nul
+    echo.
+    echo   +--------------------------------------------------+
 ) else (
-    echo  [UP]   Ollama  - http://localhost:11434
+    echo  [91m   FAIL — Could not search knowledge base[0m
+    echo     Check hints.md for troubleshooting.
 )
+echo.
 
-if !HEALTH_OK!==0 (
+:: ============================================================
+:: TASK 3: Social View
+:: ============================================================
+echo  ------------------------------------------------------
+echo.
+echo  [TASK 3/4] Social View — Your Relationship Network
+echo.
+echo   Your AI tracks the people in your life. Friend
+echo   profiles with context and connection strength.
+echo   This is who your AI knows about.
+echo.
+
+python "%MCP_CALL%" get_top_friends > "%TEMP_DIR%\friends.json" 2>nul
+
+if %errorlevel% EQU 0 (
+    echo  [92m   OK — Friend profiles retrieved[0m
     echo.
-    echo  ^!WARNING: Some services are down. Tools may not work fully.
+    echo   +--------------------------------------------------+
+    echo   ^|  RELATIONSHIP NETWORK                             ^|
+    echo   +--------------------------------------------------+
+    echo.
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\friends.json')); friends=d.get('friends',d.get('results',[])); entries=friends if isinstance(friends,list) else [friends]; [print(f'     {e.get(\"name\",\"Unknown\"):20s} strength: {e.get(\"relationship_strength\",e.get(\"strength\",\"?\"))}') for e in entries[:10] if isinstance(e,dict)]" 2>nul
+    echo.
+    echo   +--------------------------------------------------+
+    echo.
+    echo   Your AI remembers the people you told it about.
+    echo   The more context you give, the better it serves you.
+) else (
+    echo  [93m   WARNING — Could not retrieve friend profiles[0m
+    echo     FriendProfile collection may be empty. That's OK
+    echo     for now — you can add profiles later.
 )
-
 echo.
 
-REM ============================================================
-REM VAULT STATS
-REM ============================================================
-echo  [VAULT STATS]
+:: ============================================================
+:: TASK 4: Personal AI Conversation
+:: ============================================================
+echo  ------------------------------------------------------
+echo.
+echo  [TASK 4/4] Talk to Your AI — The Final Proof
+echo.
+echo   This is the moment. You're going to ask your AI to
+echo   summarize what it knows about you and your system.
+echo   It will search its knowledge, pull context from your
+echo   vault, and generate a real response.
+echo.
+echo   Give it a moment — Ollama is thinking...
 echo.
 
-python -c "
-import urllib.request, json
+python "%MCP_CALL%" chat_with_shanebrain "{\"message\":\"Give me a summary of what you know about me and my system. What data do you have, what can you help me with, and what should I focus on next?\"}" > "%TEMP_DIR%\chat.json" 2>nul
 
-collections = ['PersonalDoc', 'PersonalDraft', 'SecurityLog', 'DailyNote', 'PrivacyAudit']
-total = 0
-
-for coll in collections:
-    try:
-        req = urllib.request.Request(
-            'http://localhost:8080/v1/graphql',
-            data=json.dumps({
-                'query': '{ Aggregate { ' + coll + ' { meta { count } } } }'
-            }).encode('utf-8'),
-            headers={'Content-Type': 'application/json'},
-            method='POST'
-        )
-        resp = urllib.request.urlopen(req)
-        result = json.loads(resp.read())
-        count = result['data']['Aggregate'][coll][0]['meta']['count']
-        total += count
-        bar = '#' * min(count, 30)
-        print(f'  {coll:20s} {bar} ({count})')
-    except:
-        print(f'  {coll:20s} [not created yet]')
-
-print(f'  {\"\":20s} -----')
-print(f'  {\"TOTAL\":20s} {total} objects in your vaults')
-"
-
-echo.
-echo  ============================================================
-echo       FAMILY DASHBOARD MENU
-echo  ============================================================
-echo.
-
-:DASHBOARD_MENU
-echo   Personal AI Tools:
-echo     1. Your Private Vault   (add/view personal documents)
-echo     2. Ask Your Vault       (personal Q^&A)
-echo     3. Write It Right       (writing assistant)
-echo     4. Lock It Down         (security check)
-echo     5. Daily Briefing       (journal + daily summary)
-echo     6. Digital Footprint    (privacy audit)
-echo.
-echo   System:
-echo     7. Refresh health check
-echo     8. Show vault stats
-echo     9. Exit dashboard
-echo.
-
-set "DCHOICE="
-set /p "DCHOICE=  Choose (1-9): "
-
-if "!DCHOICE!"=="1" (
+if %errorlevel% EQU 0 (
+    echo  [92m   OK — ShaneBrain responded[0m
     echo.
-    echo  Launching Your Private Vault...
-    call "%~dp0..\module-3.1-your-private-vault\exercise.bat"
+    echo   +--------------------------------------------------+
+    echo   ^|  YOUR AI SAYS:                                    ^|
+    echo   +--------------------------------------------------+
     echo.
-    goto DASHBOARD_MENU
+    python -c "import json; d=json.load(open(r'%TEMP_DIR%\chat.json')); text=d.get('response',d.get('text',d.get('message',str(d)))); print('    ',text[:800])" 2>nul
+    echo.
+    echo   +--------------------------------------------------+
+) else (
+    echo  [91m   FAIL — Could not chat with ShaneBrain[0m
+    echo     Ollama may need time to load. Try again in 30 seconds.
+    echo     Check hints.md for troubleshooting.
 )
-
-if "!DCHOICE!"=="2" (
-    echo.
-    echo  Launching Ask Your Vault...
-    call "%~dp0..\module-3.2-ask-your-vault\exercise.bat"
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="3" (
-    echo.
-    echo  Launching Write It Right...
-    call "%~dp0..\module-3.3-write-it-right\exercise.bat"
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="4" (
-    echo.
-    echo  Launching Lock It Down...
-    call "%~dp0..\module-3.4-lock-it-down\exercise.bat"
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="5" (
-    echo.
-    echo  Launching Daily Briefing...
-    call "%~dp0..\module-3.5-daily-briefing\exercise.bat"
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="6" (
-    echo.
-    echo  Launching Digital Footprint...
-    call "%~dp0..\module-3.6-digital-footprint\exercise.bat"
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="7" (
-    echo.
-    echo  [HEALTH CHECK]
-    curl -s http://localhost:8080/v1/.well-known/ready >nul 2>&1
-    if errorlevel 1 (echo  [DOWN] Weaviate) else (echo  [UP]   Weaviate)
-    curl -s http://localhost:11434/api/tags >nul 2>&1
-    if errorlevel 1 (echo  [DOWN] Ollama) else (echo  [UP]   Ollama)
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="8" (
-    echo.
-    python -c "
-import urllib.request, json
-collections = ['PersonalDoc', 'PersonalDraft', 'SecurityLog', 'DailyNote', 'PrivacyAudit']
-total = 0
-for coll in collections:
-    try:
-        req = urllib.request.Request('http://localhost:8080/v1/graphql', data=json.dumps({'query': '{ Aggregate { ' + coll + ' { meta { count } } } }'}).encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')
-        resp = urllib.request.urlopen(req)
-        result = json.loads(resp.read())
-        count = result['data']['Aggregate'][coll][0]['meta']['count']
-        total += count
-        print(f'  {coll:20s} {count} objects')
-    except:
-        print(f'  {coll:20s} [not created]')
-print(f'  Total: {total} objects')
-"
-    echo.
-    goto DASHBOARD_MENU
-)
-
-if "!DCHOICE!"=="9" goto DASHBOARD_EXIT
-
-echo  Invalid choice. Try 1-9.
 echo.
-goto DASHBOARD_MENU
 
-:DASHBOARD_EXIT
+:: ============================================================
+:: PHASE 3 COMPLETE BANNER
+:: ============================================================
 echo.
-echo  ============================================================
-echo       PHASE 3 COMPLETE: EVERYDAY USERS
-echo  ============================================================
+echo  [92m  ======================================================[0m
+echo  [92m  ======================================================[0m
 echo.
-echo   Congratulations! You've built a complete personal AI toolkit:
+echo  [92m   ██████╗ ██╗  ██╗ █████╗ ███████╗███████╗    ██████╗ [0m
+echo  [92m   ██╔══██╗██║  ██║██╔══██╗██╔════╝██╔════╝    ╚════██╗[0m
+echo  [92m   ██████╔╝███████║███████║███████╗█████╗       █████╔╝[0m
+echo  [92m   ██╔═══╝ ██╔══██║██╔══██║╚════██║██╔══╝       ╚═══██╗[0m
+echo  [92m   ██║     ██║  ██║██║  ██║███████║███████╗    ██████╔╝[0m
+echo  [92m   ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝    ╚═════╝ [0m
 echo.
-echo     Your Private Vault   - Family knowledge base
-echo     Ask Your Vault       - Personal Q^&A
-echo     Write It Right       - Writing assistant
-echo     Lock It Down         - Security awareness
-echo     Daily Briefing       - Journal + planner
-echo     Digital Footprint    - Privacy audit
-echo     Family Dashboard     - This launcher
+echo  [92m    ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗     ███████╗████████╗███████╗[0m
+echo  [92m   ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║     ██╔════╝╚══██╔══╝██╔════╝[0m
+echo  [92m   ██║     ██║   ██║██╔████╔██║██████╔╝██║     █████╗     ██║   █████╗  [0m
+echo  [92m   ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██║     ██╔══╝     ██║   ██╔══╝  [0m
+echo  [92m   ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ███████╗███████╗   ██║   ███████╗[0m
+echo  [92m    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝   ╚═╝   ╚══════╝[0m
 echo.
-echo   FINAL SECURITY REMINDER:
-echo   Everything you just built runs on YOUR machine.
-echo   No subscriptions. No accounts. No data leaving your house.
-echo   Your family's AI is truly yours.
+echo  [92m  ======================================================[0m
+echo  [92m  ======================================================[0m
 echo.
-echo   Welcome to the future of personal AI.
+echo   You did it. Phase 3 is complete.
 echo.
+echo   Here's what you built — a personal AI that:
+echo.
+echo     [92m+[0m Stores your documents in a private vault
+echo     [92m+[0m Answers questions from your personal data
+echo     [92m+[0m Writes drafts using your context
+echo     [92m+[0m Locks down with security and privacy controls
+echo     [92m+[0m Journals your days and generates briefings
+echo     [92m+[0m Audits its own data footprint
+echo     [92m+[0m Knows your people and your story
+echo     [92m+[0m Talks to you about your life
+echo.
+echo   Phase 1 made you a BUILDER.
+echo   Phase 2 made you an OPERATOR.
+echo   Phase 3 made you an EVERYDAY USER.
+echo.
+echo   Your AI is no longer a project. It's a tool you use
+echo   every day — like a truck, a phone, or a good foreman.
+echo   It runs on YOUR hardware. It holds YOUR data. It
+echo   answers to YOU.
+echo.
+echo   Next: Phase 4 — LEGACY
+echo   Build something that outlasts you.
+echo.
+echo   Now run verify.bat to lock in your completion.
+echo.
+
+if exist "%TEMP_DIR%" rd /s /q "%TEMP_DIR%" 2>nul
+
 pause
+endlocal
 exit /b 0

@@ -1,82 +1,89 @@
-# Module 3.3: Write It Right
+# Module 3.3 — Write It Right
 
-## What You'll Build
-A personal writing assistant that drafts thank-you notes, school emails,
-church letters, sympathy cards, and family updates — using YOUR personal
-context from the vault so the messages sound like YOU, not a robot.
+## WHAT YOU'LL BUILD
 
-## Time: ~15 minutes
+An AI writing assistant that drafts emails and messages using YOUR vault as context. Instead of writing from scratch, the AI pulls your personal data — names, details, history — and writes drafts that sound like they came from someone who knows your situation.
 
-## Prerequisites
-- Module 3.1 complete (PersonalDoc vault with data)
-- Module 3.2 complete (vault Q&A working)
-- Ollama running with a chat model
-- Weaviate running on port 8080
-
-## What You'll Learn
-1. How to create message templates with different tones
-2. How AI pulls personal context to personalize messages
-3. How to store and retrieve your drafts
-4. **Security lesson**: AI writing tools learn your style — keep it local
+Module 3.2 taught the AI to answer questions. Now it writes for you. Like handing your notes to a sharp office manager and saying "draft me a reply to this."
 
 ---
 
-## The Security Lesson: Your Digital Voice
+## WHO THIS IS FOR
 
-When you use Grammarly, ChatGPT, or Google Docs AI to write:
-- The service learns HOW you write
-- It knows your vocabulary, your tone, your patterns
-- It can identify you by your writing style alone
-- This is called a "writing fingerprint"
-
-Companies building AI writing tools now have YOUR voice in their database.
-They know you write "Hey y'all" instead of "Hello everyone." They know
-you sign off with "God bless" instead of "Best regards."
-
-**When your writing assistant runs locally:**
-- Your writing style stays private
-- No company profiles your communication patterns
-- Your personal messages remain personal
-- YOUR voice belongs to YOU
+Anyone who writes emails, messages, or letters and wishes they had a first draft ready. Business owners replying to clients. Parents writing notes to schools. Workers sending updates to supervisors. If you spend time staring at a blank screen, this module cuts that time in half.
 
 ---
 
-## Message Types
+## KEY TERMS
 
-| Type | Use Case | Default Tone |
-|------|----------|-------------|
-| thankyou | Thank-you notes for gifts, help, kindness | warm |
-| email | Emails to teachers, coaches, businesses | formal |
-| letter | Church communications, formal letters | formal |
-| card | Sympathy cards, birthday cards, get-well | warm |
+- **draft_create**: The MCP tool that generates a writing draft. You give it a prompt (what to write about), a type (email, message, post, letter, general), and it produces a draft. Optionally pulls context from your vault to make the draft personal and specific.
 
-## Tone Options
+- **draft_search**: Searches your saved drafts by meaning. Wrote an email last week about scheduling? Search "scheduling" and find it, even if the subject line was different.
 
-| Tone | Style | Example |
-|------|-------|---------|
-| warm | Friendly, personal, heartfelt | "We just wanted to say how much..." |
-| formal | Professional, respectful, proper | "I am writing to express..." |
-| casual | Relaxed, conversational, brief | "Hey! Just wanted to drop a note..." |
+- **Draft Type**: The format of writing you want. Types include:
+  - `email` — formal structure with subject, greeting, body, sign-off
+  - `message` — casual, short, text-message style
+  - `post` — social media or announcement format
+  - `letter` — formal letter structure
+  - `general` — free-form, no specific format
+
+- **Vault Context**: When `draft_create` runs, it can search your vault for relevant information and weave it into the draft. Writing an email about your work performance? It pulls your review document. That's vault context at work.
 
 ---
 
-## How It Works
+## THE LESSON
 
-1. You pick a message type (thank-you, email, letter, card)
-2. You pick a tone (warm, formal, casual)
-3. You describe what the message is about
-4. The AI pulls relevant context from your PersonalDoc vault
-5. It drafts a personalized message
-6. The draft is saved to a `PersonalDraft` collection for later use
+### Step 1: Understand context-aware drafting
+
+Regular AI writing tools generate generic text. "Write an email about a doctor's appointment" gives you a template. Boring. Useless.
+
+Context-aware drafting is different. The AI:
+1. Reads your prompt ("Write an email to reschedule my checkup")
+2. Searches your vault for related documents (finds your medical notes)
+3. Pulls specific details (Dr. Martinez, Valley Health Clinic, July appointment)
+4. Writes a draft with YOUR details already filled in
+
+The result reads like you wrote it, because it used your information.
+
+### Step 2: Create an email draft
+
+The `draft_create` tool takes:
+- **prompt**: What you want written. Be specific. "Email to my doctor's office to reschedule my July appointment to August" beats "email about appointment."
+- **draft_type**: Set to "email" for proper email formatting
+- **use_vault_context**: Leave this true (default) to pull from your vault
+
+The more specific your prompt, the better the draft. Like giving instructions to a new hire — "pour the footer for lot 12" works better than "go do concrete stuff."
+
+### Step 3: Create a message draft
+
+Messages are shorter and more casual than emails. Same tool, different type:
+- **draft_type**: Set to "message" for text/chat style
+- The AI keeps it brief and conversational
+- Vault context still applies — personal details get woven in
+
+### Step 4: Search your saved drafts
+
+Every draft you create gets saved and becomes searchable. Use `draft_search` to find past drafts by topic. Wrote a client email last month? Search "client proposal" and pull it up. Modify and resend instead of starting from scratch.
 
 ---
 
-## After the Exercise
+## THE PATTERN
 
-You'll have a working writing assistant with saved drafts. Every message
-it generates uses YOUR context — it knows your family members' names,
-your style preferences, and your personal details because they're in
-YOUR vault on YOUR machine.
+```
+PROMPT  →  SEARCH VAULT  →  PULL CONTEXT  →  GENERATE DRAFT
+ (text)    (vault docs)     (relevant info)   (draft_create)
+```
 
-Module 3.4 teaches you to LOCK DOWN your machine — understanding what's
-running and keeping your digital life secure.
+Same RAG pipeline from Module 3.2, but the output is a polished draft instead of a Q&A answer. Retrieval powers everything.
+
+---
+
+## WHAT YOU PROVED
+
+- You can generate personalized email drafts with vault context
+- The AI pulls your real details (names, dates, specifics) into drafts
+- Different draft types (email, message) produce different formats
+- Saved drafts are searchable — write once, find forever
+- Context-aware writing beats generic templates every time
+
+**Next:** Run `exercise.bat` to start writing with AI assistance.
