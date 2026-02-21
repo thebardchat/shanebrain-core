@@ -35,7 +35,7 @@ def check_ollama() -> dict:
 def check_gateway() -> dict:
     """Check Angel Cloud Gateway."""
     try:
-        resp = requests.get(f"{GATEWAY_HOST}/health", timeout=5)
+        resp = requests.get(f"{GATEWAY_HOST}/", timeout=5)
         if resp.status_code == 200:
             return {"status": "ok", "service": "gateway"}
         return {"status": "down", "service": "gateway", "http_status": resp.status_code}
