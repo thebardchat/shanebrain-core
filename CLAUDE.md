@@ -1,7 +1,7 @@
 # CLAUDE.md - ShaneBrain Core Project Context
 
-> **Updated:** February 15, 2026
-> **Version:** 2.2
+> **Updated:** February 20, 2026
+> **Version:** 2.3
 > **Owner:** Shane Brazelton (SRM Dispatch, Alabama)
 > **Repo:** github.com/thebardchat/shanebrain-core
 
@@ -27,6 +27,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 | Weaviate | 8080 (REST), 50051 (gRPC) | Docker: shanebrain-weaviate |
 | Open WebUI | 3000 | Docker: open-webui |
 | Portainer CE | 9000 | Docker: portainer |
+| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 19 tools via streamable HTTP |
 | Angel Cloud Gateway | 4200 | systemd: angel-cloud-gateway (FastAPI/uvicorn) |
 | GitHub Poller | — | systemd timer: angel-cloud-github-poller (every 15 min) |
 | Social Bot | — | systemd: shanebrain-social |
@@ -43,7 +44,11 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - scripts/ — Python scripts
 - scripts/weaviate_helpers.py — Weaviate CRUD (Conversation, LegacyKnowledge, CrisisLog, SocialKnowledge, FriendProfile)
 - scripts/import_rag_to_weaviate.py — RAG ingestion into Weaviate
-- weaviate-config/docker-compose.yml — Docker config
+- weaviate-config/docker-compose.yml — Docker config (Weaviate + MCP server)
+- mcp-server/server.py — ShaneBrain MCP server (19 tools: knowledge, chat, vault, notes, drafts, security, health)
+- mcp-server/weaviate_bridge.py — Docker-aware WeaviateHelper for MCP container
+- mcp-server/health.py — Service health checks (Weaviate, Ollama, Gateway)
+- phases/ — AI-Trainer-MAX training modules (Phase 1-3 complete, Phase 4 planned)
 - bot/ — Discord ShaneBrain bot (v5.4 with Weaviate harvesting)
 - arcade/ — Angel Arcade revenue bot
 - social/ — Facebook social bot with Weaviate knowledge harvesting
@@ -70,6 +75,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 | Loudon/DeSarro | loudon-desarro | Active | 50,000 SF athletic complex 3D visualizations |
 | Mini-ShaneBrain | mini-shanebrain | DEPRECATED | Merged into shanebrain-core/social/ (Feb 15) |
 | Angel Cloud Gateway | (in shanebrain-core/angel-cloud/) | Active | Front door — registration, login, angel progression, streaming chat, community leaderboard, Discord + GitHub cross-platform point system |
+| AI-Trainer-MAX | AI-Trainer-MAX | Active | Modular AI training platform — 19 modules across 3 phases (Builders, Operators, Everyday Users) |
 | Angel Arcade | (in shanebrain-core) | Active | Discord economy/casino bot |
 | Legacy AI | Planned | Planned | Personal "TheirNameBrain" for each family member |
 | LogiBot | Planned | Planned | SRM Dispatch automation |
@@ -84,6 +90,8 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - Use weaviate-client v4 for all Weaviate interactions
 - Ollama endpoint: http://localhost:11434
 - Weaviate endpoint: http://localhost:8080
+- MCP server endpoint: http://localhost:8100/mcp (streamable HTTP)
+- Weaviate collections (10): LegacyKnowledge, Conversation, FriendProfile, SocialKnowledge, CrisisLog, PersonalDoc, DailyNote, PersonalDraft, SecurityLog, PrivacyAudit
 - ALWAYS use nofail in /etc/fstab entries
 - System username is shanebrain (not shane)
 
