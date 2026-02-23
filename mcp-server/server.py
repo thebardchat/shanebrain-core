@@ -212,14 +212,14 @@ def chat_with_shanebrain(message: str) -> str:
             system += f"\n\nRELEVANT KNOWLEDGE FROM MEMORY:\n{context}\n\nUse this knowledge to answer. If it doesn't help, say you don't know."
 
         # Generate via Ollama
-        client = ollama.Client(host=OLLAMA_HOST)
+        client = ollama.Client(host=OLLAMA_HOST, timeout=600)
         response = client.chat(
             model=OLLAMA_MODEL,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": message},
             ],
-            options={"temperature": 0.3, "num_predict": 300},
+            options={"temperature": 0.3, "num_predict": 100},
             keep_alive="10m",
         )
 
@@ -415,14 +415,14 @@ def daily_briefing() -> str:
             note_texts.append(f"[{date} - {ntype}] {content}")
 
         notes_block = "\n".join(note_texts)
-        client = ollama.Client(host=OLLAMA_HOST)
+        client = ollama.Client(host=OLLAMA_HOST, timeout=600)
         response = client.chat(
             model=OLLAMA_MODEL,
             messages=[
                 {"role": "system", "content": "You are ShaneBrain. Summarize these daily notes into a brief daily briefing. Be concise — bullet points preferred."},
                 {"role": "user", "content": f"Here are recent notes:\n\n{notes_block}\n\nGive me a daily briefing."},
             ],
-            options={"temperature": 0.3, "num_predict": 300},
+            options={"temperature": 0.3, "num_predict": 100},
             keep_alive="10m",
         )
         return json.dumps({
@@ -463,14 +463,14 @@ def draft_create(prompt: str, draft_type: str = "general", use_vault_context: bo
             ctx = "\n---\n".join(context_chunks)
             system += f"\n\nRelevant context from vault:\n{ctx}"
 
-        client = ollama.Client(host=OLLAMA_HOST)
+        client = ollama.Client(host=OLLAMA_HOST, timeout=600)
         response = client.chat(
             model=OLLAMA_MODEL,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": f"Draft a {draft_type}: {prompt}"},
             ],
-            options={"temperature": 0.5, "num_predict": 500},
+            options={"temperature": 0.5, "num_predict": 150},
             keep_alive="10m",
         )
 
