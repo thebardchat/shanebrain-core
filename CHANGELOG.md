@@ -8,6 +8,7 @@ All notable changes to ShaneBrain Core infrastructure and services.
 - Ollama updated 0.15.6 → 0.17.7
 - Weaviate updated 1.28.0 → 1.36.2 (data auto-migrated, 17 collections / 251 objects intact)
 - Open WebUI updated to latest `main` image (1.4 GB old layers pruned)
+- Portainer CE pulled fresh `latest` image
 
 ### Storage Optimization
 - **SD card: 92% → 56%** (2.5 GB → 13 GB free)
@@ -32,6 +33,16 @@ All notable changes to ShaneBrain Core infrastructure and services.
 ### Containers
 - Open WebUI + Portainer recreated after containerd move (data preserved via RAID volumes)
 - All 4 containers healthy: Weaviate, MCP, Open WebUI, Portainer
+
+### Final System State
+- **Hardware:** Pi 5 — 40.6°C, 5.1 GB RAM used / 15 GB, load 2.5
+- **Storage:** SD 56% (13 GB free) | RAID 2% (1.7 TB free) | 8TB 1% (7.3 TB free)
+- **RAID:** [UU] both NVMe drives healthy
+- **Services:** 6/6 systemd active (Ollama, Discord, Arcade, Social, Gateway, Rojo)
+- **Containers:** 4/4 healthy (Weaviate 1.36.2, MCP, Open WebUI, Portainer CE)
+- **Ollama:** v0.17.7 — 4 models (shanebrain-3b, llama3.2:3b, llama3.2:1b, nomic-embed-text)
+- **Weaviate:** v1.36.2 — 17 collections, 251 objects
+- **Endpoints:** Gateway :4200 (200), Open WebUI :3000 (200), Portainer :9000 (307), Weaviate :8080 (ready)
 
 ---
 
