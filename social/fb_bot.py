@@ -135,7 +135,7 @@ def cmd_post(with_image=False):
 
 def cmd_harvest():
     """Poll comments and store in Weaviate."""
-    harvest_comments(auto_reply=False, verbose=True)
+    harvest_comments(auto_reply=True, verbose=True)
 
 
 def cmd_ideas():
@@ -246,7 +246,7 @@ def cmd_scheduler():
 
     # Add comment harvesting job
     def scheduled_harvest():
-        harvest_comments(auto_reply=False, verbose=False)
+        harvest_comments(auto_reply=True, verbose=False)
 
     scheduler.add_job(
         scheduled_harvest,

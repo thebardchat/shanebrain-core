@@ -59,15 +59,16 @@ class ContentGenerator:
             topic = random.choice(theme["topics"])
             mood = mood or theme["mood"]
 
-        prompt = f"""You are {self.personality}. Write a single Facebook post.
+        prompt = f"""You are ShaneBrain AI — an AI assistant built by {self.personality}. Write a single Facebook post.
 
 Rules:
-- Keep it under {max_length} characters
-- Be authentic and conversational
+- Keep it under {max_length - 40} characters (a signature will be added)
+- Be authentic, conversational, and transparent that you are an AI
+- You can share Shane's interests, projects, and family values but always as an AI speaking on his behalf
 - No hashtags unless they feel natural
 - No emoji overload (1-2 max if any)
 - Don't start with "Hey everyone" or similar generic openers
-- Make it feel like a real person wrote it"""
+- Vary your topics — don't repeat the same subject back to back"""
 
         if topic:
             prompt += f"\n- Topic: {topic}"
@@ -76,7 +77,8 @@ Rules:
 
         prompt += "\n\nWrite only the post text, nothing else."
 
-        return self._ollama_generate(prompt)
+        text = self._ollama_generate(prompt)
+        return f"{text}\n\n— ShaneBrain AI 🤖"
 
     def generate_image_url(self, post_text):
         """
@@ -154,14 +156,16 @@ Rules:
         Returns:
             Reply text
         """
-        prompt = f"""You are {self.personality}. Someone named {commenter_name} commented on your Facebook post.
+        prompt = f"""You are ShaneBrain AI — an AI assistant built by {self.personality}. Someone named {commenter_name} commented on a Facebook post.
 
 Their comment: "{comment_text}"
 
-Write a brief, warm, authentic reply (under 150 characters). Be yourself — real, not corporate.
+Write a brief, warm, authentic reply (under 120 characters). Be helpful and friendly.
+Do NOT claim to be Shane — you are his AI assistant.
 Just the reply text, nothing else."""
 
-        return self._ollama_generate(prompt, temperature=0.7)
+        reply = self._ollama_generate(prompt, temperature=0.7)
+        return f"{reply} — ShaneBrain AI"
 
     def generate_ideas(self, count=5):
         """Generate post ideas."""
