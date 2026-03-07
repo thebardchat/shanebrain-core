@@ -4,6 +4,11 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-07 — Security Logging & Hardening
 
+### Gateway Test Suite
+- Created `tests/test_gateway.py` — 22 smoke tests covering health, registration, login, rate limiting, sessions, password changes
+- Uses temp SQLite DB + mocked Weaviate/Ollama — no live services needed
+- Run: `pytest tests/test_gateway.py -v`
+
 ### Login Rate Limiting
 - 5 failed login attempts per IP in 15 minutes triggers lockout (HTTP 429)
 - 3 registration attempts per IP per hour max
