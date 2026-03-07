@@ -17,7 +17,7 @@ services:
   # Weaviate Vector Database (ONLY container needed)
   # ===========================================================================
   weaviate:
-    image: semitechnologies/weaviate:1.28.0
+    image: semitechnologies/weaviate:1.36.2
     container_name: shanebrain-weaviate
     restart: unless-stopped
     ports:
