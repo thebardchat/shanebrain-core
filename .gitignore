@@ -15,6 +15,7 @@
 .env.production
 .env.*.local
 *.env
+*.env.txt
 
 # Credential files
 credentials.json
@@ -62,6 +63,15 @@ private/
 crisis-logs/
 *.crisis
 crisis_*.json
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# State/runtime files
+*_state.json
+github_poller_state.json
 
 # =============================================================================
 # LOCAL DATABASE DATA (TOO LARGE FOR GIT)
@@ -247,6 +257,15 @@ temp/
 !scripts/*.py
 !scripts/*.sh
 !scripts/*.bat
+
+# Training module output (generated per-user)
+phases/*/module-*/knowledge/
+phases/*/module-*/output/
+phases/*/module-*/business-docs/
+phases/progress/
+
+# Windows path artifacts
+arcade/D\:*
 
 # =============================================================================
 # END OF GITIGNORE

@@ -1,13 +1,13 @@
 # CLAUDE.md - ShaneBrain Core Project Context
 
-> **Updated:** February 20, 2026
-> **Version:** 2.3
+> **Updated:** March 6, 2026
+> **Version:** 2.4
 > **Owner:** Shane Brazelton (SRM Dispatch, Alabama)
 > **Repo:** github.com/thebardchat/shanebrain-core
 
 ## What Is This Project?
 
-ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry Pi 5. Python stack with Ollama llama3.2:1b for local LLM, Weaviate for vector/RAG storage, Open WebUI for chat interface. Local-first, cloud-backup — everything runs offline with cloud as optional redundancy.
+ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry Pi 5. Python 3.13 stack with Ollama 0.17.7 (llama3.2:3b, shanebrain-3b) for local LLM, Weaviate for vector/RAG storage, Open WebUI for chat interface. Local-first, cloud-backup — everything runs offline with cloud as optional redundancy.
 
 ## Hardware
 
@@ -23,11 +23,11 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 
 | Service | Port | Container |
 |---------|------|-----------|
-| Ollama | 11434 | Native (systemd) — llama3.2:1b, llama3.2:3b, nomic-embed-text |
+| Ollama | 11434 | Native (systemd) — shanebrain-3b, llama3.2:3b, llama3.2:1b, nomic-embed-text |
 | Weaviate | 8080 (REST), 50051 (gRPC) | Docker: shanebrain-weaviate |
 | Open WebUI | 3000 | Docker: open-webui |
 | Portainer CE | 9000 | Docker: portainer |
-| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 19 tools via streamable HTTP |
+| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 19 tools via SSE |
 | Angel Cloud Gateway | 4200 | systemd: angel-cloud-gateway (FastAPI/uvicorn) |
 | GitHub Poller | — | systemd timer: angel-cloud-github-poller (every 15 min) |
 | Social Bot | — | systemd: shanebrain-social |
@@ -83,15 +83,15 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 ## Guidelines
 
 - Optimize everything for ARM64 (aarch64) architecture
-- Python 3.11+, keep scripts modular and lean
+- Python 3.13, keep scripts modular and lean
 - Never suggest cloud dependencies unless explicitly asked
 - All data stays local on RAID
 - RAG.md is the source of truth for who Shane is
 - Use weaviate-client v4 for all Weaviate interactions
 - Ollama endpoint: http://localhost:11434
 - Weaviate endpoint: http://localhost:8080
-- MCP server endpoint: http://localhost:8100/mcp (streamable HTTP)
-- Weaviate collections (10): LegacyKnowledge, Conversation, FriendProfile, SocialKnowledge, CrisisLog, PersonalDoc, DailyNote, PersonalDraft, SecurityLog, PrivacyAudit
+- MCP server endpoint: http://localhost:8100/mcp (SSE)
+- Weaviate collections (17): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
 - ALWAYS use nofail in /etc/fstab entries
 - System username is shanebrain (not shane)
 
