@@ -1,7 +1,7 @@
 # CLAUDE.md - ShaneBrain Core Project Context
 
 > **Updated:** March 6, 2026
-> **Version:** 2.4
+> **Version:** 2.5
 > **Owner:** Shane Brazelton (SRM Dispatch, Alabama)
 > **Repo:** github.com/thebardchat/shanebrain-core
 
@@ -27,7 +27,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 | Weaviate | 8080 (REST), 50051 (gRPC) | Docker: shanebrain-weaviate |
 | Open WebUI | 3000 | Docker: open-webui |
 | Portainer CE | 9000 | Docker: portainer |
-| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 19 tools via SSE |
+| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 19 tools via SSE, /health endpoint |
 | Angel Cloud Gateway | 4200 | systemd: angel-cloud-gateway (FastAPI/uvicorn) |
 | GitHub Poller | — | systemd timer: angel-cloud-github-poller (every 15 min) |
 | Social Bot | — | systemd: shanebrain-social |
@@ -48,6 +48,8 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - mcp-server/server.py — ShaneBrain MCP server (19 tools: knowledge, chat, vault, notes, drafts, security, health)
 - mcp-server/weaviate_bridge.py — Docker-aware WeaviateHelper for MCP container
 - mcp-server/health.py — Service health checks (Weaviate, Ollama, Gateway)
+- scripts/weaviate_backup.sh — Daily Weaviate backup (cron 3:15 AM, 7-day retention)
+- scripts/backup.sh — Daily restic backup to 8TB external (cron 3:00 AM)
 - phases/ — AI-Trainer-MAX training modules (Phase 1-3 complete, Phase 4 planned)
 - bot/ — Discord ShaneBrain bot (v5.4 with Weaviate harvesting)
 - arcade/ — Angel Arcade revenue bot
@@ -90,8 +92,9 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - Use weaviate-client v4 for all Weaviate interactions
 - Ollama endpoint: http://localhost:11434
 - Weaviate endpoint: http://localhost:8080
-- MCP server endpoint: http://localhost:8100/mcp (SSE)
-- Weaviate collections (17): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
+- MCP server endpoint: http://localhost:8100/mcp (SSE), health: http://localhost:8100/health
+- Weaviate backups: daily at 3:15 AM to weaviate-config/backups/, 7-day retention
+- Weaviate collections (16 in MCP, 17 total — MultiTenantTest excluded): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
 - ALWAYS use nofail in /etc/fstab entries
 - System username is shanebrain (not shane)
 
@@ -131,7 +134,8 @@ curl http://localhost:4200/api/stats         # Public stats
 
 ## Security
 
-- NEVER commit `.env` files
+- NEVER commit `.env` files — all secrets (Facebook, Discord, Restic) live in `.env`
+- NEVER hardcode passwords in scripts — source from `.env`
 - NEVER paste connection strings in chat
 - Keep repos PRIVATE until production ready
 - Use Tailscale for remote access, not port forwarding

@@ -3,8 +3,11 @@
 # Backs up critical data to 8TB external drive
 # Run manually or via cron: 0 3 * * * /mnt/shanebrain-raid/shanebrain-core/scripts/backup.sh
 
-export RESTIC_REPOSITORY="/media/shane/ANGEL_CLOUD/shanebrain-backups"
-export RESTIC_PASSWORD="shanebrain-backup-2026"
+# Load credentials from .env (never hardcode secrets)
+set -a
+source /mnt/shanebrain-raid/shanebrain-core/.env
+set +a
+export RESTIC_REPOSITORY RESTIC_PASSWORD
 
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[$TIMESTAMP] Starting ShaneBrain backup..."
