@@ -4,8 +4,9 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-06 — System Maintenance & Optimization
 
-### Ollama
-- Updated 0.15.6 → 0.17.7
+### Service Updates
+- Ollama updated 0.15.6 → 0.17.7
+- Weaviate updated 1.28.0 → 1.36.2 (data auto-migrated, 17 collections / 251 objects intact)
 
 ### Storage Optimization
 - **SD card: 92% → 56%** (2.5 GB → 13 GB free)
