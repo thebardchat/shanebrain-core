@@ -242,7 +242,10 @@ def cmd_scheduler():
             log(f"Failed: {e}", "error")
             log_to_file("(generation/post failed)", status="FAILED", error=str(e))
 
-    scheduler.add_job(scheduled_post, trigger, id="post")
+    scheduler.add_job(
+        scheduled_post, trigger, id="post",
+        misfire_grace_time=60, coalesce=True,
+    )
 
     # Add comment harvesting job
     def scheduled_harvest():
@@ -252,6 +255,7 @@ def cmd_scheduler():
         scheduled_harvest,
         IntervalTrigger(minutes=config.FACEBOOK_COMMENT_POLL_MINUTES),
         id="harvest",
+        misfire_grace_time=120, coalesce=True,
     )
 
     log(f"Scheduler started.", "success")

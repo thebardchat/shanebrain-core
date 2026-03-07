@@ -4,6 +4,18 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-06 — System Maintenance & Optimization
 
+### Social Bot Stability Fix
+- Fixed burst post bug: added `misfire_grace_time=60` and `coalesce=True` to APScheduler jobs
+- Previously, every restart fired all "missed" cron triggers at once (15 burst posts in one incident)
+- Deleted 15 burst duplicate posts from Facebook
+- Bot now skips missed triggers older than 60 seconds on startup
+
+### Weaviate Automated Backups
+- Created `scripts/weaviate_backup.sh` — daily filesystem backup of all 16 collections
+- Keeps last 7 days of backups, auto-prunes older ones
+- Cron job at 3:15 AM daily (after existing restic backup at 3:00 AM)
+- Logs to `social/logs/weaviate-backup.log`
+
 ### MCP Server Fixes
 - Added HTTP `/health` endpoint (returns Weaviate + Ollama status, 200/503)
 - Added Docker healthcheck to MCP container in `docker-compose.yml`
