@@ -4,6 +4,16 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-07 — Security Logging & Hardening
 
+### Gateway Cleanup
+- Migrated `on_event("startup")` to FastAPI `lifespan` context manager (fixes deprecation warnings)
+- Purged 7 test security events from SecurityLog (brute-force testing artifacts)
+- Gateway port 4200 confirmed locked to LAN (192.168.0.0/16), Tailscale (100.64.0.0/10), and Docker network only
+- Social bot v2.0 dry-run verified: on-theme content, AI-signed, no drift
+
+### CLAUDE.md Count Updater
+- Created `scripts/update_claude_md_counts.py` — pulls live Weaviate counts and updates CLAUDE.md
+- Run: `python scripts/update_claude_md_counts.py`
+
 ### Gateway Test Suite
 - Created `tests/test_gateway.py` — 22 smoke tests covering health, registration, login, rate limiting, sessions, password changes
 - Uses temp SQLite DB + mocked Weaviate/Ollama — no live services needed

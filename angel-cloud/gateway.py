@@ -8,6 +8,7 @@ import re
 import time
 import secrets
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import json
@@ -23,7 +24,17 @@ from chat_engine import stream_response, log_chat
 
 START_TIME = time.time()
 
-app = FastAPI(title="Angel Cloud Gateway", docs_url="/api/docs", redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(app):
+    models.init_db()
+    cleaned = models.cleanup_expired_sessions()
+    if cleaned:
+        print(f"Cleaned up {cleaned} expired sessions")
+    yield
+
+
+app = FastAPI(title="Angel Cloud Gateway", docs_url="/api/docs", redoc_url=None, lifespan=lifespan)
 
 BASE_DIR = os.path.dirname(__file__)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
@@ -85,18 +96,6 @@ def _is_register_limited(ip: str) -> bool:
 
 def _record_registration(ip: str) -> None:
     _register_attempts[ip].append(time.time())
-
-
-# ---------------------------------------------------------------------------
-# Startup
-# ---------------------------------------------------------------------------
-
-@app.on_event("startup")
-def startup():
-    models.init_db()
-    cleaned = models.cleanup_expired_sessions()
-    if cleaned:
-        print(f"Cleaned up {cleaned} expired sessions")
 
 
 # ---------------------------------------------------------------------------
