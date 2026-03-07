@@ -7,6 +7,7 @@ import os
 import re
 import time
 import secrets
+from collections import defaultdict
 from datetime import datetime, timezone
 
 import json
@@ -44,6 +45,46 @@ def _get_current_user(request: Request) -> dict | None:
 
 def _check_bot_secret(x_bot_secret: str | None) -> bool:
     return BOT_INTERNAL_SECRET and x_bot_secret == BOT_INTERNAL_SECRET
+
+
+# ---------------------------------------------------------------------------
+# Rate Limiting (login brute-force protection)
+# ---------------------------------------------------------------------------
+LOGIN_MAX_ATTEMPTS = 5       # max failures per window
+LOGIN_WINDOW_SECONDS = 900   # 15 minutes
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+
+
+def _is_rate_limited(ip: str) -> bool:
+    """Check if an IP has exceeded the login attempt limit."""
+    now = time.time()
+    cutoff = now - LOGIN_WINDOW_SECONDS
+    # Prune old attempts
+    _login_attempts[ip] = [t for t in _login_attempts[ip] if t > cutoff]
+    return len(_login_attempts[ip]) >= LOGIN_MAX_ATTEMPTS
+
+
+def _record_failed_login(ip: str) -> None:
+    _login_attempts[ip].append(time.time())
+
+
+def _clear_failed_logins(ip: str) -> None:
+    _login_attempts.pop(ip, None)
+
+
+REGISTER_MAX_PER_HOUR = 3
+_register_attempts: dict[str, list[float]] = defaultdict(list)
+
+
+def _is_register_limited(ip: str) -> bool:
+    now = time.time()
+    cutoff = now - 3600
+    _register_attempts[ip] = [t for t in _register_attempts[ip] if t > cutoff]
+    return len(_register_attempts[ip]) >= REGISTER_MAX_PER_HOUR
+
+
+def _record_registration(ip: str) -> None:
+    _register_attempts[ip].append(time.time())
 
 
 # ---------------------------------------------------------------------------
@@ -188,6 +229,15 @@ def api_register(
     password: str = Form(...),
     password_confirm: str = Form(...),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+    if _is_register_limited(client_ip):
+        log_security_event("rate_limited", f"Registration rate limit hit from {client_ip}", severity="high")
+        return templates.TemplateResponse("register.html", {
+            "request": request, "user": None,
+            "error": "Too many registration attempts. Please try again later.",
+            "username": username, "email": email,
+        }, status_code=429)
+
     # Validation
     if not USERNAME_RE.match(username):
         return templates.TemplateResponse("register.html", {
@@ -224,6 +274,7 @@ def api_register(
     except Exception as e:
         print(f"Weaviate registration failed (non-fatal): {e}")
 
+    _record_registration(client_ip)
     log_security_event("registration", f"New user registered: {username} ({email})")
     log_privacy_event("account_creation", f"New account created: {username} ({email})")
 
@@ -241,15 +292,28 @@ def api_login(
     email: str = Form(...),
     password: str = Form(...),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+
+    if _is_rate_limited(client_ip):
+        log_security_event("rate_limited", f"Login rate limit hit for {email} from {client_ip}", severity="high")
+        return templates.TemplateResponse("login.html", {
+            "request": request, "user": None,
+            "error": "Too many failed attempts. Please try again in 15 minutes.",
+            "email": email, "success": None,
+        }, status_code=429)
+
     user = models.authenticate(email, password)
     if not user:
-        log_security_event("failed_login", f"Failed login for {email}", severity="medium")
+        _record_failed_login(client_ip)
+        remaining = LOGIN_MAX_ATTEMPTS - len(_login_attempts[client_ip])
+        log_security_event("failed_login", f"Failed login for {email} from {client_ip} ({remaining} attempts left)", severity="medium")
         return templates.TemplateResponse("login.html", {
             "request": request, "user": None,
             "error": "Invalid email or password.",
             "email": email, "success": None,
         }, status_code=401)
 
+    _clear_failed_logins(client_ip)
     token = secrets.token_hex(32)
     models.create_session(token, user["id"])
     response = RedirectResponse("/welcome", status_code=303)

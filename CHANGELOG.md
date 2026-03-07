@@ -4,6 +4,13 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-07 — Security Logging & Hardening
 
+### Login Rate Limiting
+- 5 failed login attempts per IP in 15 minutes triggers lockout (HTTP 429)
+- 3 registration attempts per IP per hour max
+- Rate limit events logged as severity=high in SecurityLog
+- Failed logins now include IP address and remaining attempts countdown
+- Successful login clears the attempt counter for that IP
+
 ### Angel Cloud Gateway Security Logging
 - Wired `log_security_event()` into gateway for: failed logins, registrations, password changes, unauthorized bot API calls
 - Events logged to Weaviate `SecurityLog` collection with event_type, source, severity, timestamp
