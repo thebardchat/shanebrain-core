@@ -2,6 +2,22 @@
 
 All notable changes to ShaneBrain Core infrastructure and services.
 
+## 2026-03-07 — Security Logging & Hardening
+
+### Angel Cloud Gateway Security Logging
+- Wired `log_security_event()` into gateway for: failed logins, registrations, password changes, unauthorized bot API calls
+- Events logged to Weaviate `SecurityLog` collection with event_type, source, severity, timestamp
+- All 4 bot-secret-protected endpoints now log unauthorized access attempts as severity=high
+
+### Restic Backup Mount Check
+- Added `mountpoint -q` check to `scripts/backup.sh` — skips backup if 8TB external not mounted
+- Prevents silent failures when drive is disconnected
+
+### Weaviate Helpers CLI
+- Updated CLI demo to list all 17 collections (was only showing 5)
+
+---
+
 ## 2026-03-06 — System Maintenance & Optimization
 
 ### Social Bot Hardening

@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 import models
-from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats, update_friend_level
+from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats, update_friend_level, log_security_event
 from chat_engine import stream_response, log_chat
 
 START_TIME = time.time()
@@ -223,6 +223,8 @@ def api_register(
     except Exception as e:
         print(f"Weaviate registration failed (non-fatal): {e}")
 
+    log_security_event("registration", f"New user registered: {username} ({email})")
+
     # Create session
     token = secrets.token_hex(32)
     _sessions[token] = user["id"]
@@ -239,6 +241,7 @@ def api_login(
 ):
     user = models.authenticate(email, password)
     if not user:
+        log_security_event("failed_login", f"Failed login for {email}", severity="medium")
         return templates.TemplateResponse("login.html", {
             "request": request, "user": None,
             "error": "Invalid email or password.",
@@ -324,7 +327,9 @@ def api_password(
     if len(new_password) < 8:
         return RedirectResponse("/profile?error=Password+must+be+at+least+8+characters", status_code=303)
     if not models.update_password(user["id"], current_password, new_password):
+        log_security_event("failed_password_change", f"Failed password change for {user['username']}", severity="medium")
         return RedirectResponse("/profile?error=Current+password+is+incorrect", status_code=303)
+    log_security_event("password_change", f"Password changed for {user['username']}")
     return RedirectResponse("/profile?success=Password+changed+successfully", status_code=303)
 
 
@@ -336,6 +341,7 @@ def api_password(
 async def api_create_link_code(request: Request, x_bot_secret: str | None = Header(None)):
     """Called by Discord bot to create a verification code."""
     if not _check_bot_secret(x_bot_secret):
+        log_security_event("unauthorized_api", "Unauthorized create-link-code attempt", severity="high")
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
     try:
@@ -389,6 +395,7 @@ def api_link_github(request: Request, github_username: str = Form(...)):
 async def api_discord_activity(request: Request, x_bot_secret: str | None = Header(None)):
     """Called by Discord bot to report user activity for points."""
     if not _check_bot_secret(x_bot_secret):
+        log_security_event("unauthorized_api", "Unauthorized discord-activity attempt", severity="high")
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
     try:
@@ -435,6 +442,7 @@ def api_create_roblox_link_code(request: Request):
 async def api_verify_roblox(request: Request, x_bot_secret: str | None = Header(None)):
     """Called by Roblox game server to verify a link code."""
     if not _check_bot_secret(x_bot_secret):
+        log_security_event("unauthorized_api", "Unauthorized verify-roblox attempt", severity="high")
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
     try:
@@ -466,6 +474,7 @@ async def api_verify_roblox(request: Request, x_bot_secret: str | None = Header(
 async def api_roblox_activity(request: Request, x_bot_secret: str | None = Header(None)):
     """Called by Roblox game server to report player activity for points."""
     if not _check_bot_secret(x_bot_secret):
+        log_security_event("unauthorized_api", "Unauthorized roblox-activity attempt", severity="high")
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
     try:

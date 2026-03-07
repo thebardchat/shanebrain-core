@@ -12,6 +12,12 @@ export RESTIC_REPOSITORY RESTIC_PASSWORD
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[$TIMESTAMP] Starting ShaneBrain backup..."
 
+# Check if 8TB external is mounted
+if ! mountpoint -q /media/shane/ANGEL_CLOUD; then
+  echo "[$TIMESTAMP] ERROR: /media/shane/ANGEL_CLOUD is not mounted. Skipping backup."
+  exit 1
+fi
+
 # Backup critical files
 restic backup \
   /mnt/shanebrain-raid/shanebrain-core/.env \

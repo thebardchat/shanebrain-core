@@ -84,6 +84,35 @@ def update_friend_level(email: str, username: str, new_level: str) -> bool:
         return False
 
 
+def log_security_event(event_type: str, detail: str, source: str = "gateway", severity: str = "low") -> bool:
+    """Log a security event to the SecurityLog collection in Weaviate.
+
+    Args:
+        event_type: e.g. failed_login, unauthorized_api, registration, password_change
+        detail: Human-readable description
+        source: Where it came from (gateway, discord, social)
+        severity: low, medium, high, critical
+    """
+    try:
+        with WeaviateHelper() as helper:
+            if not helper.is_ready():
+                return False
+            if not helper.client.collections.exists("SecurityLog"):
+                return False
+            collection = helper.client.collections.get("SecurityLog")
+            collection.data.insert({
+                "content": f"[{event_type}] {detail}",
+                "event_type": event_type,
+                "source": source,
+                "severity": severity,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            return True
+    except Exception as e:
+        print(f"Security log error: {e}")
+        return False
+
+
 def get_weaviate_stats() -> dict:
     """Get collection counts for the stats endpoint."""
     stats = {}

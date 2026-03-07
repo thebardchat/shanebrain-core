@@ -721,7 +721,14 @@ if __name__ == "__main__":
 
         # Show collection counts
         print("Collection counts:")
-        for name in ['Conversation', 'LegacyKnowledge', 'CrisisLog', 'SocialKnowledge', 'FriendProfile']:
+        for name in [
+            'LegacyKnowledge', 'Conversation', 'FriendProfile',
+            'SocialKnowledge', 'CrisisLog',
+            'PersonalDoc', 'DailyNote', 'PersonalDraft',
+            'SecurityLog', 'PrivacyAudit',
+            'BrainDoc', 'BusinessDoc', 'Document',
+            'DraftTemplate', 'MessageLog', 'MyBrain',
+        ]:
             count = helper.get_collection_count(name)
             exists = helper.collection_exists(name)
             status = f"{count} records" if exists else "not created"
