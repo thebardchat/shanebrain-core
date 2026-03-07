@@ -113,6 +113,33 @@ def log_security_event(event_type: str, detail: str, source: str = "gateway", se
         return False
 
 
+def log_privacy_event(audit_type: str, detail: str, status: str = "completed") -> bool:
+    """Log a privacy-relevant event to the PrivacyAudit collection in Weaviate.
+
+    Args:
+        audit_type: e.g. profile_access, password_change, data_export, account_delete
+        detail: Human-readable description
+        status: completed, denied, pending
+    """
+    try:
+        with WeaviateHelper() as helper:
+            if not helper.is_ready():
+                return False
+            if not helper.client.collections.exists("PrivacyAudit"):
+                return False
+            collection = helper.client.collections.get("PrivacyAudit")
+            collection.data.insert({
+                "content": f"[{audit_type}] {detail}",
+                "audit_type": audit_type,
+                "status": status,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            return True
+    except Exception as e:
+        print(f"Privacy audit log error: {e}")
+        return False
+
+
 def get_weaviate_stats() -> dict:
     """Get collection counts for the stats endpoint."""
     stats = {}

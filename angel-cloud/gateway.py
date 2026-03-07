@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 import models
-from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats, update_friend_level, log_security_event
+from weaviate_bridge import register_user_in_weaviate, get_weaviate_stats, update_friend_level, log_security_event, log_privacy_event
 from chat_engine import stream_response, log_chat
 
 START_TIME = time.time()
@@ -28,9 +28,8 @@ BASE_DIR = os.path.dirname(__file__)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-# Simple signed-cookie session store
+# Session config
 SESSION_SECRET = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
-_sessions: dict[str, int] = {}  # token -> user_id
 
 # Bot internal secret for Discord bot -> Gateway communication
 BOT_INTERNAL_SECRET = os.environ.get("BOT_INTERNAL_SECRET", "")
@@ -38,9 +37,8 @@ BOT_INTERNAL_SECRET = os.environ.get("BOT_INTERNAL_SECRET", "")
 
 def _get_current_user(request: Request) -> dict | None:
     token = request.cookies.get("session")
-    if token and token in _sessions:
-        user = models.get_user_by_id(_sessions[token])
-        return user
+    if token:
+        return models.get_session_user(token)
     return None
 
 
@@ -55,6 +53,9 @@ def _check_bot_secret(x_bot_secret: str | None) -> bool:
 @app.on_event("startup")
 def startup():
     models.init_db()
+    cleaned = models.cleanup_expired_sessions()
+    if cleaned:
+        print(f"Cleaned up {cleaned} expired sessions")
 
 
 # ---------------------------------------------------------------------------
@@ -166,7 +167,7 @@ def community_page(request: Request):
 def logout(request: Request):
     token = request.cookies.get("session")
     if token:
-        _sessions.pop(token, None)
+        models.delete_session(token)
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie("session")
     return response
@@ -224,10 +225,11 @@ def api_register(
         print(f"Weaviate registration failed (non-fatal): {e}")
 
     log_security_event("registration", f"New user registered: {username} ({email})")
+    log_privacy_event("account_creation", f"New account created: {username} ({email})")
 
     # Create session
     token = secrets.token_hex(32)
-    _sessions[token] = user["id"]
+    models.create_session(token, user["id"])
     response = RedirectResponse("/welcome", status_code=303)
     response.set_cookie("session", token, httponly=True, samesite="lax", max_age=86400 * 30)
     return response
@@ -249,7 +251,7 @@ def api_login(
         }, status_code=401)
 
     token = secrets.token_hex(32)
-    _sessions[token] = user["id"]
+    models.create_session(token, user["id"])
     response = RedirectResponse("/welcome", status_code=303)
     response.set_cookie("session", token, httponly=True, samesite="lax", max_age=86400 * 30)
     return response
@@ -330,6 +332,7 @@ def api_password(
         log_security_event("failed_password_change", f"Failed password change for {user['username']}", severity="medium")
         return RedirectResponse("/profile?error=Current+password+is+incorrect", status_code=303)
     log_security_event("password_change", f"Password changed for {user['username']}")
+    log_privacy_event("password_change", f"Password changed for {user['username']}")
     return RedirectResponse("/profile?success=Password+changed+successfully", status_code=303)
 
 
@@ -371,6 +374,7 @@ def api_verify_discord(request: Request, code: str = Form(...)):
 
     discord_name = models.verify_link_code(user["id"], code.strip())
     if discord_name:
+        log_privacy_event("account_link", f"{user['username']} linked Discord as {discord_name}")
         return RedirectResponse(f"/profile?success=Discord+linked+as+{discord_name}", status_code=303)
     return RedirectResponse("/profile?error=Invalid+or+expired+code", status_code=303)
 
@@ -387,6 +391,7 @@ def api_link_github(request: Request, github_username: str = Form(...)):
         return RedirectResponse("/profile?error=GitHub+username+cannot+be+empty", status_code=303)
 
     if models.link_github(user["id"], username):
+        log_privacy_event("account_link", f"{user['username']} linked GitHub as {username}")
         return RedirectResponse(f"/profile?success=GitHub+linked+as+{username}", status_code=303)
     return RedirectResponse("/profile?error=GitHub+username+already+linked+to+another+account", status_code=303)
 

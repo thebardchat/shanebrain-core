@@ -94,8 +94,72 @@ def init_db():
         )
     """)
 
+    # Persistent sessions (survive gateway restarts)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Sessions (persistent across restarts)
+# ---------------------------------------------------------------------------
+
+SESSION_MAX_AGE_DAYS = 30
+
+
+def create_session(token: str, user_id: int) -> None:
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(days=SESSION_MAX_AGE_DAYS)
+    conn = get_db()
+    conn.execute(
+        "INSERT OR REPLACE INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+        (token, user_id, now.isoformat(), expires.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_session_user(token: str) -> Optional[dict]:
+    """Look up a session token and return the user if valid and not expired."""
+    conn = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    row = conn.execute(
+        "SELECT user_id FROM sessions WHERE token = ? AND expires_at > ?",
+        (token, now),
+    ).fetchone()
+    if not row:
+        conn.close()
+        return None
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (row["user_id"],)).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def delete_session(token: str) -> None:
+    conn = get_db()
+    conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+    conn.commit()
+    conn.close()
+
+
+def cleanup_expired_sessions() -> int:
+    """Delete expired sessions. Returns count deleted."""
+    conn = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    cursor = conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
+    count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return count
 
 
 def create_user(username: str, email: str, password: str) -> Optional[dict]:

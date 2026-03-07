@@ -8,6 +8,18 @@ All notable changes to ShaneBrain Core infrastructure and services.
 - Wired `log_security_event()` into gateway for: failed logins, registrations, password changes, unauthorized bot API calls
 - Events logged to Weaviate `SecurityLog` collection with event_type, source, severity, timestamp
 - All 4 bot-secret-protected endpoints now log unauthorized access attempts as severity=high
+- End-to-end verified: failed login → Weaviate SecurityLog → CLI viewer
+
+### PrivacyAudit Pipeline
+- Added `log_privacy_event()` to `weaviate_bridge.py` — logs to PrivacyAudit collection
+- Wired into gateway for: account creation, password changes, Discord/GitHub/Roblox account linking
+- Audit trail for all PII storage and cross-platform identity linking events
+
+### Gateway Sessions — SQLite Persistence
+- Sessions now stored in `angel_cloud.db` `sessions` table instead of in-memory dict
+- Users stay logged in across gateway restarts (30-day expiry)
+- Expired sessions auto-cleaned on startup
+- Added `create_session()`, `get_session_user()`, `delete_session()`, `cleanup_expired_sessions()` to models.py
 
 ### MCP Server
 - Added `security_log_recent` tool (chronological fetch, complements semantic search) — now 20 tools across 9 groups
@@ -24,6 +36,7 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ### Social Bot
 - Version bumped to v2.0.0 (reflects dedup, token monitoring, misfire protection from v1)
+- Added `--security` command to view security events with color-coded severity
 
 ### Fixes
 - Updated gateway landing page fallback counts (165→153 knowledge, 51→61 conversations)

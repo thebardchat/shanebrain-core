@@ -11,6 +11,7 @@ Usage:
   python -m social.fb_bot --ideas        Generate post ideas
   python -m social.fb_bot --status       Show page stats
   python -m social.fb_bot --friends      Show top friend profiles
+  python -m social.fb_bot --security     Show recent security events
   python -m social.fb_bot               Start scheduler (default)
 """
 
@@ -217,6 +218,33 @@ def cmd_status():
     print(f"\n{BLUE}{'='*50}{RESET}\n")
 
 
+def cmd_security():
+    """Show recent security events from Weaviate."""
+    print(f"\n{BLUE}{'='*50}{RESET}")
+    print(f"{BLUE}  ShaneBrain Security Log{RESET}")
+    print(f"{BLUE}{'='*50}{RESET}\n")
+
+    try:
+        from scripts.weaviate_helpers import WeaviateHelper
+        with WeaviateHelper() as wv:
+            events = wv.get_recent_security_events(limit=30)
+            if not events:
+                print(f"  {DIM}No security events recorded yet.{RESET}")
+            else:
+                for e in events:
+                    ts = str(e.get("timestamp", ""))[:19]
+                    sev = e.get("severity", "?").upper()
+                    etype = e.get("event_type", "?")
+                    content = e.get("content", "")
+                    color = RED if sev in ("HIGH", "CRITICAL") else YELLOW if sev == "MEDIUM" else DIM
+                    print(f"  {color}[{sev}]{RESET} [{ts}] {etype}: {content}")
+                print(f"\n  Total: {len(events)} events")
+    except Exception as e:
+        print(f"  {RED}Failed to read security log: {e}{RESET}")
+
+    print(f"\n{BLUE}{'='*50}{RESET}\n")
+
+
 def cmd_scheduler():
     """Run the scheduler with cron-based posting and comment harvesting."""
     from apscheduler.schedulers.blocking import BlockingScheduler
@@ -350,6 +378,8 @@ def main():
         cmd_status()
     elif "--friends" in args:
         show_friends()
+    elif "--security" in args:
+        cmd_security()
     elif args:
         print(f"Unknown argument: {args[0]}")
         print(__doc__)
