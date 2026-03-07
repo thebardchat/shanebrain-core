@@ -11,9 +11,10 @@ All notable changes to ShaneBrain Core infrastructure and services.
 - Portainer CE pulled fresh `latest` image
 
 ### Storage Optimization
-- **SD card: 92% → 56%** (2.5 GB → 13 GB free)
+- **SD card: 92% → 44%** (2.5 GB → 16 GB free)
   - Removed unused desktop apps: Chromium, Firefox, LibreOffice, FreeCAD (~3.2 GB)
   - Moved containerd to RAID at `/mnt/shanebrain-raid/containerd/` (~6.5 GB)
+  - Moved Ollama libs to RAID, symlinked `/usr/local/lib/ollama` → `/mnt/shanebrain-raid/ollama/lib` (~3.4 GB)
   - Cleared apt + pip cache (~0.8 GB)
 - **RAID: 26 GB → 19 GB used**
   - Removed duplicate containerd data from move (6.5 GB)
@@ -26,9 +27,11 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ### Configuration
 - Containerd root moved to RAID, config at `/etc/containerd/config.toml`
+- Ollama libs symlinked to RAID: `/usr/local/lib/ollama` → `/mnt/shanebrain-raid/ollama/lib`
 - MCP server transport committed: streamable-http → SSE
 - `.gitignore` hardened: blocks `*.env.txt`, `*.db`, state files, training output dirs
 - `CLAUDE.md` updated to v2.4 (Ollama 0.17.7, 17 Weaviate collections, Python 3.13, SSE)
+- Deleted redundant `.env.txt` files containing exposed secrets
 
 ### Containers
 - Open WebUI + Portainer recreated after containerd move (data preserved via RAID volumes)
@@ -39,10 +42,13 @@ All notable changes to ShaneBrain Core infrastructure and services.
 - Auto-reply enabled: harvester replies to Facebook comments every 15 min, signed as AI
 - Deleted 3 duplicate burst posts caused by scheduler flush during restart
 - Reply prompt explicitly identifies as Shane's AI assistant, never impersonates
+- Switched from llama3.2:1b to shanebrain-3b (fixed repetitive BGKPJR content)
+- Expanded PAGE_PERSONALITY with full bio (Alabama, dispatch, ADHD, sobriety, faith)
+- Post prompt blocks space/rocket/BGKPJR drift, focuses on everyday life
 
 ### Final System State
 - **Hardware:** Pi 5 — 40.6°C, 5.1 GB RAM used / 15 GB, load 2.5
-- **Storage:** SD 56% (13 GB free) | RAID 2% (1.7 TB free) | 8TB 1% (7.3 TB free)
+- **Storage:** SD 44% (16 GB free) | RAID 2% (1.7 TB free) | 8TB 1% (7.3 TB free)
 - **RAID:** [UU] both NVMe drives healthy
 - **Services:** 6/6 systemd active (Ollama, Discord, Arcade, Social, Gateway, Rojo)
 - **Containers:** 4/4 healthy (Weaviate 1.36.2, MCP, Open WebUI, Portainer CE)
