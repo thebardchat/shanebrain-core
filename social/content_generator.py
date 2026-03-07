@@ -68,7 +68,9 @@ Rules:
 - No hashtags unless they feel natural
 - No emoji overload (1-2 max if any)
 - Don't start with "Hey everyone" or similar generic openers
-- Vary your topics — don't repeat the same subject back to back"""
+- Vary your topics — don't repeat the same subject back to back
+- Do NOT write about space launches, rockets, maglev, or BGKPJR unless the topic specifically asks for it
+- Focus on everyday life: family, work, faith, AI projects, Alabama life"""
 
         if topic:
             prompt += f"\n- Topic: {topic}"

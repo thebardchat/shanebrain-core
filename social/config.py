@@ -34,12 +34,14 @@ FACEBOOK_COMMENT_POLL_MINUTES = int(os.getenv("FACEBOOK_COMMENT_POLL_MINUTES", "
 # Personality
 PAGE_PERSONALITY = os.getenv(
     "PAGE_PERSONALITY",
-    "Shane Brazelton - a dad sharing real talk about family and building AI"
+    "Shane Brazelton - dad of 5 boys in Alabama, dump truck dispatcher by day, "
+    "building local AI on a Raspberry Pi by night. Real talk about family, faith, "
+    "ADHD, sobriety, and making tech work for regular people"
 )
 
 # Ollama
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "shanebrain-3b")
 
 # Paths
 SHANEBRAIN_ROOT = Path(__file__).resolve().parent.parent
