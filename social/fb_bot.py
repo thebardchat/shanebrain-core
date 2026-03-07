@@ -17,6 +17,7 @@ Usage:
 import sys
 import os
 import signal
+import hashlib
 from datetime import datetime
 
 from . import config
@@ -74,6 +75,17 @@ def cmd_verify():
     result = fb.verify_token()
     if result["valid"]:
         log(f"Token valid! Connected as: {result['name']} (ID: {result['id']})", "success")
+        expires = result.get("expires", "unknown")
+        days_left = result.get("days_left")
+        if expires == "never":
+            log("Token does not expire", "success")
+        elif days_left is not None:
+            if days_left < 7:
+                log(f"TOKEN EXPIRING SOON: {days_left} days left (expires {expires})", "error")
+            elif days_left < 30:
+                log(f"Token expires in {days_left} days ({expires})", "warn")
+            else:
+                log(f"Token expires in {days_left} days ({expires})", "success")
     else:
         log(f"Token invalid: {result.get('error', 'unknown')}", "error")
         log("Run: python -m social.token_exchange YOUR_SHORT_LIVED_TOKEN", "info")
@@ -227,6 +239,9 @@ def cmd_scheduler():
         log(f"Invalid cron schedule: {config.FACEBOOK_POST_SCHEDULE}", "error")
         sys.exit(1)
 
+    # Track recent post hashes to prevent duplicates
+    recent_hashes = set()
+
     # Add posting job
     def scheduled_post():
         log("Scheduled post triggered...")
@@ -234,8 +249,20 @@ def cmd_scheduler():
             fb = FacebookAPI()
             gen = ContentGenerator()
             content = gen.generate_post()
+
+            # Dedup: skip if we just posted something identical
+            content_hash = hashlib.md5(content.encode()).hexdigest()[:12]
+            if content_hash in recent_hashes:
+                log(f"Duplicate content detected, regenerating...", "warn")
+                content = gen.generate_post()
+                content_hash = hashlib.md5(content.encode()).hexdigest()[:12]
+
             log(f'Generated: "{content[:50]}..."')
             result = fb.post(content)
+            recent_hashes.add(content_hash)
+            # Keep set bounded
+            if len(recent_hashes) > 20:
+                recent_hashes.pop()
             log(f"Posted! ID: {result['post_id']}", "success")
             log_to_file(content, status="POSTED")
         except Exception as e:
@@ -256,6 +283,30 @@ def cmd_scheduler():
         IntervalTrigger(minutes=config.FACEBOOK_COMMENT_POLL_MINUTES),
         id="harvest",
         misfire_grace_time=120, coalesce=True,
+    )
+
+    # Daily token expiry check (runs at startup + every 24h)
+    def check_token():
+        try:
+            fb = FacebookAPI()
+            result = fb.verify_token()
+            if not result["valid"]:
+                log(f"FACEBOOK TOKEN INVALID: {result.get('error')}", "error")
+            else:
+                days_left = result.get("days_left")
+                if days_left is not None and days_left < 7:
+                    log(f"FACEBOOK TOKEN EXPIRING IN {days_left} DAYS!", "error")
+                elif days_left is not None and days_left < 30:
+                    log(f"Facebook token expires in {days_left} days", "warn")
+        except Exception as e:
+            log(f"Token check failed: {e}", "error")
+
+    check_token()  # Check immediately on startup
+    scheduler.add_job(
+        check_token,
+        IntervalTrigger(hours=24),
+        id="token_check",
+        misfire_grace_time=3600, coalesce=True,
     )
 
     log(f"Scheduler started.", "success")

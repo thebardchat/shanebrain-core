@@ -4,11 +4,25 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-06 — System Maintenance & Optimization
 
-### Social Bot Stability Fix
+### Social Bot Hardening
 - Fixed burst post bug: added `misfire_grace_time=60` and `coalesce=True` to APScheduler jobs
 - Previously, every restart fired all "missed" cron triggers at once (15 burst posts in one incident)
 - Deleted 15 burst duplicate posts from Facebook
 - Bot now skips missed triggers older than 60 seconds on startup
+- Added dedup protection: MD5 hash check prevents posting identical content back-to-back
+- Added daily token expiry monitoring (checks on startup + every 24h, warns at <30 days)
+- Added `--verify` now shows token expiry date and days remaining
+- Added `delete_post()` method to FacebookAPI
+
+### Weaviate Collection Migration
+- Migrated 6 training collections from `vectorizer: none` to `text2vec-ollama + nomic-embed-text`
+- BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
+- All 17 collections now support semantic search (previously only 10 could)
+
+### Environment Fix
+- Fixed Windows line endings (`\r`) in `.env` via `dos2unix`
+- Quoted values with spaces/commas (`PAGE_PERSONALITY`, `FACEBOOK_POST_SCHEDULE`)
+- Moved restic password from hardcoded in `backup.sh` to `.env`
 
 ### Weaviate Automated Backups
 - Created `scripts/weaviate_backup.sh` — daily filesystem backup of all 16 collections

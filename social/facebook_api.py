@@ -110,7 +110,7 @@ class FacebookAPI:
         }
 
     def verify_token(self) -> dict:
-        """Verify the access token is valid."""
+        """Verify the access token is valid and check expiry."""
         url = f"{self.base}/me"
         resp = requests.get(url, params={"access_token": self.access_token})
         data = resp.json()
@@ -118,4 +118,40 @@ class FacebookAPI:
         if "error" in data:
             return {"valid": False, "error": data["error"]["message"]}
 
-        return {"valid": True, "name": data.get("name"), "id": data.get("id")}
+        result = {"valid": True, "name": data.get("name"), "id": data.get("id")}
+
+        # Check token expiry via debug_token
+        try:
+            debug_resp = requests.get(
+                f"{self.base}/debug_token",
+                params={
+                    "input_token": self.access_token,
+                    "access_token": self.access_token,
+                },
+                timeout=10,
+            )
+            debug_data = debug_resp.json().get("data", {})
+            expires_at = debug_data.get("expires_at", 0)
+            if expires_at == 0:
+                result["expires"] = "never"
+            else:
+                from datetime import datetime, timezone
+                expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+                days_left = (expiry - datetime.now(timezone.utc)).days
+                result["expires"] = expiry.isoformat()
+                result["days_left"] = days_left
+        except Exception:
+            pass
+
+        return result
+
+    def delete_post(self, post_id: str) -> dict:
+        """Delete a post from the page."""
+        url = f"{self.base}/{post_id}"
+        resp = requests.delete(url, params={"access_token": self.access_token})
+        data = resp.json()
+
+        if "error" in data:
+            raise RuntimeError(f"Facebook API Error: {data['error']['message']}")
+
+        return {"success": True, "post_id": post_id}

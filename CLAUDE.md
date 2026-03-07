@@ -94,7 +94,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - Weaviate endpoint: http://localhost:8080
 - MCP server endpoint: http://localhost:8100/mcp (SSE), health: http://localhost:8100/health
 - Weaviate backups: daily at 3:15 AM to weaviate-config/backups/, 7-day retention
-- Weaviate collections (16 in MCP, 17 total — MultiTenantTest excluded): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
+- Weaviate collections (17 total, ALL use text2vec-ollama + nomic-embed-text): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
 - ALWAYS use nofail in /etc/fstab entries
 - System username is shanebrain (not shane)
 
