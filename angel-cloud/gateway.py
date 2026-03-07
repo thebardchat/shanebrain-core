@@ -66,8 +66,8 @@ def landing(request: Request):
     user = _get_current_user(request)
     stats = {
         "users": models.get_user_count(),
-        "knowledge": 165,
-        "conversations": 51,
+        "knowledge": 153,
+        "conversations": 61,
     }
     try:
         wv = get_weaviate_stats()

@@ -9,12 +9,25 @@ All notable changes to ShaneBrain Core infrastructure and services.
 - Events logged to Weaviate `SecurityLog` collection with event_type, source, severity, timestamp
 - All 4 bot-secret-protected endpoints now log unauthorized access attempts as severity=high
 
-### Restic Backup Mount Check
-- Added `mountpoint -q` check to `scripts/backup.sh` — skips backup if 8TB external not mounted
-- Prevents silent failures when drive is disconnected
+### MCP Server
+- Added `security_log_recent` tool (chronological fetch, complements semantic search) — now 20 tools across 9 groups
+- Security group: search (semantic), recent (chronological), privacy audit search
 
-### Weaviate Helpers CLI
-- Updated CLI demo to list all 17 collections (was only showing 5)
+### Restic Backup Hardening
+- Added `mountpoint -q` check to `scripts/backup.sh` — skips backup if 8TB external not mounted
+- Added `angel-cloud/`, `mcp-server/`, `langchain-chains/` to backup list (were missing)
+
+### Weaviate Helpers
+- Added `get_recent_security_events()` method with optional severity filter
+- CLI demo now lists all 17 collections with total object count
+- Added `--security` CLI flag: `python scripts/weaviate_helpers.py --security [severity]`
+
+### Social Bot
+- Version bumped to v2.0.0 (reflects dedup, token monitoring, misfire protection from v1)
+
+### Fixes
+- Updated gateway landing page fallback counts (165→153 knowledge, 51→61 conversations)
+- Updated CLAUDE.md to reflect 20 MCP tools
 
 ---
 

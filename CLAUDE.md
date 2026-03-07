@@ -27,7 +27,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 | Weaviate | 8080 (REST), 50051 (gRPC) | Docker: shanebrain-weaviate |
 | Open WebUI | 3000 | Docker: open-webui |
 | Portainer CE | 9000 | Docker: portainer |
-| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 19 tools via SSE, /health endpoint |
+| ShaneBrain MCP | 8100 | Docker: shanebrain-mcp — 20 tools via SSE, /health endpoint |
 | Angel Cloud Gateway | 4200 | systemd: angel-cloud-gateway (FastAPI/uvicorn) |
 | GitHub Poller | — | systemd timer: angel-cloud-github-poller (every 15 min) |
 | Social Bot | — | systemd: shanebrain-social |
@@ -45,7 +45,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - scripts/weaviate_helpers.py — Weaviate CRUD (Conversation, LegacyKnowledge, CrisisLog, SocialKnowledge, FriendProfile)
 - scripts/import_rag_to_weaviate.py — RAG ingestion into Weaviate
 - weaviate-config/docker-compose.yml — Docker config (Weaviate + MCP server)
-- mcp-server/server.py — ShaneBrain MCP server (19 tools: knowledge, chat, vault, notes, drafts, security, health)
+- mcp-server/server.py — ShaneBrain MCP server (20 tools: knowledge, chat, vault, notes, drafts, security, health)
 - mcp-server/weaviate_bridge.py — Docker-aware WeaviateHelper for MCP container
 - mcp-server/health.py — Service health checks (Weaviate, Ollama, Gateway)
 - scripts/weaviate_backup.sh — Daily Weaviate backup (cron 3:15 AM, 7-day retention)
@@ -94,7 +94,7 @@ ShaneBrain Core — a personal AI assistant/legacy system running on Raspberry P
 - Weaviate endpoint: http://localhost:8080
 - MCP server endpoint: http://localhost:8100/mcp (SSE), health: http://localhost:8100/health
 - Weaviate backups: daily at 3:15 AM to weaviate-config/backups/, 7-day retention
-- Weaviate collections (17 total, ALL use text2vec-ollama + nomic-embed-text): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
+- Weaviate collections (17 total, ALL use text2vec-ollama + nomic-embed-text, 251 objects): LegacyKnowledge (153), Conversation (61), FriendProfile (5), SocialKnowledge (1), CrisisLog (0), PersonalDoc (3), DailyNote (5), PersonalDraft (1), SecurityLog (0), PrivacyAudit (0), BrainDoc (3), BusinessDoc (5), Document (1), DraftTemplate (5), MessageLog (5), MyBrain (3)
 - ALWAYS use nofail in /etc/fstab entries
 - System username is shanebrain (not shane)
 

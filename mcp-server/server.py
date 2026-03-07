@@ -2,9 +2,9 @@
 """
 ShaneBrain MCP Server — Exposes ShaneBrain tools via Model Context Protocol.
 
-19 tools across 9 groups:
+20 tools across 9 groups:
   Knowledge (2), Chat (3), RAG (1), Social (2),
-  Vault (3), Notes (3), Drafts (2), Security (2), System (1)
+  Vault (3), Notes (3), Drafts (2), Security (3), System (1)
 
 Transport: SSE on port 8100
 """
@@ -483,6 +483,29 @@ def security_log_search(query: str, limit: int = 10) -> str:
         results = h._generic_near_text("SecurityLog", query, limit=limit)
         if not results and not h.collection_exists("SecurityLog"):
             return json.dumps({"results": [], "message": "SecurityLog collection does not exist yet."})
+        return json.dumps({"results": results, "count": len(results)}, default=str)
+
+
+@mcp.tool()
+def security_log_recent(severity: str = "", limit: int = 20) -> str:
+    """Get recent security log entries (chronological, not semantic).
+
+    Args:
+        severity: Optional filter — low, medium, high, critical. Empty for all.
+        limit: Max results (default 20)
+    """
+    with _weaviate() as h:
+        if not h.collection_exists("SecurityLog"):
+            return json.dumps({"results": [], "message": "SecurityLog collection does not exist yet."})
+        collection = h.client.collections.get("SecurityLog")
+        if severity:
+            response = collection.query.fetch_objects(
+                filters=Filter.by_property("severity").equal(severity),
+                limit=limit,
+            )
+        else:
+            response = collection.query.fetch_objects(limit=limit)
+        results = [obj.properties for obj in response.objects]
         return json.dumps({"results": results, "count": len(results)}, default=str)
 
 

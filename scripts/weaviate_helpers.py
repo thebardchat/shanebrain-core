@@ -335,6 +335,36 @@ class WeaviateHelper:
             return []
 
     # =========================================================================
+    # Security Log Operations
+    # =========================================================================
+
+    def get_recent_security_events(
+        self,
+        severity: Optional[str] = None,
+        limit: int = 20,
+    ) -> List[Dict[str, Any]]:
+        """Get recent security log entries.
+
+        Args:
+            severity: Optional filter (low, medium, high, critical)
+            limit: Maximum results
+        """
+        if not self.client.collections.exists("SecurityLog"):
+            return []
+        collection = self.client.collections.get("SecurityLog")
+        try:
+            if severity:
+                response = collection.query.fetch_objects(
+                    filters=Filter.by_property("severity").equal(severity),
+                    limit=limit,
+                )
+            else:
+                response = collection.query.fetch_objects(limit=limit)
+            return [obj.properties for obj in response.objects]
+        except Exception:
+            return []
+
+    # =========================================================================
     # Social Knowledge Operations
     # =========================================================================
 
@@ -708,41 +738,68 @@ class WeaviateHelper:
 if __name__ == "__main__":
     import sys
 
-    print("\n" + "="*60)
-    print("     ShaneBrain Weaviate Helper Demo")
-    print("="*60 + "\n")
+    args = sys.argv[1:]
 
     with WeaviateHelper() as helper:
         if not helper.is_ready():
             print("Weaviate is not ready. Make sure it's running.")
             sys.exit(1)
 
-        print("✓ Connected to Weaviate\n")
+        if "--security" in args:
+            # Security log viewer
+            severity = None
+            for a in args:
+                if a in ("low", "medium", "high", "critical"):
+                    severity = a
+            print("\n" + "="*60)
+            print("     ShaneBrain Security Log")
+            print("="*60 + "\n")
+            events = helper.get_recent_security_events(severity=severity, limit=50)
+            if not events:
+                print("  No security events recorded yet.")
+            else:
+                for e in events:
+                    ts = str(e.get("timestamp", ""))[:19]
+                    sev = e.get("severity", "?").upper()
+                    etype = e.get("event_type", "?")
+                    content = e.get("content", "")
+                    print(f"  [{ts}] [{sev}] {etype}: {content}")
+                print(f"\n  Total: {len(events)} events")
+            print("\n" + "="*60 + "\n")
 
-        # Show collection counts
-        print("Collection counts:")
-        for name in [
-            'LegacyKnowledge', 'Conversation', 'FriendProfile',
-            'SocialKnowledge', 'CrisisLog',
-            'PersonalDoc', 'DailyNote', 'PersonalDraft',
-            'SecurityLog', 'PrivacyAudit',
-            'BrainDoc', 'BusinessDoc', 'Document',
-            'DraftTemplate', 'MessageLog', 'MyBrain',
-        ]:
-            count = helper.get_collection_count(name)
-            exists = helper.collection_exists(name)
-            status = f"{count} records" if exists else "not created"
-            print(f"  • {name}: {status}")
-
-        # Demo: Search knowledge
-        print("\nDemo: Searching LegacyKnowledge for 'family'...")
-        results = helper.search_knowledge("family", limit=2)
-        if results:
-            for r in results:
-                title = r.get('title', 'Untitled')[:40]
-                dist = r.get('_distance', 'N/A')
-                print(f"  • {title} (distance: {dist})")
         else:
-            print("  (no results or collection not set up)")
+            # Default: collection overview
+            print("\n" + "="*60)
+            print("     ShaneBrain Weaviate Helper Demo")
+            print("="*60 + "\n")
+            print("✓ Connected to Weaviate\n")
 
-    print("\n" + "="*60 + "\n")
+            total = 0
+            print("Collection counts:")
+            for name in [
+                'LegacyKnowledge', 'Conversation', 'FriendProfile',
+                'SocialKnowledge', 'CrisisLog',
+                'PersonalDoc', 'DailyNote', 'PersonalDraft',
+                'SecurityLog', 'PrivacyAudit',
+                'BrainDoc', 'BusinessDoc', 'Document',
+                'DraftTemplate', 'MessageLog', 'MyBrain',
+            ]:
+                count = helper.get_collection_count(name)
+                exists = helper.collection_exists(name)
+                status = f"{count} records" if exists else "not created"
+                total += count if exists else 0
+                print(f"  • {name}: {status}")
+            print(f"\n  Total: {total} objects across 17 collections")
+
+            # Demo: Search knowledge
+            print("\nDemo: Searching LegacyKnowledge for 'family'...")
+            results = helper.search_knowledge("family", limit=2)
+            if results:
+                for r in results:
+                    title = r.get('title', 'Untitled')[:40]
+                    dist = r.get('_distance', 'N/A')
+                    print(f"  • {title} (distance: {dist})")
+            else:
+                print("  (no results or collection not set up)")
+
+            print("\n" + "="*60 + "\n")

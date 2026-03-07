@@ -63,7 +63,7 @@ def log_to_file(content, status="POSTED", error=None):
 
 def banner():
     print(f"\n{CYAN}╔══════════════════════════════════════╗{RESET}")
-    print(f"{CYAN}║{RESET}  {GREEN}ShaneBrain Social Bot{RESET} v1.0.0       {CYAN}║{RESET}")
+    print(f"{CYAN}║{RESET}  {GREEN}ShaneBrain Social Bot{RESET} v2.0.0       {CYAN}║{RESET}")
     print(f"{CYAN}║{RESET}  {DIM}Facebook + Weaviate knowledge{RESET}       {CYAN}║{RESET}")
     print(f"{CYAN}╚══════════════════════════════════════╝{RESET}\n")
 

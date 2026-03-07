@@ -28,6 +28,9 @@ restic backup \
   /mnt/shanebrain-raid/shanebrain-core/social/ \
   /mnt/shanebrain-raid/shanebrain-core/arcade/ \
   /mnt/shanebrain-raid/shanebrain-core/systemd/ \
+  /mnt/shanebrain-raid/shanebrain-core/angel-cloud/ \
+  /mnt/shanebrain-raid/shanebrain-core/mcp-server/ \
+  /mnt/shanebrain-raid/shanebrain-core/langchain-chains/ \
   /mnt/shanebrain-raid/shanebrain-core/weaviate-config/docker-compose.yml \
   /mnt/shanebrain-raid/shanebrain-core/weaviate-config/schemas/ \
   /mnt/shanebrain-raid/shanebrain-core/requirements.txt \
