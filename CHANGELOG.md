@@ -7,6 +7,7 @@ All notable changes to ShaneBrain Core infrastructure and services.
 ### Service Updates
 - Ollama updated 0.15.6 → 0.17.7
 - Weaviate updated 1.28.0 → 1.36.2 (data auto-migrated, 17 collections / 251 objects intact)
+- Open WebUI updated to latest `main` image (1.4 GB old layers pruned)
 
 ### Storage Optimization
 - **SD card: 92% → 56%** (2.5 GB → 13 GB free)
