@@ -2,11 +2,11 @@
 """
 ShaneBrain MCP Server — Exposes ShaneBrain tools via Model Context Protocol.
 
-19 tools across 7 groups:
+19 tools across 9 groups:
   Knowledge (2), Chat (3), RAG (1), Social (2),
   Vault (3), Notes (3), Drafts (2), Security (2), System (1)
 
-Transport: Streamable HTTP on port 8100
+Transport: SSE on port 8100
 """
 
 import os
@@ -40,18 +40,9 @@ mcp = FastMCP(
 )
 
 
-def _get_helper() -> DockerWeaviateHelper:
-    """Get a connected Weaviate helper."""
-    h = DockerWeaviateHelper()
-    h.connect()
-    return h
-
-
-def _close(helper):
-    try:
-        helper.close()
-    except Exception:
-        pass
+def _weaviate():
+    """Get a Weaviate helper as a context manager (auto-connects and closes)."""
+    return DockerWeaviateHelper()
 
 
 # ===========================================================================
@@ -67,14 +58,11 @@ def search_knowledge(query: str, category: Optional[str] = None, limit: int = 5)
         category: Optional filter — family, faith, technical, philosophy, general, wellness
         limit: Max results (default 5)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h.search_knowledge(query, category=category, limit=limit)
         if not results:
             return json.dumps({"results": [], "message": "No matches found."})
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -87,14 +75,11 @@ def add_knowledge(content: str, category: str, source: str = "mcp", title: Optio
         source: Where this came from (default "mcp")
         title: Optional title
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         uid = h.add_knowledge(content, category, source=source, title=title)
         if uid:
             return json.dumps({"success": True, "uuid": uid})
         return json.dumps({"success": False, "error": "Failed to add — collection may not exist."})
-    finally:
-        _close(h)
 
 
 # ===========================================================================
@@ -110,12 +95,9 @@ def search_conversations(query: str, mode: Optional[str] = None, limit: int = 10
         mode: Optional filter — CHAT, MEMORY, WELLNESS, SECURITY, DISPATCH, CODE
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h.search_conversations(query, mode=mode, limit=limit)
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -128,14 +110,11 @@ def log_conversation(message: str, role: str, mode: str = "CHAT", session_id: Op
         mode: Agent mode — CHAT, MEMORY, WELLNESS, SECURITY, DISPATCH, CODE
         session_id: Session ID (auto-generated if omitted)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         uid = h.log_conversation(message, role, mode=mode, session_id=session_id)
         if uid:
             return json.dumps({"success": True, "uuid": uid})
         return json.dumps({"success": False, "error": "Failed to log."})
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -146,12 +125,9 @@ def get_conversation_history(session_id: str, limit: int = 50) -> str:
         session_id: The session identifier
         limit: Max messages (default 50)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h.get_conversation_history(session_id, limit=limit)
         return json.dumps({"messages": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 # ===========================================================================
@@ -194,44 +170,42 @@ def chat_with_shanebrain(message: str) -> str:
     Args:
         message: Your message to ShaneBrain
     """
-    h = _get_helper()
-    try:
-        # RAG: search knowledge
-        chunks = []
-        results = h.search_knowledge(message, limit=RAG_CHUNK_LIMIT)
-        for r in results:
-            content = r.get("content", "")
-            title = r.get("title", "")
-            if content:
-                chunks.append(f"[{title}]\n{content}" if title else content)
+    with _weaviate() as h:
+        try:
+            # RAG: search knowledge
+            chunks = []
+            results = h.search_knowledge(message, limit=RAG_CHUNK_LIMIT)
+            for r in results:
+                content = r.get("content", "")
+                title = r.get("title", "")
+                if content:
+                    chunks.append(f"[{title}]\n{content}" if title else content)
 
-        # Build prompt
-        system = _get_system_prompt()
-        if chunks:
-            context = "\n\n---\n\n".join(chunks)
-            system += f"\n\nRELEVANT KNOWLEDGE FROM MEMORY:\n{context}\n\nUse this knowledge to answer. If it doesn't help, say you don't know."
+            # Build prompt
+            system = _get_system_prompt()
+            if chunks:
+                context = "\n\n---\n\n".join(chunks)
+                system += f"\n\nRELEVANT KNOWLEDGE FROM MEMORY:\n{context}\n\nUse this knowledge to answer. If it doesn't help, say you don't know."
 
-        # Generate via Ollama
-        client = ollama.Client(host=OLLAMA_HOST, timeout=600)
-        response = client.chat(
-            model=OLLAMA_MODEL,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": message},
-            ],
-            options={"temperature": 0.3, "num_predict": 100},
-            keep_alive="10m",
-        )
+            # Generate via Ollama
+            client = ollama.Client(host=OLLAMA_HOST, timeout=600)
+            response = client.chat(
+                model=OLLAMA_MODEL,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": message},
+                ],
+                options={"temperature": 0.3, "num_predict": 100},
+                keep_alive="10m",
+            )
 
-        reply = response["message"]["content"]
-        return json.dumps({
-            "response": reply,
-            "knowledge_chunks_used": len(chunks),
-        })
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-    finally:
-        _close(h)
+            reply = response["message"]["content"]
+            return json.dumps({
+                "response": reply,
+                "knowledge_chunks_used": len(chunks),
+            })
+        except Exception as e:
+            return json.dumps({"error": str(e)})
 
 
 # ===========================================================================
@@ -246,12 +220,9 @@ def search_friends(query: str, limit: int = 10) -> str:
         query: What to search for (e.g. a person's name or topic)
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h.search_friends(query, limit=limit)
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -261,12 +232,9 @@ def get_top_friends(limit: int = 10) -> str:
     Args:
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h.get_top_friends(limit=limit)
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 # ===========================================================================
@@ -282,8 +250,7 @@ def vault_search(query: str, category: Optional[str] = None, limit: int = 10) ->
         category: Optional category filter
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         filters = None
         if category:
             filters = Filter.by_property("category").equal(category)
@@ -291,8 +258,6 @@ def vault_search(query: str, category: Optional[str] = None, limit: int = 10) ->
         if not results and not h.collection_exists("PersonalDoc"):
             return json.dumps({"results": [], "message": "PersonalDoc collection does not exist yet."})
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -305,8 +270,7 @@ def vault_add(content: str, category: str, title: Optional[str] = None, tags: Op
         title: Optional title
         tags: Optional comma-separated tags
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         data = {
             "content": content,
             "category": category,
@@ -320,15 +284,12 @@ def vault_add(content: str, category: str, title: Optional[str] = None, tags: Op
         if uid:
             return json.dumps({"success": True, "uuid": uid})
         return json.dumps({"success": False, "error": "PersonalDoc collection may not exist yet."})
-    finally:
-        _close(h)
 
 
 @mcp.tool()
 def vault_list_categories(limit: int = 100) -> str:
     """List document counts per category in the PersonalDoc vault."""
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         if not h.collection_exists("PersonalDoc"):
             return json.dumps({"error": "PersonalDoc collection does not exist yet.", "categories": {}})
         docs = h._generic_fetch("PersonalDoc", limit=limit)
@@ -337,8 +298,6 @@ def vault_list_categories(limit: int = 100) -> str:
             cat = d.get("category", "uncategorized")
             counts[cat] = counts.get(cat, 0) + 1
         return json.dumps({"categories": counts, "total": len(docs)})
-    finally:
-        _close(h)
 
 
 # ===========================================================================
@@ -354,8 +313,7 @@ def daily_note_add(content: str, note_type: str = "journal", mood: Optional[str]
         note_type: Type — journal, todo, reminder, reflection
         mood: Optional mood tag (e.g. grateful, tired, focused, anxious)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         data = {
             "content": content,
             "note_type": note_type,
@@ -368,8 +326,6 @@ def daily_note_add(content: str, note_type: str = "journal", mood: Optional[str]
         if uid:
             return json.dumps({"success": True, "uuid": uid})
         return json.dumps({"success": False, "error": "DailyNote collection does not exist yet."})
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -381,8 +337,7 @@ def daily_note_search(query: str, note_type: Optional[str] = None, limit: int = 
         note_type: Optional filter — journal, todo, reminder, reflection
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         filters = None
         if note_type:
             filters = Filter.by_property("note_type").equal(note_type)
@@ -390,49 +345,45 @@ def daily_note_search(query: str, note_type: Optional[str] = None, limit: int = 
         if not results and not h.collection_exists("DailyNote"):
             return json.dumps({"results": [], "message": "DailyNote collection does not exist yet."})
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 @mcp.tool()
 def daily_briefing() -> str:
     """Get an AI-generated daily briefing summarizing recent notes via Ollama."""
-    h = _get_helper()
-    try:
-        if not h.collection_exists("DailyNote"):
-            return json.dumps({"error": "DailyNote collection does not exist yet."})
+    with _weaviate() as h:
+        try:
+            if not h.collection_exists("DailyNote"):
+                return json.dumps({"error": "DailyNote collection does not exist yet."})
 
-        notes = h._generic_fetch("DailyNote", limit=20)
-        if not notes:
-            return json.dumps({"briefing": "No daily notes found.", "note_count": 0})
+            notes = h._generic_fetch("DailyNote", limit=20)
+            if not notes:
+                return json.dumps({"briefing": "No daily notes found.", "note_count": 0})
 
-        # Build summary prompt
-        note_texts = []
-        for n in notes:
-            ntype = n.get("note_type", "note")
-            content = n.get("content", "")
-            date = n.get("date", "")
-            note_texts.append(f"[{date} - {ntype}] {content}")
+            # Build summary prompt
+            note_texts = []
+            for n in notes:
+                ntype = n.get("note_type", "note")
+                content = n.get("content", "")
+                date = n.get("date", "")
+                note_texts.append(f"[{date} - {ntype}] {content}")
 
-        notes_block = "\n".join(note_texts)
-        client = ollama.Client(host=OLLAMA_HOST, timeout=600)
-        response = client.chat(
-            model=OLLAMA_MODEL,
-            messages=[
-                {"role": "system", "content": "You are ShaneBrain. Summarize these daily notes into a brief daily briefing. Be concise — bullet points preferred."},
-                {"role": "user", "content": f"Here are recent notes:\n\n{notes_block}\n\nGive me a daily briefing."},
-            ],
-            options={"temperature": 0.3, "num_predict": 100},
-            keep_alive="10m",
-        )
-        return json.dumps({
-            "briefing": response["message"]["content"],
-            "note_count": len(notes),
-        })
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-    finally:
-        _close(h)
+            notes_block = "\n".join(note_texts)
+            client = ollama.Client(host=OLLAMA_HOST, timeout=600)
+            response = client.chat(
+                model=OLLAMA_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are ShaneBrain. Summarize these daily notes into a brief daily briefing. Be concise — bullet points preferred."},
+                    {"role": "user", "content": f"Here are recent notes:\n\n{notes_block}\n\nGive me a daily briefing."},
+                ],
+                options={"temperature": 0.3, "num_predict": 100},
+                keep_alive="10m",
+            )
+            return json.dumps({
+                "briefing": response["message"]["content"],
+                "note_count": len(notes),
+            })
+        except Exception as e:
+            return json.dumps({"error": str(e)})
 
 
 # ===========================================================================
@@ -448,55 +399,53 @@ def draft_create(prompt: str, draft_type: str = "general", use_vault_context: bo
         draft_type: Type — email, message, post, letter, general
         use_vault_context: Whether to search PersonalDoc for context (default True)
     """
-    h = _get_helper()
-    try:
-        context_chunks = []
-        if use_vault_context and h.collection_exists("PersonalDoc"):
-            results = h._generic_near_text("PersonalDoc", prompt, limit=3)
-            for r in results:
-                content = r.get("content", "")
-                if content:
-                    context_chunks.append(content)
+    with _weaviate() as h:
+        try:
+            context_chunks = []
+            if use_vault_context and h.collection_exists("PersonalDoc"):
+                results = h._generic_near_text("PersonalDoc", prompt, limit=3)
+                for r in results:
+                    content = r.get("content", "")
+                    if content:
+                        context_chunks.append(content)
 
-        system = "You are ShaneBrain, helping Shane draft content. Match his voice: direct, warm, no fluff."
-        if context_chunks:
-            ctx = "\n---\n".join(context_chunks)
-            system += f"\n\nRelevant context from vault:\n{ctx}"
+            system = "You are ShaneBrain, helping Shane draft content. Match his voice: direct, warm, no fluff."
+            if context_chunks:
+                ctx = "\n---\n".join(context_chunks)
+                system += f"\n\nRelevant context from vault:\n{ctx}"
 
-        client = ollama.Client(host=OLLAMA_HOST, timeout=600)
-        response = client.chat(
-            model=OLLAMA_MODEL,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": f"Draft a {draft_type}: {prompt}"},
-            ],
-            options={"temperature": 0.5, "num_predict": 150},
-            keep_alive="10m",
-        )
+            client = ollama.Client(host=OLLAMA_HOST, timeout=600)
+            response = client.chat(
+                model=OLLAMA_MODEL,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": f"Draft a {draft_type}: {prompt}"},
+                ],
+                options={"temperature": 0.5, "num_predict": 150},
+                keep_alive="10m",
+            )
 
-        draft_text = response["message"]["content"]
+            draft_text = response["message"]["content"]
 
-        # Save to PersonalDraft if collection exists
-        saved_uuid = None
-        if h.collection_exists("PersonalDraft"):
-            saved_uuid = h._generic_insert("PersonalDraft", {
-                "content": draft_text,
-                "prompt": prompt,
+            # Save to PersonalDraft if collection exists
+            saved_uuid = None
+            if h.collection_exists("PersonalDraft"):
+                saved_uuid = h._generic_insert("PersonalDraft", {
+                    "content": draft_text,
+                    "prompt": prompt,
+                    "draft_type": draft_type,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                })
+
+            return json.dumps({
+                "draft": draft_text,
                 "draft_type": draft_type,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "saved": saved_uuid is not None,
+                "uuid": saved_uuid,
+                "vault_context_used": len(context_chunks),
             })
-
-        return json.dumps({
-            "draft": draft_text,
-            "draft_type": draft_type,
-            "saved": saved_uuid is not None,
-            "uuid": saved_uuid,
-            "vault_context_used": len(context_chunks),
-        })
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-    finally:
-        _close(h)
+        except Exception as e:
+            return json.dumps({"error": str(e)})
 
 
 @mcp.tool()
@@ -508,8 +457,7 @@ def draft_search(query: str, draft_type: Optional[str] = None, limit: int = 10) 
         draft_type: Optional filter — email, message, post, letter, general
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         filters = None
         if draft_type:
             filters = Filter.by_property("draft_type").equal(draft_type)
@@ -517,8 +465,6 @@ def draft_search(query: str, draft_type: Optional[str] = None, limit: int = 10) 
         if not results and not h.collection_exists("PersonalDraft"):
             return json.dumps({"results": [], "message": "PersonalDraft collection does not exist yet."})
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 # ===========================================================================
@@ -533,14 +479,11 @@ def security_log_search(query: str, limit: int = 10) -> str:
         query: What to search for (e.g. "failed login", "unusual activity")
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h._generic_near_text("SecurityLog", query, limit=limit)
         if not results and not h.collection_exists("SecurityLog"):
             return json.dumps({"results": [], "message": "SecurityLog collection does not exist yet."})
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 @mcp.tool()
@@ -551,14 +494,11 @@ def privacy_audit_search(query: str, limit: int = 10) -> str:
         query: What to search for
         limit: Max results (default 10)
     """
-    h = _get_helper()
-    try:
+    with _weaviate() as h:
         results = h._generic_near_text("PrivacyAudit", query, limit=limit)
         if not results and not h.collection_exists("PrivacyAudit"):
             return json.dumps({"results": [], "message": "PrivacyAudit collection does not exist yet."})
         return json.dumps({"results": results, "count": len(results)}, default=str)
-    finally:
-        _close(h)
 
 
 # ===========================================================================
@@ -568,26 +508,54 @@ def privacy_audit_search(query: str, limit: int = 10) -> str:
 @mcp.tool()
 def system_health() -> str:
     """Check ShaneBrain system health — Weaviate, Ollama, Gateway status and all collection counts."""
-    h = _get_helper()
-    try:
-        weaviate_status = check_weaviate(h)
-        ollama_status = check_ollama()
-        gateway_status = check_gateway()
-        counts = h.get_all_collection_counts()
+    with _weaviate() as h:
+        try:
+            weaviate_status = check_weaviate(h)
+            ollama_status = check_ollama()
+            gateway_status = check_gateway()
+            counts = h.get_all_collection_counts()
 
-        return json.dumps({
-            "services": {
-                "weaviate": weaviate_status,
-                "ollama": ollama_status,
-                "gateway": gateway_status,
-            },
-            "collections": counts,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }, default=str)
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-    finally:
-        _close(h)
+            return json.dumps({
+                "services": {
+                    "weaviate": weaviate_status,
+                    "ollama": ollama_status,
+                    "gateway": gateway_status,
+                },
+                "collections": counts,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }, default=str)
+        except Exception as e:
+            return json.dumps({"error": str(e)})
+
+
+# ===========================================================================
+# HTTP Health Endpoint (for Docker healthcheck / monitoring)
+# ===========================================================================
+
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def http_health(request: Request) -> JSONResponse:
+    """HTTP health endpoint for Docker healthcheck and monitoring."""
+    try:
+        with _weaviate() as h:
+            weaviate_ok = h.is_ready()
+    except Exception:
+        weaviate_ok = False
+
+    ollama_ok = check_ollama().get("status") == "ok"
+    healthy = weaviate_ok and ollama_ok
+
+    return JSONResponse(
+        status_code=200 if healthy else 503,
+        content={
+            "status": "healthy" if healthy else "degraded",
+            "weaviate": "ok" if weaviate_ok else "down",
+            "ollama": "ok" if ollama_ok else "down",
+        },
+    )
 
 
 # ===========================================================================

@@ -87,10 +87,14 @@ class DockerWeaviateHelper(WeaviateHelper):
     def get_all_collection_counts(self) -> dict:
         """Get object counts for all known collections."""
         names = [
+            # Core collections (text2vec-ollama)
             "LegacyKnowledge", "Conversation", "FriendProfile",
             "SocialKnowledge", "CrisisLog",
             "PersonalDoc", "DailyNote", "PersonalDraft",
             "SecurityLog", "PrivacyAudit",
+            # Training module collections (vectorizer: none)
+            "BrainDoc", "BusinessDoc", "Document",
+            "DraftTemplate", "MessageLog", "MyBrain",
         ]
         counts = {}
         for name in names:

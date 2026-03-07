@@ -4,6 +4,13 @@ All notable changes to ShaneBrain Core infrastructure and services.
 
 ## 2026-03-06 — System Maintenance & Optimization
 
+### MCP Server Fixes
+- Added HTTP `/health` endpoint (returns Weaviate + Ollama status, 200/503)
+- Added Docker healthcheck to MCP container in `docker-compose.yml`
+- Fixed connection leak: all 19 tools now use `with` context manager instead of manual connect/close
+- Fixed `get_all_collection_counts()` — now includes all 16 collections (was missing 6 training-module collections)
+- Fixed docstring: corrected transport description (SSE, not Streamable HTTP) and group count (9, not 7)
+
 ### Service Updates
 - Ollama updated 0.15.6 → 0.17.7
 - Weaviate updated 1.28.0 → 1.36.2 (data auto-migrated, 17 collections / 251 objects intact)
