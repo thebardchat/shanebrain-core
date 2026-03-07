@@ -34,6 +34,12 @@ All notable changes to ShaneBrain Core infrastructure and services.
 - Open WebUI + Portainer recreated after containerd move (data preserved via RAID volumes)
 - All 4 containers healthy: Weaviate, MCP, Open WebUI, Portainer
 
+### Social Bot Upgrades
+- Posts now signed `— ShaneBrain AI` with AI disclosure in generation prompt
+- Auto-reply enabled: harvester replies to Facebook comments every 15 min, signed as AI
+- Deleted 3 duplicate burst posts caused by scheduler flush during restart
+- Reply prompt explicitly identifies as Shane's AI assistant, never impersonates
+
 ### Final System State
 - **Hardware:** Pi 5 — 40.6°C, 5.1 GB RAM used / 15 GB, load 2.5
 - **Storage:** SD 56% (13 GB free) | RAID 2% (1.7 TB free) | 8TB 1% (7.3 TB free)
