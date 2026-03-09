@@ -1087,6 +1087,10 @@ async def http_health(request: Request) -> JSONResponse:
 
 if __name__ == "__main__":
     import argparse
+    import warnings
+
+    # Suppress benign ResourceWarning from anyio/MCP framework
+    warnings.filterwarnings("ignore", category=ResourceWarning, module="anyio")
 
     parser = argparse.ArgumentParser(description="ShaneBrain MCP Server v2.0")
     parser.add_argument("--transport", choices=["sse", "streamable-http", "stdio"], default="streamable-http")
