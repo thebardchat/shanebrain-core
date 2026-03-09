@@ -273,3 +273,4 @@ arcade/D\:*
 # If you're adding something sensitive, add it here BEFORE committing!
 # When in doubt, add it to .gitignore first.
 # =============================================================================
+*.py.bak
