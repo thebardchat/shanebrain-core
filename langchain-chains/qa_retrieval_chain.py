@@ -28,20 +28,14 @@ from enum import Enum
 
 # LangChain imports
 try:
-    from langchain_core.prompts import PromptTemplate
-    from langchain_classic.chains import LLMChain
-    from langchain_core.documents import Document
-    # Memory handling - optional, may not be available in all versions
-    try:
-        from langchain.memory import ConversationBufferWindowMemory
-        MEMORY_AVAILABLE = True
-    except ImportError:
-        MEMORY_AVAILABLE = False
+    from langchain.prompts import PromptTemplate
+    from langchain.chains import LLMChain
+    from langchain.memory import ConversationBufferWindowMemory
+    from langchain.schema import Document
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     LANGCHAIN_AVAILABLE = False
-    MEMORY_AVAILABLE = False
-    print("Warning: LangChain not installed. Install with: pip install langchain langchain-core")
+    print("Warning: LangChain not installed. Install with: pip install langchain")
 
 # Weaviate imports
 try:
@@ -171,14 +165,14 @@ class QARetrievalChain:
         self.confidence_threshold = confidence_threshold
 
         # Initialize conversation memory
-        if LANGCHAIN_AVAILABLE and MEMORY_AVAILABLE:
+        if LANGCHAIN_AVAILABLE:
             self.memory = ConversationBufferWindowMemory(
                 k=memory_window,
                 memory_key="chat_history",
                 return_messages=False
             )
         else:
-            self.memory = None  # Memory not available in this LangChain version
+            self.memory = None
 
         # Initialize LLM chain
         self._init_chains()
@@ -512,11 +506,13 @@ def create_qa_chain(
 
     if WEAVIATE_AVAILABLE:
         try:
-            weaviate_client = weaviate.Client(
-                f"http://{weaviate_host}:{weaviate_port}"
+            weaviate_client = weaviate.connect_to_local(
+                host=weaviate_host,
+                port=weaviate_port
             )
             if not weaviate_client.is_ready():
                 print("Warning: Weaviate is not ready")
+                weaviate_client.close()
                 weaviate_client = None
         except Exception as e:
             print(f"Warning: Could not connect to Weaviate: {e}")

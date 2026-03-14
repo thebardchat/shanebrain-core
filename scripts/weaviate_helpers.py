@@ -50,7 +50,7 @@ class WeaviateHelper:
         """Check if Weaviate is ready."""
         try:
             return self.client.is_ready()
-        except:
+        except Exception:
             return False
 
     # =========================================================================
@@ -124,7 +124,8 @@ class WeaviateHelper:
                 limit=limit
             )
             return [obj.properties for obj in response.objects]
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to get conversation history: {e}")
             return []
 
     def search_conversations(
@@ -162,7 +163,8 @@ class WeaviateHelper:
                     limit=limit
                 )
             return [obj.properties for obj in response.objects]
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to search conversations: {e}")
             return []
 
     # =========================================================================
@@ -252,7 +254,8 @@ class WeaviateHelper:
                     entry["_distance"] = obj.metadata.distance
                 results.append(entry)
             return results
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to search legacy knowledge: {e}")
             return []
 
     # =========================================================================
@@ -331,383 +334,8 @@ class WeaviateHelper:
             else:
                 response = collection.query.fetch_objects(limit=limit)
             return [obj.properties for obj in response.objects]
-        except:
-            return []
-
-    # =========================================================================
-    # Security Log Operations
-    # =========================================================================
-
-    def get_recent_security_events(
-        self,
-        severity: Optional[str] = None,
-        limit: int = 20,
-    ) -> List[Dict[str, Any]]:
-        """Get recent security log entries.
-
-        Args:
-            severity: Optional filter (low, medium, high, critical)
-            limit: Maximum results
-        """
-        if not self.client.collections.exists("SecurityLog"):
-            return []
-        collection = self.client.collections.get("SecurityLog")
-        try:
-            if severity:
-                response = collection.query.fetch_objects(
-                    filters=Filter.by_property("severity").equal(severity),
-                    limit=limit,
-                )
-            else:
-                response = collection.query.fetch_objects(limit=limit)
-            return [obj.properties for obj in response.objects]
-        except Exception:
-            return []
-
-    # =========================================================================
-    # Social Knowledge Operations
-    # =========================================================================
-
-    def log_social_interaction(
-        self,
-        content: str,
-        author_name: str,
-        author_id: str,
-        interaction_type: str,
-        source_post_id: str,
-        sentiment: str = "neutral",
-        context: str = "",
-        relationship_tags: Optional[List[str]] = None,
-        knowledge_extracted: str = "",
-        timestamp: Optional[datetime] = None
-    ) -> Optional[str]:
-        """
-        Log a social media interaction to Weaviate.
-
-        Args:
-            content: The interaction content (comment text, reaction, etc.)
-            author_name: Name of the person
-            author_id: Facebook user ID
-            interaction_type: Type (comment, reaction, share, post)
-            source_post_id: Facebook post ID this came from
-            sentiment: Sentiment (positive, negative, neutral, supportive)
-            context: Additional context
-            relationship_tags: Tags like friend, family, supporter
-            knowledge_extracted: Key knowledge from this interaction
-            timestamp: When the interaction occurred
-
-        Returns:
-            UUID of created object or None
-        """
-        if not self.client.collections.exists("SocialKnowledge"):
-            return None
-
-        collection = self.client.collections.get("SocialKnowledge")
-
-        data = {
-            "content": content,
-            "author_name": author_name,
-            "author_id": author_id,
-            "interaction_type": interaction_type,
-            "sentiment": sentiment,
-            "context": context,
-            "source_post_id": source_post_id,
-            "timestamp": (timestamp or datetime.now(timezone.utc)).isoformat(),
-            "relationship_tags": relationship_tags or [],
-            "knowledge_extracted": knowledge_extracted,
-        }
-
-        try:
-            result = collection.data.insert(data)
-            return str(result)
         except Exception as e:
-            print(f"Error logging social interaction: {e}")
-            return None
-
-    def search_social_knowledge(
-        self,
-        query: str,
-        interaction_type: Optional[str] = None,
-        limit: int = 10
-    ) -> List[Dict[str, Any]]:
-        """
-        Search social knowledge semantically.
-
-        Args:
-            query: Search query
-            interaction_type: Optional filter (comment, reaction, share, post)
-            limit: Maximum results
-
-        Returns:
-            List of matching social interactions
-        """
-        if not self.client.collections.exists("SocialKnowledge"):
-            return []
-
-        collection = self.client.collections.get("SocialKnowledge")
-
-        try:
-            if interaction_type:
-                response = collection.query.near_text(
-                    query=query,
-                    filters=Filter.by_property("interaction_type").equal(interaction_type),
-                    limit=limit,
-                    return_metadata=MetadataQuery(distance=True)
-                )
-            else:
-                response = collection.query.near_text(
-                    query=query,
-                    limit=limit,
-                    return_metadata=MetadataQuery(distance=True)
-                )
-
-            results = []
-            for obj in response.objects:
-                entry = obj.properties.copy()
-                if obj.metadata and obj.metadata.distance is not None:
-                    entry["_distance"] = obj.metadata.distance
-                results.append(entry)
-            return results
-        except:
-            return []
-
-    def get_interactions_by_author(
-        self,
-        author_id: str,
-        limit: int = 50
-    ) -> List[Dict[str, Any]]:
-        """
-        Get all interactions from a specific author.
-
-        Args:
-            author_id: Facebook user ID
-            limit: Maximum results
-
-        Returns:
-            List of interactions from this author
-        """
-        if not self.client.collections.exists("SocialKnowledge"):
-            return []
-
-        collection = self.client.collections.get("SocialKnowledge")
-
-        try:
-            response = collection.query.fetch_objects(
-                filters=Filter.by_property("author_id").equal(author_id),
-                limit=limit
-            )
-            return [obj.properties for obj in response.objects]
-        except:
-            return []
-
-    def get_interactions_by_post(
-        self,
-        post_id: str,
-        limit: int = 100
-    ) -> List[Dict[str, Any]]:
-        """
-        Get all interactions for a specific post.
-
-        Args:
-            post_id: Facebook post ID
-            limit: Maximum results
-
-        Returns:
-            List of interactions on this post
-        """
-        if not self.client.collections.exists("SocialKnowledge"):
-            return []
-
-        collection = self.client.collections.get("SocialKnowledge")
-
-        try:
-            response = collection.query.fetch_objects(
-                filters=Filter.by_property("source_post_id").equal(post_id),
-                limit=limit
-            )
-            return [obj.properties for obj in response.objects]
-        except:
-            return []
-
-    # =========================================================================
-    # Friend Profile Operations
-    # =========================================================================
-
-    def upsert_friend_profile(
-        self,
-        name: str,
-        facebook_id: str,
-        sentiment: str = "neutral",
-        topics: Optional[List[str]] = None,
-        summary: Optional[str] = None
-    ) -> Optional[str]:
-        """
-        Create or update a friend profile. If the profile exists (by facebook_id),
-        increments interaction_count, updates last_seen, merges topics, and
-        recalculates relationship_strength.
-
-        Args:
-            name: Person's display name
-            facebook_id: Facebook user ID
-            sentiment: Sentiment of this interaction
-            topics: Topics from this interaction
-            summary: Updated AI summary (if regenerating)
-
-        Returns:
-            UUID of created/updated object or None
-        """
-        if not self.client.collections.exists("FriendProfile"):
-            return None
-
-        collection = self.client.collections.get("FriendProfile")
-        now = datetime.now(timezone.utc)
-
-        try:
-            # Check if profile exists
-            existing = collection.query.fetch_objects(
-                filters=Filter.by_property("facebook_id").equal(facebook_id),
-                limit=1
-            )
-
-            if existing.objects:
-                obj = existing.objects[0]
-                props = obj.properties
-                count = (props.get("interaction_count") or 0) + 1
-
-                # Merge topics
-                existing_topics = props.get("topics_discussed") or []
-                new_topics = list(set(existing_topics + (topics or [])))
-
-                # Recalculate relationship strength (log scale, caps at 1.0)
-                import math
-                strength = min(1.0, math.log(count + 1) / math.log(100))
-
-                update_data = {
-                    "name": name,
-                    "interaction_count": count,
-                    "last_seen": now.isoformat(),
-                    "sentiment_profile": sentiment,
-                    "topics_discussed": new_topics,
-                    "relationship_strength": strength,
-                }
-                if summary:
-                    update_data["summary"] = summary
-
-                collection.data.update(
-                    uuid=obj.uuid,
-                    properties=update_data
-                )
-                return str(obj.uuid)
-            else:
-                # Create new profile
-                data = {
-                    "name": name,
-                    "facebook_id": facebook_id,
-                    "interaction_count": 1,
-                    "first_seen": now.isoformat(),
-                    "last_seen": now.isoformat(),
-                    "sentiment_profile": sentiment,
-                    "topics_discussed": topics or [],
-                    "relationship_strength": 0.1,
-                    "summary": summary or f"New commenter: {name}",
-                }
-                result = collection.data.insert(data)
-                return str(result)
-
-        except Exception as e:
-            print(f"Error upserting friend profile: {e}")
-            return None
-
-    def get_friend_profile(
-        self,
-        facebook_id: str
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Get a friend profile by Facebook ID.
-
-        Args:
-            facebook_id: Facebook user ID
-
-        Returns:
-            Profile dict or None
-        """
-        if not self.client.collections.exists("FriendProfile"):
-            return None
-
-        collection = self.client.collections.get("FriendProfile")
-
-        try:
-            response = collection.query.fetch_objects(
-                filters=Filter.by_property("facebook_id").equal(facebook_id),
-                limit=1
-            )
-            if response.objects:
-                return response.objects[0].properties
-            return None
-        except:
-            return None
-
-    def search_friends(
-        self,
-        query: str,
-        limit: int = 10
-    ) -> List[Dict[str, Any]]:
-        """
-        Search friend profiles semantically.
-
-        Args:
-            query: Search query
-            limit: Maximum results
-
-        Returns:
-            List of matching friend profiles
-        """
-        if not self.client.collections.exists("FriendProfile"):
-            return []
-
-        collection = self.client.collections.get("FriendProfile")
-
-        try:
-            response = collection.query.near_text(
-                query=query,
-                limit=limit,
-                return_metadata=MetadataQuery(distance=True)
-            )
-
-            results = []
-            for obj in response.objects:
-                entry = obj.properties.copy()
-                if obj.metadata and obj.metadata.distance is not None:
-                    entry["_distance"] = obj.metadata.distance
-                results.append(entry)
-            return results
-        except:
-            return []
-
-    def get_top_friends(
-        self,
-        limit: int = 10
-    ) -> List[Dict[str, Any]]:
-        """
-        Get friend profiles sorted by relationship strength (highest first).
-
-        Args:
-            limit: Maximum results
-
-        Returns:
-            List of friend profiles
-        """
-        if not self.client.collections.exists("FriendProfile"):
-            return []
-
-        collection = self.client.collections.get("FriendProfile")
-
-        try:
-            response = collection.query.fetch_objects(limit=limit * 3)
-            profiles = [obj.properties for obj in response.objects]
-            profiles.sort(key=lambda p: p.get("relationship_strength", 0), reverse=True)
-            return profiles[:limit]
-        except:
+            print(f"Warning: Failed to get crisis logs: {e}")
             return []
 
     # =========================================================================
@@ -723,7 +351,8 @@ class WeaviateHelper:
             collection = self.client.collections.get(collection_name)
             response = collection.aggregate.over_all(total_count=True)
             return response.total_count
-        except:
+        except Exception as e:
+            print(f"Warning: Failed to get collection count for {collection_name}: {e}")
             return 0
 
     def collection_exists(self, name: str) -> bool:
@@ -738,68 +367,34 @@ class WeaviateHelper:
 if __name__ == "__main__":
     import sys
 
-    args = sys.argv[1:]
+    print("\n" + "="*60)
+    print("     ShaneBrain Weaviate Helper Demo")
+    print("="*60 + "\n")
 
     with WeaviateHelper() as helper:
         if not helper.is_ready():
             print("Weaviate is not ready. Make sure it's running.")
             sys.exit(1)
 
-        if "--security" in args:
-            # Security log viewer
-            severity = None
-            for a in args:
-                if a in ("low", "medium", "high", "critical"):
-                    severity = a
-            print("\n" + "="*60)
-            print("     ShaneBrain Security Log")
-            print("="*60 + "\n")
-            events = helper.get_recent_security_events(severity=severity, limit=50)
-            if not events:
-                print("  No security events recorded yet.")
-            else:
-                for e in events:
-                    ts = str(e.get("timestamp", ""))[:19]
-                    sev = e.get("severity", "?").upper()
-                    etype = e.get("event_type", "?")
-                    content = e.get("content", "")
-                    print(f"  [{ts}] [{sev}] {etype}: {content}")
-                print(f"\n  Total: {len(events)} events")
-            print("\n" + "="*60 + "\n")
+        print("✓ Connected to Weaviate\n")
 
+        # Show collection counts
+        print("Collection counts:")
+        for name in ['Conversation', 'LegacyKnowledge', 'CrisisLog']:
+            count = helper.get_collection_count(name)
+            exists = helper.collection_exists(name)
+            status = f"{count} records" if exists else "not created"
+            print(f"  • {name}: {status}")
+
+        # Demo: Search knowledge
+        print("\nDemo: Searching LegacyKnowledge for 'family'...")
+        results = helper.search_knowledge("family", limit=2)
+        if results:
+            for r in results:
+                title = r.get('title', 'Untitled')[:40]
+                dist = r.get('_distance', 'N/A')
+                print(f"  • {title} (distance: {dist})")
         else:
-            # Default: collection overview
-            print("\n" + "="*60)
-            print("     ShaneBrain Weaviate Helper Demo")
-            print("="*60 + "\n")
-            print("✓ Connected to Weaviate\n")
+            print("  (no results or collection not set up)")
 
-            total = 0
-            print("Collection counts:")
-            for name in [
-                'LegacyKnowledge', 'Conversation', 'FriendProfile',
-                'SocialKnowledge', 'CrisisLog',
-                'PersonalDoc', 'DailyNote', 'PersonalDraft',
-                'SecurityLog', 'PrivacyAudit',
-                'BrainDoc', 'BusinessDoc', 'Document',
-                'DraftTemplate', 'MessageLog', 'MyBrain',
-            ]:
-                count = helper.get_collection_count(name)
-                exists = helper.collection_exists(name)
-                status = f"{count} records" if exists else "not created"
-                total += count if exists else 0
-                print(f"  • {name}: {status}")
-            print(f"\n  Total: {total} objects across 17 collections")
-
-            # Demo: Search knowledge
-            print("\nDemo: Searching LegacyKnowledge for 'family'...")
-            results = helper.search_knowledge("family", limit=2)
-            if results:
-                for r in results:
-                    title = r.get('title', 'Untitled')[:40]
-                    dist = r.get('_distance', 'N/A')
-                    print(f"  • {title} (distance: {dist})")
-            else:
-                print("  (no results or collection not set up)")
-
-            print("\n" + "="*60 + "\n")
+    print("\n" + "="*60 + "\n")

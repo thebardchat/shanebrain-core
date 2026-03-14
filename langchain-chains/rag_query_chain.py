@@ -15,10 +15,11 @@ Author: Shane Brazelton
 import os
 import requests
 import numpy as np
-from typing import List, Any
+from typing import List, Any, Optional
 
 try:
-    from weaviate import Client
+    import weaviate
+    from weaviate.classes.query import MetadataQuery
     WEAVIATE_AVAILABLE = True
 except ImportError:
     WEAVIATE_AVAILABLE = False
@@ -27,15 +28,22 @@ except ImportError:
 try:
     from langchain.chains import RetrievalQA
     from langchain.llms.base import LLM
-    from langchain.prompts import PromptTemplate
-    from langchain_community.vectorstores import Weaviate
+    from langchain_core.prompts import PromptTemplate
     from langchain.schema import Document
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    LANGCHAIN_AVAILABLE = False
-    print("Warning: langchain not installed. Install with: pip install langchain langchain-community")
+    try:
+        from langchain.chains import RetrievalQA
+        from langchain.llms.base import LLM
+        from langchain.prompts import PromptTemplate
+        from langchain.schema import Document
+        LANGCHAIN_AVAILABLE = True
+    except ImportError:
+        LANGCHAIN_AVAILABLE = False
+        print("Warning: langchain not installed. Install with: pip install langchain langchain-community")
 
-WEAVIATE_URL = os.getenv("WEAVIATE_URL", "http://localhost:8080")
+WEAVIATE_HOST = os.getenv("WEAVIATE_HOST", "localhost")
+WEAVIATE_PORT = int(os.getenv("WEAVIATE_PORT", "8080"))
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 EMBED_URL = os.getenv("OLLAMA_EMBED_URL", "http://localhost:11434/api/embeddings")
 MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
@@ -45,17 +53,17 @@ RERANK_TOP = 3
 
 
 def get_client():
-    """Get Weaviate client."""
+    """Get Weaviate v4 client."""
     if not WEAVIATE_AVAILABLE:
         raise RuntimeError("Weaviate client not available - pip install weaviate-client")
-    return Client(WEAVIATE_URL)
+    return weaviate.connect_to_local(host=WEAVIATE_HOST, port=WEAVIATE_PORT)
 
 
 def embed_text(text: str) -> np.ndarray:
     """Generate embeddings using Ollama."""
     response = requests.post(EMBED_URL, json={"model": MODEL, "prompt": text})
     if response.status_code != 200:
-        raise ValueError(f"Ollama choked: {response.text}")
+        raise ValueError(f"Ollama embedding failed: {response.text}")
     return np.array(response.json()["embedding"])
 
 
@@ -66,11 +74,25 @@ def rerank_chunks(query: str, chunks: List[Any]) -> List[Any]:
 
     for chunk in chunks:
         # Handle both Document objects and dicts
-        content = chunk.page_content if hasattr(chunk, 'page_content') else chunk.get('content', '')
+        if hasattr(chunk, 'page_content'):
+            content = chunk.page_content
+        elif hasattr(chunk, 'properties'):
+            content = chunk.properties.get('content', '')
+        elif isinstance(chunk, dict):
+            content = chunk.get('content', '')
+        else:
+            content = str(chunk)
+
+        if not content:
+            continue
+
         chunk_vec = embed_text(content)
 
         # Cosine similarity
-        sim = np.dot(query_vec, chunk_vec) / (np.linalg.norm(query_vec) * np.linalg.norm(chunk_vec))
+        norm_product = np.linalg.norm(query_vec) * np.linalg.norm(chunk_vec)
+        if norm_product == 0:
+            continue
+        sim = np.dot(query_vec, chunk_vec) / norm_product
 
         if sim > SIM_THRESHOLD:
             scored.append((sim, chunk))
@@ -82,7 +104,7 @@ def rerank_chunks(query: str, chunks: List[Any]) -> List[Any]:
 class OllamaLLM(LLM):
     """Custom LLM wrapper for Ollama."""
 
-    def _call(self, prompt: str, stop: List[str] = None) -> str:
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         """Call Ollama API."""
         response = requests.post(OLLAMA_URL, json={
             "model": MODEL,
@@ -90,7 +112,7 @@ class OllamaLLM(LLM):
             "stream": False
         })
         if response.status_code != 200:
-            raise ValueError(f"Ollama choked: {response.text}")
+            raise ValueError(f"Ollama generation failed: {response.text}")
         return response.json()["response"]
 
     @property
@@ -100,11 +122,13 @@ class OllamaLLM(LLM):
 
 # Prompt template for RAG
 PROMPT_TEMPLATE = """
-Based on these reranked chunks: {context}
+Based on these retrieved context chunks:
 
-Answer this: {question}
+{context}
 
-Keep it direct, no bullshit.
+Answer this question: {question}
+
+Provide a direct, concise answer based on the context provided.
 """
 
 PROMPT = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
@@ -120,39 +144,61 @@ def query_rag(question: str) -> str:
     Returns:
         Generated answer based on retrieved context
     """
-    client = get_client()
+    client = None
+    try:
+        client = get_client()
 
-    if not client.is_ready():
-        raise RuntimeError("Weaviate's ghosted—docker up.")
+        if not client.is_ready():
+            raise RuntimeError("Weaviate is offline - ensure Docker containers are running")
 
-    # Query Weaviate directly for initial retrieval
-    result = client.query.get("Docs", ["content", "source", "chunk_id"]) \
-        .with_near_text({"concepts": [question]}) \
-        .with_limit(TOP_K) \
-        .do()
+        # Get the Docs collection
+        docs_collection = client.collections.get("Docs")
 
-    initial_chunks = result.get("data", {}).get("Get", {}).get("Docs", [])
+        # Query using near_text (requires vectorizer or manual vector)
+        # Since we use custom vectors, we need to embed the query first
+        query_vector = embed_text(question)
 
-    if not initial_chunks:
-        return "No relevant context found. The empire's memory is empty on this one."
+        # Query with vector
+        results = docs_collection.query.near_vector(
+            near_vector=query_vector.tolist(),
+            limit=TOP_K,
+            return_metadata=MetadataQuery(distance=True)
+        )
 
-    # Rerank by cosine similarity
-    reranked = rerank_chunks(question, initial_chunks)
+        initial_chunks = list(results.objects)
 
-    if not reranked:
-        return "All chunks below similarity threshold. Try a different query."
+        if not initial_chunks:
+            return "No relevant context found in the knowledge base."
 
-    # Build context from reranked chunks
-    context = "\n\n---\n\n".join([
-        chunk.get('content', '') if isinstance(chunk, dict) else chunk.page_content
-        for chunk in reranked
-    ])
+        # Rerank by cosine similarity
+        reranked = rerank_chunks(question, initial_chunks)
 
-    # Generate with Ollama
-    llm = OllamaLLM()
-    prompt = PROMPT.format(context=context, question=question)
+        if not reranked:
+            return "All retrieved chunks below similarity threshold. Try rephrasing your query."
 
-    return llm._call(prompt)
+        # Build context from reranked chunks
+        context_parts = []
+        for chunk in reranked:
+            if hasattr(chunk, 'properties'):
+                content = chunk.properties.get('content', '')
+            elif isinstance(chunk, dict):
+                content = chunk.get('content', '')
+            else:
+                content = str(chunk)
+            if content:
+                context_parts.append(content)
+
+        context = "\n\n---\n\n".join(context_parts)
+
+        # Generate with Ollama
+        llm = OllamaLLM()
+        prompt = PROMPT.format(context=context, question=question)
+
+        return llm._call(prompt)
+
+    finally:
+        if client:
+            client.close()
 
 
 def build_qa_chain():
@@ -160,17 +206,11 @@ def build_qa_chain():
     if not LANGCHAIN_AVAILABLE:
         raise RuntimeError("LangChain not available - pip install langchain langchain-community")
 
-    client = get_client()
-    vectorstore = Weaviate(client, "Docs", "content")
-    llm = OllamaLLM()
-    retriever = vectorstore.as_retriever(search_kwargs={"k": TOP_K})
-
-    return RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=retriever,
-        chain_type_kwargs={"prompt": PROMPT},
-        return_source_documents=True
+    # Note: LangChain's Weaviate integration may need updates for v4
+    # This is a simplified implementation using custom retrieval
+    raise NotImplementedError(
+        "LangChain Weaviate integration pending v4 compatibility updates. "
+        "Use query_rag() function directly for now."
     )
 
 
@@ -180,16 +220,26 @@ if __name__ == "__main__":
     print("=" * 60)
     print()
 
-    client = get_client()
-    if not client.is_ready():
-        raise RuntimeError("Weaviate's ghosted—docker up.")
+    client = None
+    try:
+        client = get_client()
+        if not client.is_ready():
+            raise RuntimeError("Weaviate is offline - ensure Docker containers are running")
+        client.close()
+        client = None
 
-    question = "Who is Shane?"
-    print(f"Query: {question}")
-    print()
-    print("Response:")
-    print("-" * 40)
-    print(query_rag(question))
-    print("-" * 40)
-    print()
-    print("Rerank chain locked. Empire queries sharper.")
+        question = "Who is Shane?"
+        print(f"Query: {question}")
+        print()
+        print("Response:")
+        print("-" * 40)
+        print(query_rag(question))
+        print("-" * 40)
+        print()
+        print("RAG query chain operational.")
+
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        if client:
+            client.close()
