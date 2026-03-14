@@ -4,6 +4,10 @@
 > **Last Updated:** February 16, 2026
 > **Version:** 5.2 - The Cloud Climb
 > **Location:** `/mnt/shanebrain-raid/shanebrain-core/RAG.md`
+>
+> > **Owner:** Shane Brazelton (SRM Dispatch, Alabama)
+> **Repo:** github.com/thebardchat/shanebrain-core
+> This repository holds the ShaneTheBrain Constitution — the single source of truth governing every project, tool, and decision in the thebardchat ecosystem.
 
 ---
 
