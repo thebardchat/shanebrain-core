@@ -117,7 +117,7 @@ def landing(request: Request):
             stats["conversations"] = wv.get("Conversation", 51)
     except Exception:
         pass
-    return templates.TemplateResponse("landing.html", {"request": request, "user": user, "stats": stats})
+    return templates.TemplateResponse(request, "landing.html", {"user": user, "stats": stats})
 
 
 @app.get("/register", response_class=HTMLResponse)
@@ -125,7 +125,7 @@ def register_page(request: Request):
     user = _get_current_user(request)
     if user:
         return RedirectResponse("/welcome", status_code=303)
-    return templates.TemplateResponse("register.html", {"request": request, "user": None, "error": None})
+    return templates.TemplateResponse(request, "register.html", {"user": None, "error": None})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -133,7 +133,7 @@ def login_page(request: Request):
     user = _get_current_user(request)
     if user:
         return RedirectResponse("/welcome", status_code=303)
-    return templates.TemplateResponse("login.html", {"request": request, "user": None, "error": None, "success": None})
+    return templates.TemplateResponse(request, "login.html", {"user": None, "error": None, "success": None})
 
 
 @app.get("/welcome", response_class=HTMLResponse)
@@ -149,8 +149,7 @@ def welcome_page(request: Request):
         progress = int((count / next_threshold) * 100)
     else:
         progress = 100
-    return templates.TemplateResponse("welcome.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "welcome.html", {
         "user": user,
         "level_index": level_index,
         "total_levels": total_levels,
@@ -159,12 +158,17 @@ def welcome_page(request: Request):
     })
 
 
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_redirect(request: Request):
+    return RedirectResponse("/welcome", status_code=301)
+
+
 @app.get("/chat", response_class=HTMLResponse)
 def chat_page(request: Request):
     user = _get_current_user(request)
     if not user:
         return RedirectResponse("/login", status_code=303)
-    return templates.TemplateResponse("chat.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "chat.html", {"user": user})
 
 
 @app.get("/profile", response_class=HTMLResponse)
@@ -178,8 +182,7 @@ def profile_page(request: Request, success: str = None, error: str = None):
         progress = min(int((count / next_threshold) * 100), 100)
     else:
         progress = 100
-    return templates.TemplateResponse("profile.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "profile.html", {
         "user": user,
         "progress": progress,
         "next_threshold": next_threshold,
@@ -194,8 +197,7 @@ def community_page(request: Request):
     leaderboard = models.get_leaderboard()
     activity = models.get_recent_activity()
     stats = models.get_community_stats()
-    return templates.TemplateResponse("community.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "community.html", {
         "user": user,
         "leaderboard": leaderboard,
         "activity": activity,
@@ -231,38 +233,38 @@ def api_register(
     client_ip = request.client.host if request.client else "unknown"
     if _is_register_limited(client_ip):
         log_security_event("rate_limited", f"Registration rate limit hit from {client_ip}", severity="high")
-        return templates.TemplateResponse("register.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "register.html", {
+            "user": None,
             "error": "Too many registration attempts. Please try again later.",
             "username": username, "email": email,
         }, status_code=429)
 
     # Validation
     if not USERNAME_RE.match(username):
-        return templates.TemplateResponse("register.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "register.html", {
+            "user": None,
             "error": "Username must be 3-32 characters: letters, numbers, hyphens, underscores.",
             "username": username, "email": email,
         }, status_code=400)
 
     if password != password_confirm:
-        return templates.TemplateResponse("register.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "register.html", {
+            "user": None,
             "error": "Passwords do not match.",
             "username": username, "email": email,
         }, status_code=400)
 
     if len(password) < 8:
-        return templates.TemplateResponse("register.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "register.html", {
+            "user": None,
             "error": "Password must be at least 8 characters.",
             "username": username, "email": email,
         }, status_code=400)
 
     user = models.create_user(username, email, password)
     if not user:
-        return templates.TemplateResponse("register.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "register.html", {
+            "user": None,
             "error": "Username or email already taken.",
             "username": username, "email": email,
         }, status_code=409)
@@ -295,8 +297,8 @@ def api_login(
 
     if _is_rate_limited(client_ip):
         log_security_event("rate_limited", f"Login rate limit hit for {email} from {client_ip}", severity="high")
-        return templates.TemplateResponse("login.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "login.html", {
+            "user": None,
             "error": "Too many failed attempts. Please try again in 15 minutes.",
             "email": email, "success": None,
         }, status_code=429)
@@ -306,8 +308,8 @@ def api_login(
         _record_failed_login(client_ip)
         remaining = LOGIN_MAX_ATTEMPTS - len(_login_attempts[client_ip])
         log_security_event("failed_login", f"Failed login for {email} from {client_ip} ({remaining} attempts left)", severity="medium")
-        return templates.TemplateResponse("login.html", {
-            "request": request, "user": None,
+        return templates.TemplateResponse(request, "login.html", {
+            "user": None,
             "error": "Invalid email or password.",
             "email": email, "success": None,
         }, status_code=401)

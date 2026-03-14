@@ -32,7 +32,7 @@ from enum import Enum
 # LangChain imports
 try:
     from langchain_core.prompts import PromptTemplate
-    from langchain_classic.chains import LLMChain
+    from langchain.chains import LLMChain
     from langchain_core.output_parsers import BaseOutputParser
     LANGCHAIN_AVAILABLE = True
 except ImportError:

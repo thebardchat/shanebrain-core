@@ -54,7 +54,13 @@
       "Bash(taskkill:*)",
       "Bash(cmd.exe /c \"set OLLAMA_HOST=0.0.0.0:11434 && set OLLAMA_ORIGINS=* && start ollama serve\")",
       "Bash(ls:*)",
-      "Bash(git -C \"D:\\\\Angel_Cloud\\\\shanebrain-core\" status -sb)"
+      "Bash(git -C \"D:\\\\Angel_Cloud\\\\shanebrain-core\" status -sb)",
+      "Bash(python3 -c \"import fastapi, uvicorn, requests; print\\('All social deps installed'\\)\")",
+      "Bash(cd /mnt/shanebrain-raid/shanebrain-core/ && python3 -m py_compile social/__init__.py && echo \"OK __init__.py\" && python3 -m py_compile social/config.py && echo \"OK config.py\" && python3 -m py_compile social/ai_client.py && echo \"OK ai_client.py\" && python3 -m py_compile social/fb_bot.py && echo \"OK fb_bot.py\")",
+      "Bash(chmod +x /mnt/shanebrain-raid/shanebrain-core/sync-all-repos.sh)",
+      "Bash(gh issue:*)",
+      "Bash(gh run:*)",
+      "Bash(gh api:*)"
     ]
   }
 }

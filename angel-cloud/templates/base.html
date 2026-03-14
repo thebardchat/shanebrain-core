@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Angel Cloud — an AI-powered platform for growth, legacy, and community. Part of the ShaneBrain ecosystem.">
+    <meta property="og:title" content="{% block og_title %}Angel Cloud{% endblock %}">
+    <meta property="og:description" content="A living knowledge system for growth, legacy, and community. Start as a Newborn and grow into a Guardian Angel.">
+    <meta property="og:type" content="website">
     <title>{% block title %}Angel Cloud{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9729;</text></svg>">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header>
         <div class="container">
             <a href="/" class="logo">ANGEL CLOUD</a>
-            <nav>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">&#9776;</button>
+            <nav id="nav-menu">
                 {% if user %}
                     <a href="/welcome">Dashboard</a>
                     <a href="/chat">Chat</a>
@@ -32,10 +38,20 @@
 
     <footer>
         <div class="container">
-            Angel Cloud &mdash; Part of the ShaneBrain Ecosystem
+            <div class="footer-links">
+                <a href="https://discord.gg/xbHQZkggU7">Discord</a>
+                <a href="https://ko-fi.com/shanebrain">Ko-fi</a>
+                <a href="https://github.com/thebardchat">GitHub</a>
+            </div>
+            <p>Angel Cloud &mdash; Part of the ShaneBrain Ecosystem</p>
         </div>
     </footer>
 
+    <script>
+    document.getElementById('nav-toggle').addEventListener('click', function() {
+        document.getElementById('nav-menu').classList.toggle('open');
+    });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

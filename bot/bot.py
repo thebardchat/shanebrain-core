@@ -71,6 +71,9 @@ RAG_CHUNK_LIMIT = 5
 # Questions log file
 QUESTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pending_questions.json")
 
+# Feed-the-brain channel name (auto-ingest to knowledge base)
+FEED_CHANNEL = "feed-the-brain"
+
 # Global client
 weaviate_client = None
 
@@ -496,6 +499,19 @@ async def on_message(message):
         return
 
     channel_name = getattr(message.channel, 'name', 'DM')
+
+    # Auto-ingest from #feed-the-brain
+    if channel_name == FEED_CHANNEL and message.content.strip():
+        content = message.content.strip()
+        title = f"Community knowledge from {message.author.display_name}"
+        if save_to_memory(title, content, "community", f"discord:{message.author.display_name}"):
+            await message.add_reaction("🧠")
+            print(f"[FEED] Ingested from {message.author.display_name}: {content[:60]}...")
+        else:
+            await message.add_reaction("❌")
+        # Still process commands if any, but don't do normal chat handling
+        await bot.process_commands(message)
+        return
 
     # Respond to mentions or DMs
     if bot.user in message.mentions or isinstance(message.channel, discord.DMChannel):

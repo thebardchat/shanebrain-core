@@ -2,7 +2,25 @@
 
 All notable changes to ShaneBrain Core infrastructure and services.
 
-## 2026-03-07 — Security Logging & Hardening
+## 2026-03-07 — Security Logging, Hardening & HTTPS/Caddy
+
+### HTTPS / Caddy Reverse Proxy (in progress)
+- Installed Caddy 2.11.2 from official repo (arm64)
+- Configured `cloud.theangel.com` → reverse proxy to `localhost:4200`
+- Security headers: HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Server header stripped
+- Access logging to `/var/log/caddy/access.log` (10MB rotation, keep 5)
+- UFW: ports 80/443 opened to the world for HTTPS + Let's Encrypt ACME
+- Let's Encrypt ACME account registered — cert auto-provisions when DNS resolves
+- Created `scripts/ddns_update.sh` — IONOS DNS API updater for dynamic IP changes
+- Domain: `theangel.com` registered via IONOS, expires 2027-03-06
+- Pi public IP: `45.19.238.179` (AT&T, Meridianville)
+- **PIVOTED** from Caddy direct → Cloudflare Tunnel → **Tailscale Funnel** (double NAT made port forwarding impractical)
+- Installed cloudflared 2026.2.0 (may use later for custom domain)
+- Installed miniupnpc (UPnP disabled on both routers)
+- **Tailscale Funnel LIVE:** `https://shanebrain-1.tail202c1a.ts.net` → proxy to `localhost:4200`
+- Auto-TLS via Tailscale, public internet access, zero router config needed
+- Funnel runs in background, persists across reboots
+- **FUTURE:** Point `cloud.theangel.com` via Cloudflare Tunnel or CNAME when ready
 
 ### Gateway Cleanup
 - Migrated `on_event("startup")` to FastAPI `lifespan` context manager (fixes deprecation warnings)

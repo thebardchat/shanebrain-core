@@ -27,16 +27,16 @@ except ImportError:
 
 try:
     from langchain.chains import RetrievalQA
-    from langchain.llms.base import LLM
+    from langchain_core.language_models.llms import BaseLLM as LLM
     from langchain_core.prompts import PromptTemplate
-    from langchain.schema import Document
+    from langchain_core.documents import Document
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     try:
         from langchain.chains import RetrievalQA
         from langchain.llms.base import LLM
-        from langchain.prompts import PromptTemplate
-        from langchain.schema import Document
+        from langchain_core.prompts import PromptTemplate
+        from langchain_core.documents import Document
         LANGCHAIN_AVAILABLE = True
     except ImportError:
         LANGCHAIN_AVAILABLE = False
