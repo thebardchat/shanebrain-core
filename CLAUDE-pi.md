@@ -1,5 +1,11 @@
 # ShaneBrain Core
 
+> **Owner:** Shane Brazelton (SRM Dispatch, Alabama)
+> **Repo:** github.com/thebardchat/shanebrain-core
+> This repository holds the ShaneTheBrain Constitution — the single source of truth governing every project, tool, and decision in the thebardchat ecosystem.
+
+This project operates under the ShaneTheBrain Constitution. https://github.com/thebardchat/constitution
+
 Personal AI assistant brain — the core of the Angel Cloud ecosystem (mental wellness and digital legacy platform).
 
 ## Stack
