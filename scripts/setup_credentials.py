@@ -194,7 +194,6 @@ def collect_mongodb_credentials() -> Tuple[Dict[str, str], bool]:
         credentials["MONGODB_ATLAS_ENABLED"] = "true"
 
         print_info("\nMongoDB Atlas Connection String")
-        print_info("Format: mongodb+srv://user:password@cluster.mongodb.net/...")
         print_info("Get this from MongoDB Atlas dashboard > Connect > Drivers")
         print_warning("Your password will be hidden as you type.")
 
@@ -202,13 +201,13 @@ def collect_mongodb_credentials() -> Tuple[Dict[str, str], bool]:
         print_info("\nLet's build your connection string securely:")
 
         cluster_host = secure_input(
-            "Atlas cluster host (e.g., thebardchat.qo97nbq.mongodb.net)",
-            "thebardchat.qo97nbq.mongodb.net"
+            "Atlas cluster host (e.g., cluster0.xxxxx.mongodb.net)",
+            ""
         )
 
         db_user = secure_input(
             "Database username",
-            "shanebrain_db_user"
+            ""
         )
 
         db_password = secure_input(
@@ -216,13 +215,13 @@ def collect_mongodb_credentials() -> Tuple[Dict[str, str], bool]:
             is_password=True
         )
 
-        if db_password:
+        if db_password and cluster_host and db_user:
             # URL-encode the password for special characters
             encoded_password = quote_plus(db_password)
 
             atlas_uri = (
                 f"mongodb+srv://{db_user}:{encoded_password}@{cluster_host}/"
-                f"?retryWrites=true&w=majority&appName=thebardchat"
+                f"?retryWrites=true&w=majority&appName=shanebrain"
             )
             credentials["MONGODB_ATLAS_URI"] = atlas_uri
 
