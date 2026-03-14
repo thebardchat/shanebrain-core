@@ -2,7 +2,8 @@
 
 This repository holds the ShaneTheBrain Constitution — the single source of truth governing every project, tool, and decision in the thebardchat ecosystem.
 
-This project operates under the ShaneTheBrain Constitution.
+This project operates under the ShaneTheBrain Constitution. https://github.com/thebardchat/constitution
+
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/thebardchat)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-ff5f5f?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/shanebrain)
